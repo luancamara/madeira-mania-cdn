@@ -1,0 +1,644 @@
+/* =============================================
+   PRODUTO CSS - Madeira Mania (Mobile)
+   Redesign v2 — Validado por agentes UI/UX
+
+   Seletores validados via Playwright em 13/02/2026
+   Todos com !important + prefixo de alta especificidade
+
+   Paleta:
+   - Verde base: #4b664a
+   - Borda: #dbe1db
+   - Borda sutil: #e8ece8
+   - Texto: #1a1a1a
+   - Texto sec: #555
+   - Fundo seção: #f7f8f7
+   ============================================= */
+
+@media (max-width: 768px) {
+
+
+  /* ==========================================
+     0. CONTAINER — Corrigir overflow horizontal
+     ========================================== */
+
+  #produto-react-app {
+    overflow-x: hidden !important;
+  }
+
+
+  /* ==========================================
+     0b. ABSORVIDO DE CA-6 (Remove padding produto)
+     ========================================== */
+
+  .ra-produto {
+    padding-left: 0px !important;
+  }
+
+  /* ==========================================
+     0c. ABSORVIDO DE CA-9 (Arredonda img produto)
+     ========================================== */
+
+  .gallery-main img {
+    border-radius: 2rem !important;
+  }
+
+  .gallery-main .swiper-slide {
+    border-radius: 2rem !important;
+  }
+
+
+  /* ==========================================
+     1. GALERIA - Full-bleed edge-to-edge
+     ========================================== */
+
+  #produto-react-app #block-imagem {
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+    width: calc(100% + 16px) !important;
+  }
+
+  #produto-react-app .gallery-container {
+    max-width: 100vw !important;
+    overflow: hidden !important;
+  }
+
+  #produto-react-app .gallery-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Esconder setas de navegação — swipe natural */
+  #produto-react-app .gallery-main > .button-prev,
+  #produto-react-app .gallery-main > .button-next {
+    display: none !important;
+  }
+
+  /* Esconder dots do swiper — substituído por counter textual #mm-gallery-counter */
+  #produto-react-app .swiper-pagination {
+    display: none !important;
+  }
+
+
+  /* ==========================================
+     2. BREADCRUMB
+     ========================================== */
+
+  #produto-react-app .breadcrumb a {
+    color: #888 !important;
+  }
+
+  #produto-react-app .breadcrumb .separator {
+    color: #ccc !important;
+  }
+
+  #produto-react-app .bread-produto .text-secondary-700 {
+    color: #555 !important;
+    font-weight: 500 !important;
+  }
+
+
+  /* ==========================================
+     3. TÍTULO
+     ========================================== */
+
+  #produto-react-app h1.text-xl {
+    font-size: 22px !important;
+    line-height: 1.3 !important;
+    color: #1a1a1a !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  /* Estrelas — discretas quando vazio */
+  #produto-react-app .avaliacoes .star-back {
+    opacity: 0.4 !important;
+  }
+
+
+  /* ==========================================
+     4. PREÇO
+     ========================================== */
+
+  #produto-react-app .preco-principal {
+    max-width: 100% !important;
+  }
+
+  /* Badge desconto — verde sólido */
+  #produto-react-app .porcentagem-desconto,
+  #produto-react-app [class*="badge-desconto"],
+  #produto-react-app [class*="desconto-badge"] {
+    background: #2e7d32 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    font-size: 13px !important;
+  }
+
+  /* Preço antigo */
+  #produto-react-app .preco-de,
+  #produto-react-app [class*="preco-de"] {
+    color: #999 !important;
+    font-size: 14px !important;
+  }
+
+  /* Parcelamento */
+  #produto-react-app .valor-parcelado {
+    font-size: 14px !important;
+    color: #555 !important;
+  }
+
+  /* Link "Mais formas de pagamento" */
+  #produto-react-app .form-pag-link {
+    border-color: #dbe1db !important;
+    color: #4b664a !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+  }
+
+
+  /* ==========================================
+     5. VARIAÇÕES — Swatches + Pills
+     ========================================== */
+
+  /* Swatches de cor — arredondar apenas a imagem */
+  #produto-react-app .variation-color-swatch-image {
+    border-radius: 16px !important;
+  }
+
+  #produto-react-app .variation-pill-label-value {
+    font-weight: 600 !important;
+    color: #1a1a1a !important;
+  }
+
+  /* Pills — formato pill verdadeiro */
+  #produto-react-app .variation-pill {
+    border-radius: 9999px !important;
+    min-width: 80px !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 20px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  /* Pill NÃO selecionado */
+  #produto-react-app .variation-pill[tabindex="-1"] {
+    border: 1.5px solid #dbe1db !important;
+    background: #ffffff !important;
+    color: #333 !important;
+  }
+
+  /* Pill selecionado — manter pill + verde do Magazord */
+  #produto-react-app .variation-pill[tabindex="0"] {
+    border-radius: 9999px !important;
+  }
+
+
+  /* ==========================================
+     6. SEÇÃO DE COMPRA — Layout compacto
+     ========================================== */
+
+  #produto-react-app .informacoes-compra-produto {
+    gap: 8px !important;
+    padding-top: 2px !important;
+    padding-bottom: 12px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Eliminar gap do grid wrapper entre galeria e info */
+  #produto-react-app > .grid {
+    gap: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  /* Colapsar primeiro filho vazio do info (breadcrumb oculto no mobile) */
+  #produto-react-app .informacoes-compra-produto > .flex.flex-col.gap-space-16:first-child {
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: none !important;
+  }
+
+  /* Separador antes das derivações */
+  #produto-react-app .derivacoes-produto {
+    border-top: 1px solid #f0f0f0 !important;
+    padding-top: 10px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+
+  /* ==========================================
+     7. QUANTIDADE
+     ========================================== */
+
+  #produto-react-app #area-comprar {
+    gap: 12px !important;
+  }
+
+  #produto-react-app .quantidade {
+    border-radius: 10px !important;
+    border-color: #dbe1db !important;
+    height: 44px !important;
+  }
+
+  #produto-react-app .quantidade button,
+  #produto-react-app .quantidade input {
+    min-width: 40px !important;
+    min-height: 42px !important;
+    font-size: 16px !important;
+  }
+
+
+  /* ==========================================
+     8. BOTÕES DE AÇÃO — Linha compacta
+     O JS cria um container #mm-action-row
+     com Favoritos (ícone) + WhatsApp + Share (ícone)
+     ========================================== */
+
+  /* Row criada pelo JS — estilos globais fora do @media */
+
+  /* Favoritos — ícone compacto */
+  #produto-react-app #mm-action-row .salvar-favoritos {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+
+  #produto-react-app #mm-action-row .salvar-favoritos button {
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    border: 1.5px solid #dbe1db !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  #produto-react-app #mm-action-row .salvar-favoritos button svg {
+    width: 20px !important;
+    height: 20px !important;
+    color: #777 !important;
+    stroke: #777 !important;
+  }
+
+  /* Compartilhar — ícone compacto */
+  #produto-react-app #mm-action-row .compartilhar-produto {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+
+  #produto-react-app #mm-action-row .compartilhar-produto button {
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    border: 1.5px solid #dbe1db !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  #produto-react-app #mm-action-row .compartilhar-produto button svg {
+    width: 18px !important;
+    height: 18px !important;
+    color: #777 !important;
+  }
+
+  /* Fallback: se JS não rodou, manter botões decentes */
+  #produto-react-app .salvar-favoritos button {
+    border: 1.5px solid #dbe1db !important;
+    border-radius: 10px !important;
+    color: #555 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 10px 16px !important;
+    background: #ffffff !important;
+  }
+
+  #produto-react-app .informacoes-compra-produto > .flex.gap-space-4 {
+    width: 100% !important;
+  }
+
+  #produto-react-app .compartilhar-produto {
+    width: 100% !important;
+    flex: 1 !important;
+  }
+
+  #produto-react-app .compartilhar-produto button {
+    width: 100% !important;
+    border: 1.5px solid #dbe1db !important;
+    border-radius: 10px !important;
+    color: #555 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 10px 16px !important;
+    background: #ffffff !important;
+    justify-content: center !important;
+  }
+
+
+  /* ==========================================
+     9. FRETE
+     ========================================== */
+
+  #produto-react-app .calculo-frete {
+    border-top: 1px solid #f0f0f0 !important;
+    padding-top: 14px !important;
+  }
+
+  #produto-react-app .label-frete span {
+    font-weight: 500 !important;
+    color: #1a1a1a !important;
+  }
+
+  #produto-react-app .calculo-frete input {
+    border-radius: 10px !important;
+    border-color: #dbe1db !important;
+    font-size: 15px !important;
+  }
+
+  #produto-react-app .calculo-frete a {
+    color: #4b664a !important;
+    font-size: 13px !important;
+  }
+
+  #produto-react-app .area-calculo button {
+    border-radius: 10px !important;
+    font-weight: 500 !important;
+  }
+
+
+  /* ==========================================
+     10. WHATSAPP FLUTUANTE
+     Mover acima da sticky bar + bottom nav
+     Sticky bar: bottom 60px, h=79px → topo em 139px
+     ========================================== */
+
+  #popup-msg-whats {
+    bottom: 152px !important;
+  }
+
+
+  /* ==========================================
+     11. STICKY BAR
+     ========================================== */
+
+  /* PDP Mobile: WA e back-to-top acima da sticky bar
+     Bottom nav: 60px + Sticky bar: 77px = 137px → WA a 152px, BTT a 214px */
+  #mm-floating-whatsapp {
+    bottom: 152px !important;
+  }
+
+  .back-to-top {
+    bottom: 214px !important;
+  }
+
+  #produto-react-app .comprar-fixo {
+    padding: 10px 16px !important;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08) !important;
+    background: #ffffff !important;
+    border-top: 1px solid #f0f0f0 !important;
+    z-index: 99 !important;
+    gap: 12px !important;
+  }
+
+  #produto-react-app .comprar-fixo .price-fixed {
+    flex-shrink: 0 !important;
+  }
+
+  #produto-react-app .comprar-fixo > button {
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 14px 24px !important;
+    flex: 1 !important;
+    max-width: 200px !important;
+  }
+
+  /* Preço riscado na sticky bar */
+  #produto-react-app .comprar-fixo #mm-sticky-old-price {
+    text-decoration: line-through !important;
+    color: #999 !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    display: block !important;
+    margin-bottom: 1px !important;
+  }
+
+
+  /* ==========================================
+     12. DESCRIÇÃO — Tipografia
+     ========================================== */
+
+  #pagina-produto-react-app .descricao-produto.accordion {
+    border-top: 1px solid #f0f0f0 !important;
+  }
+
+  #pagina-produto-react-app .descricao-produto h2,
+  #pagina-produto-react-app .descricao-produto h3 {
+    font-size: 18px !important;
+    color: #1a1a1a !important;
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+    line-height: 1.4 !important;
+  }
+
+  #pagina-produto-react-app .descricao-produto p {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+    color: #444 !important;
+  }
+
+  #pagina-produto-react-app .descricao-produto li {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+    color: #444 !important;
+  }
+
+
+  /* ==========================================
+     13. ACCORDIONS — Separadores
+     ========================================== */
+
+  #pagina-produto-react-app .recomendacao-ctn-0.accordion,
+  #pagina-produto-react-app .produtos-relacionados.accordion {
+    border-top: 1px solid #f0f0f0 !important;
+  }
+
+  /* Ocultar avaliações vazias (0) em cross-sell e relacionados */
+  .recomendacao-ctn-0 .average-rating[data-value="0.00"],
+  .recomendacao-ctn-0 .average-rating[data-value="0.00"] ~ .qtd-aval,
+  .produtos-relacionados .average-rating[data-value="0.00"],
+  .produtos-relacionados .average-rating[data-value="0.00"] ~ .qtd-aval {
+    display: none !important;
+  }
+
+
+  /* ==========================================
+     14. AVALIAÇÕES — Verde
+     ========================================== */
+
+  .container-avaliacoes button,
+  .container-avaliacoes a[class*="btn"] {
+    background-color: #4b664a !important;
+    border-color: #4b664a !important;
+    border-radius: 12px !important;
+    font-weight: 500 !important;
+  }
+
+
+  /* ==========================================
+     15. TAGS + LINKS
+     ========================================== */
+
+  #pagina-produto-react-app [class*="tags"] a {
+    color: #4b664a !important;
+  }
+
+}
+
+
+/* =============================================
+   REGRAS GLOBAIS (mobile + desktop)
+   Fora do @media para aplicar em todos os viewports
+   ============================================= */
+
+/* Ocultar botão WhatsApp original (substituído por #mm-whatsapp-cta) */
+#produto-react-app .exibe-botao-whatsapp {
+  display: none !important;
+}
+
+/* Ocultar badge de desconto da galeria (% inconsistente com preço PIX) */
+#produto-react-app .tag-1.tag-produto {
+  display: none !important;
+}
+
+/* Reviews reformatados — reset do estilo original */
+#produto-react-app .avaliacoes {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* WhatsApp CTA inline */
+#produto-react-app #mm-whatsapp-cta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  height: 44px !important;
+  padding: 0 16px !important;
+  background: #ffffff !important;
+  color: #4b664a !important;
+  border: 1.5px solid #4b664a !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+#produto-react-app #mm-whatsapp-cta:hover {
+  background: #f7f8f7 !important;
+}
+
+/* Action row — flex em todos os viewports */
+#produto-react-app #mm-action-row {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+
+/* =============================================
+   DESKTOP OVERRIDES (min-width: 769px)
+   Ajustes para layout 2-colunas do desktop
+   ============================================= */
+
+@media (min-width: 769px) {
+
+  /* Limitar largura dos elementos injetados na coluna de info */
+  #produto-react-app #mm-trust-badges,
+  #produto-react-app #mm-action-row,
+  #produto-react-app #mm-whatsapp-cta,
+  #produto-react-app #mm-frete-progress,
+  #produto-react-app #mm-trust-block,
+  #produto-react-app #mm-inline-payments,
+  #produto-react-app #mm-mini-specs,
+  #produto-react-app #mm-envio-badge,
+  #produto-react-app #mm-stock-indicator,
+  #produto-react-app #mm-brand,
+  #produto-react-app .calculo-frete {
+    max-width: 36rem !important;
+  }
+
+  /* WhatsApp CTA — largura automática no desktop */
+  #produto-react-app #mm-whatsapp-cta {
+    width: fit-content !important;
+    padding: 0 24px !important;
+  }
+
+  /* Action row — layout e botões no desktop */
+  #produto-react-app #mm-action-row {
+    gap: 8px !important;
+  }
+
+  #produto-react-app #mm-action-row .salvar-favoritos,
+  #produto-react-app #mm-action-row .compartilhar-produto {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+
+  #produto-react-app #mm-action-row .salvar-favoritos button,
+  #produto-react-app #mm-action-row .compartilhar-produto button {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    border: 1.5px solid #dbe1db !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    color: #777 !important;
+  }
+
+  #produto-react-app #mm-action-row .salvar-favoritos button:hover,
+  #produto-react-app #mm-action-row .compartilhar-produto button:hover {
+    background: #f7f8f7 !important;
+  }
+
+  /* Trust badges — alinhar à esquerda no desktop */
+  #produto-react-app #mm-trust-badges {
+    justify-content: flex-start !important;
+  }
+
+  /* Desktop sticky bar */
+  #mm-desktop-sticky button {
+    transition: background 0.15s ease !important;
+  }
+  #mm-desktop-sticky button:hover {
+    background: #3d5340 !important;
+  }
+
+}
