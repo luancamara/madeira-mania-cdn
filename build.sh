@@ -16,7 +16,7 @@ DIST="$SCRIPT_DIR/dist"
 
 mkdir -p "$DIST/js" "$DIST/loaders"
 
-CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@main/dist/js"
+CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn/dist/js"
 
 echo "=== Build Madeira Mania CDN ==="
 echo ""
