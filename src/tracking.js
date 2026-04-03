@@ -216,7 +216,8 @@ function mmMapToFBEvent(name, props) {
     product_viewed:   { fb: 'ViewContent', params: { content_type: 'product', content_ids: [props.product_id], value: props.price, currency: 'BRL' } },
     add_to_cart:      { fb: 'AddToCart', params: { content_type: 'product', content_ids: [props.product_id], value: props.price, currency: 'BRL' } },
     checkout_started: { fb: 'InitiateCheckout', params: { value: props.cart_value, currency: 'BRL' } },
-    freight_calculated: { fb: 'CustomizeProduct' }
+    freight_calculated: { fb: 'CustomizeProduct' },
+    purchase: { fb: 'Purchase', params: { content_type: 'product', value: props.value, currency: 'BRL', content_ids: props.content_ids || [], num_items: props.num_items || 1 } }
   };
   if (name === 'whatsapp_inline_clicked' || name === 'whatsapp_float_clicked') {
     return { fb: 'Contact' };
@@ -1295,6 +1296,103 @@ function mmInitCartTrackers() {
 }
 
 /* =============================================
+   SECAO 8B: PURCHASE TRACKER (/checkout/done)
+   Lê dataLayer[0].transaction (nativo Magazord)
+   e despacha para GTM (dataLayer push), GA4,
+   Meta Pixel e PostHog via mmTrackEvent.
+   Dedup por transaction_id em sessionStorage.
+   ============================================= */
+
+function mmInitPurchaseTracker() {
+  if (location.pathname.indexOf('/checkout/done') === -1) return;
+
+  var PURCHASE_KEY = 'mm_purchase_fired';
+
+  function tryFirePurchase() {
+    /* Ler dados do dataLayer nativo Magazord */
+    var dl = window.dataLayer && window.dataLayer[0];
+    if (!dl || !dl.transaction || !dl.transaction.id) return false;
+
+    var txn = dl.transaction;
+    var txnId = String(txn.id);
+
+    /* Dedup: não disparar se já disparou para este pedido */
+    try {
+      var firedIds = JSON.parse(sessionStorage.getItem(PURCHASE_KEY) || '[]');
+      if (firedIds.indexOf(txnId) !== -1) {
+        if (MM_CONFIG.debug) console.log('[MM] Purchase já disparado para', txnId);
+        return true;
+      }
+      firedIds.push(txnId);
+      sessionStorage.setItem(PURCHASE_KEY, JSON.stringify(firedIds));
+    } catch(e) {}
+
+    /* Montar items no formato GA4 */
+    var items = [];
+    var contentIds = [];
+    if (txn.items && txn.items.length) {
+      txn.items.forEach(function(item) {
+        var cats = (item.category || '').split(',');
+        contentIds.push(item.sku || item.skuGroup || '');
+        items.push({
+          item_id: item.sku || item.skuGroup || '',
+          item_name: (item.name || '').substring(0, 100),
+          item_brand: item.brand || '',
+          item_category: cats[0] ? cats[0].trim() : '',
+          item_category2: item.category2 || (cats[1] ? cats[1].trim() : ''),
+          item_variant: item.variant || '',
+          price: parseFloat(item.price) || 0,
+          quantity: parseInt(item.quantity, 10) || 1
+        });
+      });
+    }
+
+    var value = parseFloat(txn.value) || 0;
+    var shipping = parseFloat(txn.shipping) || 0;
+
+    /* 1) Push para dataLayer — dispara trigger CE-purchase do GTM
+          (Google Ads Conversion + GA4 purchase) */
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null }); /* limpar ecommerce anterior */
+    window.dataLayer.push({
+      event: 'purchase',
+      ecommerce: {
+        transaction_id: txnId,
+        value: value,
+        currency: 'BRL',
+        shipping: shipping,
+        items: items
+      }
+    });
+
+    /* 2) mmTrackEvent — despacha para PostHog + Meta Pixel (Purchase) */
+    mmTrackEvent('purchase', {
+      transaction_id: txnId,
+      value: value,
+      shipping: shipping,
+      item_count: items.length,
+      content_ids: contentIds,
+      num_items: items.length
+    });
+
+    if (MM_CONFIG.debug) console.log('[MM] Purchase disparado:', txnId, 'valor:', value);
+    return true;
+  }
+
+  /* Magazord pode demorar a popular dataLayer[0].transaction
+     Tentar imediatamente e com retry */
+  if (!tryFirePurchase()) {
+    var attempts = 0;
+    var interval = setInterval(function() {
+      attempts++;
+      if (tryFirePurchase() || attempts >= 20) {
+        clearInterval(interval);
+      }
+    }, 500);
+  }
+}
+
+/* =============================================
    SECAO 9: BOOT
    ============================================= */
 
@@ -1377,6 +1475,9 @@ function mmInitCartTrackers() {
   if (window.__MM.ctx.page_type === 'cart' || window.__MM.ctx.page_type === 'checkout') {
     mmInitCartTrackers();
   }
+
+  /* Purchase tracker (/checkout/done) */
+  mmInitPurchaseTracker();
 
   /* #25 Session summary on beforeunload */
   window.addEventListener('beforeunload', function() {
