@@ -1047,6 +1047,15 @@
   })();
 
 
+  /* --- Desktop: compactar gaps para CTA no fold --- */
+  if (window.innerWidth >= 769) {
+    var info = app.querySelector('.informacoes-compra-produto');
+    if (info) {
+      info.style.setProperty('gap', '12px', 'important');
+      info.style.setProperty('row-gap', '12px', 'important');
+    }
+  }
+
   /* --- Sinalizar que o JS terminou (anti-flicker) --- */
   document.body.classList.add('mm-ready');
 
