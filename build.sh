@@ -44,7 +44,7 @@ html_to_js() {
     var html = fs.readFileSync('$html_file', 'utf8');
     var escaped = JSON.stringify(html);
     console.log('/* Inject HTML: ' + require('path').basename('$html_file') + ' */');
-    console.log('(function(){if(document.getElementById(\"tickerBar\"))return;var d=document.createElement(\"div\");d.innerHTML=' + escaped + ';var el=d.firstElementChild;var header=document.querySelector(\"header\");if(header&&header.nextSibling){header.parentNode.insertBefore(el,header.nextSibling)}else{document.body.insertBefore(el,document.body.firstChild)}})();');
+    console.log('(function(){if(document.getElementById(\"tickerBar\"))return;var d=document.createElement(\"div\");d.innerHTML=' + escaped + ';var el=d.firstElementChild;document.body.insertBefore(el,document.body.firstChild)})();');
   "
 }
 

@@ -196,15 +196,16 @@ var __faqScript = document.currentScript;
 
   section.appendChild(list);
 
-  /* ---- Posicionar: após .descricao-produto ---- */
-  var recomendacao = document.querySelector('.recomendacao-ctn-0');
+  /* ---- Posicionar: após .produtos-relacionados, antes de avaliações ---- */
   var relacionados = document.querySelector('.produtos-relacionados');
-  var insertTarget = recomendacao || relacionados;
+  var avaliacoes = document.querySelector('.container-avaliacoes');
 
-  if (insertTarget) {
-    insertTarget.parentNode.insertBefore(section, insertTarget);
+  if (relacionados && relacionados.nextSibling) {
+    relacionados.parentNode.insertBefore(section, relacionados.nextSibling);
+  } else if (avaliacoes) {
+    avaliacoes.parentNode.insertBefore(section, avaliacoes);
   } else {
-    descricao.parentNode.insertBefore(section, descricao.nextElementSibling);
+    descricao.parentNode.appendChild(section);
   }
 
   /* ---- Injetar Schema FAQPage JSON-LD ---- */

@@ -25,7 +25,7 @@
      ============================================= */
 
   /* Inject HTML: ticker.html */
-  (function(){if(document.getElementById("tickerBar"))return;var d=document.createElement("div");d.innerHTML="<div class=\"ticker-bar\" id=\"tickerBar\">\n  <button class=\"ticker-close\" onclick=\"document.getElementById('tickerBar').style.display='none'\" aria-label=\"Fechar\">×</button>\n  <div class=\"ticker-track\">\n    <!-- Bloco 1 (original) -->\n    <span class=\"ticker-item\">\n      🎟️ Use o cupom: <b> BEMVINDO </b>&nbsp;para garantir 5%OFF na sua primeira compra\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Parcele em até 12x sem juros no cartão\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      🚚 Envios em até 24h para produtos pronta entrega\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Frete grátis em pedidos acima de R$ 2.000\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      <a href=\"https://api.whatsapp.com/send?l=pt_BR&amp;phone=5511915299488&amp;text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos.\" target=\"_blank\">📞 11 91529-9488</a>\n    </span>\n    <span class=\"ticker-separator\">•</span>\n\n    <!-- Bloco 2 (duplicado para loop infinito) -->\n    <span class=\"ticker-item\">\n      🎟️ Use o cupom: <b> BEMVINDO </b>&nbsp;para garantir 5%OFF na sua primeira compra\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Parcele em até 12x sem juros no cartão\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      🚚 Envios em até 24h para produtos pronta entrega\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Frete grátis em pedidos acima de R$ 2.000\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      <a href=\"https://api.whatsapp.com/send?l=pt_BR&amp;phone=5511915299488&amp;text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos.\" target=\"_blank\">📞 11 91529-9488</a>\n    </span>\n    <span class=\"ticker-separator\">•</span>\n  </div>\n</div>";var el=d.firstElementChild;var header=document.querySelector("header");if(header&&header.nextSibling){header.parentNode.insertBefore(el,header.nextSibling)}else{document.body.insertBefore(el,document.body.firstChild)}})();
+  (function(){if(document.getElementById("tickerBar"))return;var d=document.createElement("div");d.innerHTML="<div class=\"ticker-bar\" id=\"tickerBar\">\n  <button class=\"ticker-close\" onclick=\"document.getElementById('tickerBar').style.display='none'\" aria-label=\"Fechar\">×</button>\n  <div class=\"ticker-track\">\n    <!-- Bloco 1 (original) -->\n    <span class=\"ticker-item\">\n      🎟️ Use o cupom: <b> BEMVINDO </b>&nbsp;para garantir 5%OFF na sua primeira compra\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Parcele em até 12x sem juros no cartão\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      🚚 Envios em até 24h para produtos pronta entrega\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Frete grátis em pedidos acima de R$ 2.000\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      <a href=\"https://api.whatsapp.com/send?l=pt_BR&amp;phone=5511915299488&amp;text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos.\" target=\"_blank\">📞 11 91529-9488</a>\n    </span>\n    <span class=\"ticker-separator\">•</span>\n\n    <!-- Bloco 2 (duplicado para loop infinito) -->\n    <span class=\"ticker-item\">\n      🎟️ Use o cupom: <b> BEMVINDO </b>&nbsp;para garantir 5%OFF na sua primeira compra\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Parcele em até 12x sem juros no cartão\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      🚚 Envios em até 24h para produtos pronta entrega\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      Frete grátis em pedidos acima de R$ 2.000\n    </span>\n    <span class=\"ticker-separator\">•</span>\n    <span class=\"ticker-item\">\n      <a href=\"https://api.whatsapp.com/send?l=pt_BR&amp;phone=5511915299488&amp;text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20produtos.\" target=\"_blank\">📞 11 91529-9488</a>\n    </span>\n    <span class=\"ticker-separator\">•</span>\n  </div>\n</div>";var el=d.firstElementChild;document.body.insertBefore(el,document.body.firstChild)})();
 
   /* =============================================
      SEÇÃO 3: EXTERNAL SCRIPT LOADERS
@@ -264,6 +264,8 @@
       add_to_cart:      { fb: 'AddToCart', params: { content_type: 'product', content_ids: [props.product_id], value: props.price, currency: 'BRL' } },
       checkout_started: { fb: 'InitiateCheckout', params: { value: props.cart_value, currency: 'BRL' } },
       freight_calculated: { fb: 'CustomizeProduct' }
+      /* purchase: NÃO mapear aqui — Magazord já dispara fbq('track','Purchase')
+         nativamente com eventID para dedup CAPI. Disparar aqui duplicaria. */
     };
     if (name === 'whatsapp_inline_clicked' || name === 'whatsapp_float_clicked') {
       return { fb: 'Contact' };
@@ -311,9 +313,9 @@
       }
     } catch(e) {}
   
-    /* Meta Pixel */
+    /* Meta Pixel — skip 'purchase' pois Magazord já dispara nativamente */
     try {
-      if (window.fbq) {
+      if (window.fbq && name !== 'purchase') {
         var fbEvt = mmMapToFBEvent(name, merged);
         if (fbEvt) {
           if (fbEvt.params) {
@@ -1342,6 +1344,103 @@
   }
   
   /* =============================================
+     SECAO 8B: PURCHASE TRACKER (/checkout/done)
+     Lê dataLayer[0].transaction (nativo Magazord)
+     e despacha para GTM (dataLayer push), GA4,
+     Meta Pixel e PostHog via mmTrackEvent.
+     Dedup por transaction_id em sessionStorage.
+     ============================================= */
+  
+  function mmInitPurchaseTracker() {
+    if (location.pathname.indexOf('/checkout/done') === -1) return;
+  
+    var PURCHASE_KEY = 'mm_purchase_fired';
+  
+    function tryFirePurchase() {
+      /* Ler dados do dataLayer nativo Magazord */
+      var dl = window.dataLayer && window.dataLayer[0];
+      if (!dl || !dl.transaction || !dl.transaction.id) return false;
+  
+      var txn = dl.transaction;
+      var txnId = String(txn.id);
+  
+      /* Dedup: não disparar se já disparou para este pedido */
+      try {
+        var firedIds = JSON.parse(sessionStorage.getItem(PURCHASE_KEY) || '[]');
+        if (firedIds.indexOf(txnId) !== -1) {
+          if (MM_CONFIG.debug) console.log('[MM] Purchase já disparado para', txnId);
+          return true;
+        }
+        firedIds.push(txnId);
+        sessionStorage.setItem(PURCHASE_KEY, JSON.stringify(firedIds));
+      } catch(e) {}
+  
+      /* Montar items no formato GA4 */
+      var items = [];
+      var contentIds = [];
+      if (txn.items && txn.items.length) {
+        txn.items.forEach(function(item) {
+          var cats = (item.category || '').split(',');
+          contentIds.push(item.sku || item.skuGroup || '');
+          items.push({
+            item_id: item.sku || item.skuGroup || '',
+            item_name: (item.name || '').substring(0, 100),
+            item_brand: item.brand || '',
+            item_category: cats[0] ? cats[0].trim() : '',
+            item_category2: item.category2 || (cats[1] ? cats[1].trim() : ''),
+            item_variant: item.variant || '',
+            price: parseFloat(item.price) || 0,
+            quantity: parseInt(item.quantity, 10) || 1
+          });
+        });
+      }
+  
+      var value = parseFloat(txn.value) || 0;
+      var shipping = parseFloat(txn.shipping) || 0;
+  
+      /* 1) Push para dataLayer — dispara trigger CE-purchase do GTM
+            (Google Ads Conversion + GA4 purchase) */
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ ecommerce: null }); /* limpar ecommerce anterior */
+      window.dataLayer.push({
+        event: 'purchase',
+        ecommerce: {
+          transaction_id: txnId,
+          value: value,
+          currency: 'BRL',
+          shipping: shipping,
+          items: items
+        }
+      });
+  
+      /* 2) mmTrackEvent — despacha para PostHog + Meta Pixel (Purchase) */
+      mmTrackEvent('purchase', {
+        transaction_id: txnId,
+        value: value,
+        shipping: shipping,
+        item_count: items.length,
+        content_ids: contentIds,
+        num_items: items.length
+      });
+  
+      if (MM_CONFIG.debug) console.log('[MM] Purchase disparado:', txnId, 'valor:', value);
+      return true;
+    }
+  
+    /* Magazord pode demorar a popular dataLayer[0].transaction
+       Tentar imediatamente e com retry */
+    if (!tryFirePurchase()) {
+      var attempts = 0;
+      var interval = setInterval(function() {
+        attempts++;
+        if (tryFirePurchase() || attempts >= 20) {
+          clearInterval(interval);
+        }
+      }, 500);
+    }
+  }
+  
+  /* =============================================
      SECAO 9: BOOT
      ============================================= */
   
@@ -1424,6 +1523,9 @@
     if (window.__MM.ctx.page_type === 'cart' || window.__MM.ctx.page_type === 'checkout') {
       mmInitCartTrackers();
     }
+  
+    /* Purchase tracker (/checkout/done) */
+    mmInitPurchaseTracker();
   
     /* #25 Session summary on beforeunload */
     window.addEventListener('beforeunload', function() {
@@ -2127,15 +2229,18 @@
   
       var block = document.createElement('div');
       block.id = 'mm-trust-block';
+      var isDesktop = window.innerWidth >= 769;
       block.style.cssText = [
         'background: #f7f8f7',
         'border-radius: 10px',
         'padding: 14px 16px',
         'margin-top: 10px',
         'display: flex',
-        'flex-direction: column',
+        isDesktop ? 'flex-direction: row' : 'flex-direction: column',
+        isDesktop ? 'flex-wrap: wrap' : '',
+        isDesktop ? 'justify-content: space-between' : '',
         'gap: 10px'
-      ].join(';');
+      ].filter(Boolean).join(';');
   
       var items = [
         { icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>', label: 'Atendimento', desc: 'Seg à Sex 8h-18h' },
@@ -2144,9 +2249,9 @@
         { icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>', label: 'Parcelamento', desc: 'Até 12x sem juros no cartão' }
       ];
   
-      var rowStyle = 'display:flex;align-items:center;gap:10px;';
-      var labelStyle = 'font-size:13px;font-weight:600;color:#1a1a1a;';
-      var descStyle = 'font-size:12px;color:#666;';
+      var rowStyle = 'display:flex;align-items:center;gap:10px;' + (isDesktop ? 'flex:1;min-width:0;' : '');
+      var labelStyle = 'font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;';
+      var descStyle = 'font-size:12px;color:#666;white-space:nowrap;';
   
       items.forEach(function(item) {
         var row = document.createElement('div');
@@ -3263,15 +3368,16 @@
   
     section.appendChild(list);
   
-    /* ---- Posicionar: após .descricao-produto ---- */
-    var recomendacao = document.querySelector('.recomendacao-ctn-0');
+    /* ---- Posicionar: após .produtos-relacionados, antes de avaliações ---- */
     var relacionados = document.querySelector('.produtos-relacionados');
-    var insertTarget = recomendacao || relacionados;
+    var avaliacoes = document.querySelector('.container-avaliacoes');
   
-    if (insertTarget) {
-      insertTarget.parentNode.insertBefore(section, insertTarget);
+    if (relacionados && relacionados.nextSibling) {
+      relacionados.parentNode.insertBefore(section, relacionados.nextSibling);
+    } else if (avaliacoes) {
+      avaliacoes.parentNode.insertBefore(section, avaliacoes);
     } else {
-      descricao.parentNode.insertBefore(section, descricao.nextElementSibling);
+      descricao.parentNode.appendChild(section);
     }
   
     /* ---- Injetar Schema FAQPage JSON-LD ---- */
