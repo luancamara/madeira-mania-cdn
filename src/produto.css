@@ -651,9 +651,11 @@
 
 @media (min-width: 769px) {
 
-  /* Reduzir gap da área de compra desktop (Magazord default é ~40px) */
-  #produto-react-app .informacoes-compra-produto {
-    gap: 8px !important;
+  /* Reduzir gap da área de compra desktop (Magazord default gap-space-40 = 40px) */
+  #produto-react-app .informacoes-compra-produto,
+  #produto-react-app .informacoes-compra-produto.gap-space-40 {
+    gap: 12px !important;
+    row-gap: 12px !important;
   }
 
   /* Eliminar gap entre avaliações e próximo elemento */
