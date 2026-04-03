@@ -16,7 +16,9 @@ DIST="$SCRIPT_DIR/dist"
 
 mkdir -p "$DIST/js" "$DIST/loaders"
 
-CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn/dist/js"
+# IMPORTANTE: Atualizar a versão aqui a cada deploy significativo
+CDN_VERSION="v1.0"
+CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@${CDN_VERSION}/dist/js"
 
 echo "=== Build Madeira Mania CDN ==="
 echo ""
