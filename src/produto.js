@@ -838,24 +838,7 @@
       }
     }
 
-    /* Atualizar bloco de confiança: adicionar garantia */
-    var block = document.getElementById('mm-trust-block');
-    if (block && !block.querySelector('#mm-garantia-row')) {
-      var garantiaRow = document.createElement('div');
-      garantiaRow.id = 'mm-garantia-row';
-      garantiaRow.style.cssText = 'display:flex;align-items:center;gap:10px;';
-      garantiaRow.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
-        + '<div><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Garantia</div>'
-        + '<div style="font-size:12px;color:#666;">12 meses contra defeitos de fabricação</div></div>';
-
-      /* Inserir como segundo item (após Atendimento) */
-      var firstItem = block.firstElementChild;
-      if (firstItem && firstItem.nextElementSibling) {
-        block.insertBefore(garantiaRow, firstItem.nextElementSibling);
-      } else {
-        block.appendChild(garantiaRow);
-      }
-    }
+    /* Garantia já incluída nos items do trust block (item 8) — não duplicar */
   })();
 
 
