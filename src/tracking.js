@@ -216,8 +216,9 @@ function mmMapToFBEvent(name, props) {
     product_viewed:   { fb: 'ViewContent', params: { content_type: 'product', content_ids: [props.product_id], value: props.price, currency: 'BRL' } },
     add_to_cart:      { fb: 'AddToCart', params: { content_type: 'product', content_ids: [props.product_id], value: props.price, currency: 'BRL' } },
     checkout_started: { fb: 'InitiateCheckout', params: { value: props.cart_value, currency: 'BRL' } },
-    freight_calculated: { fb: 'CustomizeProduct' },
-    purchase: { fb: 'Purchase', params: { content_type: 'product', value: props.value, currency: 'BRL', content_ids: props.content_ids || [], num_items: props.num_items || 1 } }
+    freight_calculated: { fb: 'CustomizeProduct' }
+    /* purchase: NÃO mapear aqui — Magazord já dispara fbq('track','Purchase')
+       nativamente com eventID para dedup CAPI. Disparar aqui duplicaria. */
   };
   if (name === 'whatsapp_inline_clicked' || name === 'whatsapp_float_clicked') {
     return { fb: 'Contact' };
@@ -265,9 +266,9 @@ function mmTrackEvent(name, props) {
     }
   } catch(e) {}
 
-  /* Meta Pixel */
+  /* Meta Pixel — skip 'purchase' pois Magazord já dispara nativamente */
   try {
-    if (window.fbq) {
+    if (window.fbq && name !== 'purchase') {
       var fbEvt = mmMapToFBEvent(name, merged);
       if (fbEvt) {
         if (fbEvt.params) {
