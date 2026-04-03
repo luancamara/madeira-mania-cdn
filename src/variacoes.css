@@ -1,0 +1,559 @@
+/* ============================================
+   VARIÁVEIS CSS CUSTOMIZÁVEIS
+   ============================================ */
+@media (min-width: 1024px) {
+      .h-\[650px\],
+      [class*="h-[650px]"] {
+          height: auto !important;
+          max-height: 650px !important;
+      }
+
+      .gallery-main .swiper-slide img {
+          max-height: 650px !important;
+          width: auto !important;
+          height: auto !important;
+          object-fit: contain !important;
+      }
+
+      .gallery-main .swiper,
+      [class*="swiper\]:h-\[650px\]"] .swiper {
+          height: auto !important;
+          max-height: 650px !important;
+      }
+
+      .gallery-main .swiper-slide img {
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+      }
+
+      
+
+      .tags-info-product {
+          position: absolute !important;
+          top: 8px !important;
+          left: 8px !important;
+          z-index: 10 !important;
+          margin: 0 !important;
+      }
+
+      .gallery-main .swiper {
+          height: auto !important;
+      }
+
+      .gallery-main .swiper-wrapper {
+          height: auto !important;
+          align-items: center !important;
+      }
+
+      .gallery-main .swiper-slide {
+          height: auto !important;
+      }
+
+      .gallery-main .swiper-slide img {
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+      }
+
+      .tags-info-product span {
+          border-radius: 999px !important;
+      }
+      .gallery-main .swiper-slide img {
+          object-fit: cover !important;
+      }
+  }
+
+.tag-value {
+    border-radius: 999px !important;
+}
+
+:root {
+    /* Cores principais - MINIMALISTA */
+    --pill-color-selected: rgb(75, 102, 74);
+    --pill-color-selected-hover: rgb(65, 92, 64);
+    --pill-color-normal: #FFFFFF;
+    --pill-color-normal-hover: rgb(249, 250, 251);
+    --pill-color-disabled: rgb(245, 245, 245);
+
+    /* Cores de texto */
+    --pill-text-selected: #FFFFFF;
+    --pill-text-normal: rgb(55, 65, 81);
+    --pill-text-disabled: #9CA3AF;
+
+    /* Borders */
+    --pill-border-selected: rgb(75, 102, 74);
+    --pill-border-normal: rgb(209, 213, 219);
+    --pill-border-disabled: rgb(229, 231, 235);
+
+    /* Espaçamentos */
+    --pill-padding-vertical: 12px;
+    --pill-padding-horizontal: 20px;
+    --pill-gap: 12px;
+    --pill-group-gap: 16px;
+
+    /* Tipografia */
+    --pill-font-size: 15px;
+    --pill-font-weight: 500;
+    --pill-font-weight-selected: 600;
+    --pill-line-height: 1.4;
+
+    /* Border radius - design arredondado */
+    --pill-radius: 40px;
+
+    /* Transições */
+    --pill-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Shadows */
+    --pill-shadow-normal: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --pill-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --pill-shadow-selected: 0 2px 4px rgba(75, 102, 74, 0.15);
+    --pill-shadow-focus: 0 0 0 3px rgba(75, 102, 74, 0.2);
+
+    /* ============================================
+       VARIÁVEIS ESPECÍFICAS PARA CORES (IMAGENS)
+       ============================================ */
+    --color-swatch-size: 128px;
+    --color-swatch-size-mobile: 96px;
+    --color-image-size: 128px;
+    --color-image-size-mobile: 96px;
+    --color-border-width: 2px;
+    --color-border-width-selected: 3px;
+    --color-border-radius: 8px;
+}
+
+/* ============================================
+   RESET E BASE STYLES
+   ============================================ */
+.product-variations-pills-container,
+.product-variations-pills-container * {
+    box-sizing: border-box;
+}
+
+/* ============================================
+   GRUPOS DE VARIAÇÃO - LAYOUT MINIMALISTA
+   ============================================ */
+.variation-pill-group {
+    margin-bottom: var(--pill-group-gap);
+}
+
+.variation-pill-group:last-child {
+    margin-bottom: 0;
+}
+
+.variation-pill-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #6B7280;
+    margin-bottom: 12px;
+    letter-spacing: 0.01em;
+}
+
+/* Valor selecionado ao lado do label */
+.variation-pill-label-value {
+    font-weight: 600;
+    color: #1F2937;
+}
+
+.variation-pill-required {
+    color: #EF4444;
+    margin-left: 2px;
+}
+
+/* ============================================
+   CONTAINER DE PILLS E SWATCHES
+   ============================================ */
+.variation-pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pill-gap);
+    align-items: center;
+}
+
+/* ============================================
+   PILLS PADRÃO - ESTRUTURA HTML SEMÂNTICA
+   ============================================ */
+
+/* Input radio escondido mas acessível */
+.variation-pill-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Label como pill visual (para variações SEM imagem) */
+.variation-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: var(--pill-padding-vertical) var(--pill-padding-horizontal);
+    font-size: var(--pill-font-size);
+    font-weight: var(--pill-font-weight);
+    line-height: var(--pill-line-height);
+    color: var(--pill-text-normal);
+    background-color: var(--pill-color-normal);
+    border: 2px solid var(--pill-border-normal);
+    border-radius: var(--pill-radius);
+    cursor: pointer;
+    transition: var(--pill-transition);
+    user-select: none;
+    box-shadow: var(--pill-shadow-normal);
+    min-height: 44px;
+    text-align: center;
+    white-space: nowrap;
+    position: relative;
+}
+
+.variation-pill:hover {
+    background-color: var(--pill-color-normal-hover);
+    border-color: var(--pill-color-selected);
+    box-shadow: var(--pill-shadow-hover);
+    transform: translateY(-1px);
+}
+
+.variation-pill-input:checked + .variation-pill {
+    background-color: var(--pill-color-selected);
+    border-color: var(--pill-border-selected);
+    color: var(--pill-text-selected);
+    font-weight: var(--pill-font-weight-selected);
+    box-shadow: var(--pill-shadow-selected);
+}
+
+.variation-pill-input:checked + .variation-pill:hover {
+    background-color: var(--pill-color-selected-hover);
+    transform: translateY(0);
+}
+
+.variation-pill-input:focus + .variation-pill {
+    outline: 3px solid var(--pill-color-selected);
+    outline-offset: 2px;
+    box-shadow: var(--pill-shadow-focus);
+}
+
+.variation-pill-input:focus:not(:focus-visible) + .variation-pill {
+    outline: none;
+}
+
+.variation-pill-input:disabled + .variation-pill {
+    background-color: var(--pill-color-disabled);
+    border-color: var(--pill-border-disabled);
+    color: var(--pill-text-disabled);
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* ============================================
+   COLOR SWATCHES - IMAGENS GRANDES
+   ============================================ */
+
+/* Container específico para swatches de cor */
+.variation-swatches-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pill-gap);
+    align-items: flex-start;
+}
+
+/* Wrapper do swatch (contém imagem + nome no mobile) */
+.variation-color-swatch-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: var(--color-swatch-size);
+    cursor: pointer;
+    position: relative; /* Para o tooltip */
+}
+
+/* Label como swatch de cor (quadrado com imagem) */
+.variation-color-swatch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--color-swatch-size);
+    height: var(--color-swatch-size);
+    padding: 0;
+    background-color: #FFFFFF;
+    border: var(--color-border-width) solid var(--pill-border-normal);
+    border-radius: var(--color-border-radius);
+    cursor: pointer;
+    transition: var(--pill-transition);
+    user-select: none;
+    position: relative;
+    overflow: hidden; /* Mantém para a imagem */
+}
+
+/* Imagem dentro do swatch */
+.variation-color-swatch-image {
+    width: var(--color-image-size);
+    height: var(--color-image-size);
+    object-fit: cover;
+    display: block;
+    border-radius: calc(var(--color-border-radius) - 2px);
+}
+
+/* Hover state - Desktop only */
+@media (hover: hover) and (pointer: fine) {
+    .variation-color-swatch-wrapper:hover .variation-color-swatch {
+        border-color: var(--pill-color-selected);
+        box-shadow: var(--pill-shadow-hover);
+        transform: scale(1.03);
+    }
+}
+
+/* Selected state */
+.variation-pill-input:checked + .variation-color-swatch-wrapper .variation-color-swatch {
+    border-color: var(--pill-border-selected);
+    border-width: var(--color-border-width-selected);
+    box-shadow: 0 0 0 1px var(--pill-border-selected);
+}
+
+.variation-pill-input:checked + .variation-color-swatch-wrapper:hover .variation-color-swatch {
+    transform: scale(1);
+}
+
+/* Focus state */
+.variation-pill-input:focus + .variation-color-swatch-wrapper .variation-color-swatch {
+    outline: 3px solid var(--pill-color-selected);
+    outline-offset: 2px;
+}
+
+.variation-pill-input:focus:not(:focus-visible) + .variation-color-swatch-wrapper .variation-color-swatch {
+    outline: none;
+}
+
+/* Disabled state */
+.variation-pill-input:disabled + .variation-color-swatch-wrapper {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.variation-pill-input:disabled + .variation-color-swatch-wrapper .variation-color-swatch::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #EF4444;
+    transform: rotate(-45deg);
+}
+
+/* ============================================
+   NOME DA COR - MOBILE ONLY
+   ============================================ */
+.variation-color-swatch-name {
+    display: none; /* Escondido no desktop */
+    width: 100%;
+    font-size: 11px;
+    font-weight: 500;
+    color: #374151;
+    text-align: center;
+    line-height: 1.3;
+    
+    /* Truncamento de texto */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Nome da cor quando selecionado */
+.variation-pill-input:checked + .variation-color-swatch-wrapper .variation-color-swatch-name {
+    font-weight: 600;
+    color: var(--pill-color-selected);
+}
+
+/* ============================================
+   TOOLTIP - DESKTOP ONLY (no wrapper, não no swatch)
+   ============================================ */
+@media (hover: hover) and (pointer: fine) {
+    .variation-color-swatch-wrapper[data-tooltip] {
+        position: relative;
+    }
+
+    .variation-color-swatch-wrapper[data-tooltip]::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        padding: 8px 14px;
+        background-color: #1F2937;
+        color: #FFFFFF;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        border-radius: 6px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .variation-color-swatch-wrapper[data-tooltip]::after {
+        content: '';
+        position: absolute;
+        bottom: calc(100% + 2px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        border: 6px solid transparent;
+        border-top-color: #1F2937;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 1000;
+    }
+
+    .variation-color-swatch-wrapper[data-tooltip]:hover::before,
+    .variation-color-swatch-wrapper[data-tooltip]:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ============================================
+   BADGE DE INDISPONÍVEL
+   ============================================ */
+.variation-pill-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    padding: 2px 6px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border-radius: 12px;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+.variation-pill-group.is-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.variation-pill-group.is-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 3px solid var(--pill-color-normal);
+    border-top-color: var(--pill-color-selected);
+    border-radius: 50%;
+    animation: pill-spin 0.8s linear infinite;
+}
+
+@keyframes pill-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE
+   ============================================ */
+@media (max-width: 767px) {
+    .product-variations-pills-container {
+        margin: 16px 0;
+    }
+
+    .variation-pill {
+        font-size: 14px;
+        padding: 10px 16px;
+        min-height: 44px;
+    }
+
+    .variation-pills-container,
+    .variation-swatches-container {
+        gap: 10px;
+    }
+
+    /* Swatches menores no mobile */
+    .variation-color-swatch-wrapper {
+        width: var(--color-swatch-size-mobile);
+    }
+
+    .variation-color-swatch {
+        width: var(--color-swatch-size-mobile);
+        height: var(--color-swatch-size-mobile);
+    }
+
+    .variation-color-swatch-image {
+        width: var(--color-image-size-mobile);
+        height: var(--color-image-size-mobile);
+    }
+
+    /* Mostrar nome da cor no mobile */
+    .variation-color-swatch-name {
+        display: block;
+    }
+
+    /* Esconder tooltip no mobile (usa o nome visível) */
+    .variation-color-swatch-wrapper[data-tooltip]::before,
+    .variation-color-swatch-wrapper[data-tooltip]::after {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   ACESSIBILIDADE
+   ============================================ */
+.variation-pill-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+@media (prefers-contrast: high) {
+    .variation-pill,
+    .variation-color-swatch {
+        border-width: 3px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   ESCONDER ELEMENTOS ANTIGOS
+   ============================================ */
+.sugestoes-cores,
+.produtos-sugeridos,
+.area-produtos-sugeridos,
+#produto-react-app > div > div.informacoes-compra-produto.flex.flex-col.p-4.relative.gap-space-40 > div.flex.flex-col.gap-space-16 > div.flex.flex-col > div.text-secondary-700.text-xs.md\:text-sm {
+    display: none !important;
+    visibility: hidden !important;
+}
