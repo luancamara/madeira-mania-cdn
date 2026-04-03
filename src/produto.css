@@ -642,3 +642,60 @@
   }
 
 }
+
+
+/* =============================================
+   DESKTOP PDP — Otimizações de conversão
+   Compactar a coluna de info para CTA no fold
+   ============================================= */
+
+@media (min-width: 769px) {
+
+  /* Reduzir gap da área de compra desktop (Magazord default é ~40px) */
+  #produto-react-app .informacoes-compra-produto {
+    gap: 8px !important;
+  }
+
+  /* Eliminar gap entre avaliações e próximo elemento */
+  #produto-react-app .informacoes-compra-produto > .flex.flex-col.gap-space-16:first-child {
+    gap: 4px !important;
+  }
+
+  /* Compactar derivações */
+  #produto-react-app .derivacoes-produto {
+    padding-top: 8px !important;
+    padding-bottom: 4px !important;
+  }
+
+  /* Mini specs mais compactos */
+  #produto-react-app #mm-mini-specs {
+    padding: 4px 0 !important;
+  }
+
+  /* Botão comprar — mais destacado */
+  #produto-react-app #area-comprar button[class*="bg-primary"] {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 14px 32px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Trust block full-width desktop */
+  #mm-trust-block {
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Action row desktop — ícones pequenos, inline */
+  #produto-react-app #mm-action-row {
+    gap: 8px !important;
+  }
+
+  /* WhatsApp CTA desktop — menos destaque, ação secundária */
+  #produto-react-app #mm-whatsapp-cta {
+    height: 38px !important;
+    font-size: 13px !important;
+  }
+
+}

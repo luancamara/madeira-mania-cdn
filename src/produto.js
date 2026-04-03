@@ -449,39 +449,38 @@
   })();
 
 
-  /* --- 8. Bloco de confiança perto da conversão --- */
+  /* --- 8. Bloco de confiança — full-width no desktop, coluna no mobile --- */
   (function addTrustBlock() {
-    var info = app.querySelector('.informacoes-compra-produto');
-    if (!info || document.getElementById('mm-trust-block')) return;
+    if (document.getElementById('mm-trust-block')) return;
 
-    var frete = info.querySelector('.calculo-frete');
-    if (!frete) return;
+    var isDesktop = window.innerWidth >= 769;
 
     var block = document.createElement('div');
     block.id = 'mm-trust-block';
-    var isDesktop = window.innerWidth >= 769;
     block.style.cssText = [
       'background: #f7f8f7',
-      'border-radius: 10px',
-      'padding: 14px 16px',
-      'margin-top: 10px',
       'display: flex',
+      'align-items: center',
+      'justify-content: center',
+      'gap: ' + (isDesktop ? '40px' : '10px'),
+      'padding: ' + (isDesktop ? '14px 24px' : '12px 16px'),
       isDesktop ? 'flex-direction: row' : 'flex-direction: column',
-      isDesktop ? 'flex-wrap: wrap' : '',
-      isDesktop ? 'justify-content: space-between' : '',
-      'gap: 10px'
+      isDesktop ? 'border-top: 1px solid #e8ece8' : 'border-radius: 10px',
+      isDesktop ? 'border-bottom: 1px solid #e8ece8' : '',
+      isDesktop ? 'margin: 0' : 'margin-top: 10px'
     ].filter(Boolean).join(';');
 
     var items = [
-      { icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>', label: 'Atendimento', desc: 'Seg à Sex 8h-18h' },
-      { icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>', label: 'Trocas e Devoluções', desc: 'Até 7 dias para devolver' },
-      { icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', label: 'Frete', desc: 'Enviamos para todo o Brasil' },
-      { icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>', label: 'Parcelamento', desc: 'Até 12x sem juros no cartão' }
+      { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>', label: 'Atendimento', desc: 'Seg à Sex 8h-18h' },
+      { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', label: 'Garantia', desc: '12 meses fabricação' },
+      { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>', label: 'Trocas', desc: 'Até 7 dias' },
+      { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', label: 'Frete', desc: 'Todo o Brasil' },
+      { icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>', label: '12x sem juros', desc: 'No cartão' }
     ];
 
-    var rowStyle = 'display:flex;align-items:center;gap:10px;' + (isDesktop ? 'flex:1;min-width:0;' : '');
-    var labelStyle = 'font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;';
-    var descStyle = 'font-size:12px;color:#666;white-space:nowrap;';
+    var rowStyle = 'display:flex;align-items:center;gap:8px;';
+    var labelStyle = 'font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.2;';
+    var descStyle = 'font-size:11px;color:#777;line-height:1.2;';
 
     items.forEach(function(item) {
       var row = document.createElement('div');
@@ -492,8 +491,26 @@
       block.appendChild(row);
     });
 
-    /* Inserir após .calculo-frete */
-    frete.parentNode.insertBefore(block, frete.nextElementSibling);
+    if (isDesktop) {
+      /* Desktop: full-width FORA do React, entre o grid do produto e as seções abaixo */
+      var produtoContainer = document.querySelector('#pagina-produto-react-app');
+      if (produtoContainer && produtoContainer.nextSibling) {
+        produtoContainer.parentNode.insertBefore(block, produtoContainer.nextSibling);
+      } else {
+        /* Fallback: após o app */
+        var mainProduto = document.querySelector('.main-produto');
+        if (mainProduto) mainProduto.appendChild(block);
+      }
+    } else {
+      /* Mobile: dentro de .informacoes-compra-produto, após o frete */
+      var info = app.querySelector('.informacoes-compra-produto');
+      var frete = info ? info.querySelector('.calculo-frete') : null;
+      if (frete) {
+        frete.parentNode.insertBefore(block, frete.nextElementSibling);
+      } else if (info) {
+        info.appendChild(block);
+      }
+    }
   })();
 
 
