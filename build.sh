@@ -21,30 +21,31 @@ CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@main/dist/js"
 echo "=== Build Madeira Mania CDN ==="
 echo ""
 
-# ---- Helper: CSS → JS injector ----
+# ---- Helper: CSS → JS injector (usa node para escape seguro) ----
 css_to_js() {
   local css_file="$1"
   local style_id="$2"
   if [ ! -f "$css_file" ]; then return; fi
-  local css_content
-  css_content=$(cat "$css_file" | sed "s/'/\\\\'/g" | tr '\n' ' ' | sed 's/  */ /g')
-  cat <<JSEOF
-/* Inject CSS: $(basename "$css_file") */
-(function(){if(document.getElementById('$style_id'))return;var s=document.createElement('style');s.id='$style_id';s.textContent='$css_content';document.head.appendChild(s)})();
-JSEOF
+  node -e "
+    var fs = require('fs');
+    var css = fs.readFileSync('$css_file', 'utf8');
+    var escaped = JSON.stringify(css);
+    console.log('/* Inject CSS: ' + require('path').basename('$css_file') + ' */');
+    console.log('(function(){if(document.getElementById(\"$style_id\"))return;var s=document.createElement(\"style\");s.id=\"$style_id\";s.textContent=' + escaped + ';document.head.appendChild(s)})();');
+  "
 }
 
-# ---- Helper: HTML → JS injector ----
+# ---- Helper: HTML → JS injector (usa node para escape seguro) ----
 html_to_js() {
   local html_file="$1"
-  local target="$2"  # 'prepend-body' or 'after-header'
   if [ ! -f "$html_file" ]; then return; fi
-  local html_content
-  html_content=$(cat "$html_file" | sed "s/'/\\\\'/g" | tr '\n' ' ' | sed 's/  */ /g')
-  cat <<JSEOF
-/* Inject HTML: $(basename "$html_file") */
-(function(){if(document.getElementById('tickerBar'))return;var d=document.createElement('div');d.innerHTML='$html_content';var el=d.firstElementChild;var header=document.querySelector('header');if(header&&header.nextSibling){header.parentNode.insertBefore(el,header.nextSibling)}else{document.body.insertBefore(el,document.body.firstChild)}})();
-JSEOF
+  node -e "
+    var fs = require('fs');
+    var html = fs.readFileSync('$html_file', 'utf8');
+    var escaped = JSON.stringify(html);
+    console.log('/* Inject HTML: ' + require('path').basename('$html_file') + ' */');
+    console.log('(function(){if(document.getElementById(\"tickerBar\"))return;var d=document.createElement(\"div\");d.innerHTML=' + escaped + ';var el=d.firstElementChild;var header=document.querySelector(\"header\");if(header&&header.nextSibling){header.parentNode.insertBefore(el,header.nextSibling)}else{document.body.insertBefore(el,document.body.firstChild)}})();');
+  "
 }
 
 echo "Gerando bundle único..."
