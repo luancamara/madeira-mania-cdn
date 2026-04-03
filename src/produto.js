@@ -553,7 +553,8 @@
       'margin-top: 4px'
     ].join(';');
 
-    var itemStyle = 'display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;color:#444;';
+    var isDesktop = window.innerWidth >= 769;
+    var itemStyle = 'display:flex;align-items:center;gap:6px;padding:' + (isDesktop ? '2px' : '4px') + ' 0;font-size:13px;color:#444;';
     var dotStyle = 'width:5px;height:5px;border-radius:50%;background:#4b664a;flex-shrink:0;';
 
     /* PIX */
@@ -563,42 +564,54 @@
       + (economia > 0 ? ' <span style="color:#2e7d32;font-size:12px;font-weight:600;">(economize ' + fmt(economia) + ')</span>' : '')
       + '</span></div>';
 
-    /* 1x a 3x */
-    var visibleLines = '';
-    for (var v = 0; v < 3; v++) {
-      visibleLines += '<div style="' + itemStyle + '">'
-        + '<span style="' + dotStyle + '"></span>'
-        + '<span>' + parcelas[v].vezes + 'x de R$\u00a0' + parcelas[v].valor + ' sem juros</span>'
-        + '</div>';
+    if (isDesktop) {
+      /* Desktop: compacto — só PIX + link "Ver parcelas" */
+      container.innerHTML = pixLine
+        + '<button id="mm-toggle-parcelas" style="'
+        + 'background:none;border:none;color:#4b664a;font-size:13px;font-weight:500;'
+        + 'padding:2px 0 0;cursor:pointer;display:flex;align-items:center;gap:4px;'
+        + '">Ver todas as parcelas <span style="font-size:10px;">&#9660;</span></button>'
+        + '<div id="mm-more-parcelas" style="display:none;"></div>';
+    } else {
+      /* Mobile: PIX + 1-3x visíveis + expandível */
+      var visibleLines = '';
+      for (var v = 0; v < 3; v++) {
+        visibleLines += '<div style="' + itemStyle + '">'
+          + '<span style="' + dotStyle + '"></span>'
+          + '<span>' + parcelas[v].vezes + 'x de R$\u00a0' + parcelas[v].valor + ' sem juros</span>'
+          + '</div>';
+      }
+      container.innerHTML = pixLine + visibleLines
+        + '<button id="mm-toggle-parcelas" style="'
+        + 'background:none;border:none;color:#4b664a;font-size:13px;font-weight:500;'
+        + 'padding:6px 0 0;cursor:pointer;display:flex;align-items:center;gap:4px;'
+        + '">Ver todas as parcelas <span style="font-size:10px;">&#9660;</span></button>'
+        + '<div id="mm-more-parcelas" style="display:none;"></div>';
     }
 
-    /* 4x a 12x (expandível) */
+    /* Parcelas escondidas (todas, para o expand) */
     var hiddenLines = '';
-    for (var h = 3; h < 12; h++) {
+    var startIdx = isDesktop ? 0 : 3;
+    for (var h = startIdx; h < 12; h++) {
       hiddenLines += '<div style="' + itemStyle + '">'
         + '<span style="' + dotStyle + '"></span>'
         + '<span>' + parcelas[h].vezes + 'x de R$\u00a0' + parcelas[h].valor + ' sem juros</span>'
         + '</div>';
     }
 
-    container.innerHTML = pixLine + visibleLines
-      + '<div id="mm-more-parcelas" style="display:none;">' + hiddenLines + '</div>'
-      + '<button id="mm-toggle-parcelas" style="'
-      + 'background:none;border:none;color:#4b664a;font-size:13px;font-weight:500;'
-      + 'padding:6px 0 0;cursor:pointer;display:flex;align-items:center;gap:4px;'
-      + '">Ver todas as parcelas <span style="font-size:10px;">&#9660;</span></button>';
-
     /* Inserir antes do link .form-pag-link (substituir visualmente) */
     var formPagContainer = formPagLink.closest('div');
     if (formPagContainer) {
       formPagContainer.parentNode.insertBefore(container, formPagContainer);
-      /* Esconder o link original */
       formPagLink.style.display = 'none';
     }
 
+    /* Injetar parcelas expandíveis */
+    var moreSection = document.getElementById('mm-more-parcelas');
+    if (moreSection) moreSection.innerHTML = hiddenLines;
+
     /* Toggle accordion */
     var toggleBtn = document.getElementById('mm-toggle-parcelas');
-    var moreSection = document.getElementById('mm-more-parcelas');
     if (toggleBtn && moreSection) {
       toggleBtn.addEventListener('click', function() {
         var isOpen = moreSection.style.display !== 'none';
