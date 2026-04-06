@@ -69,6 +69,8 @@ echo "Gerando bundle único..."
   echo ""
   css_to_js "$SRC/cart-sheet.css" "mm-cart-sheet-css" | sed 's/^/  /'
   echo ""
+  css_to_js "$SRC/checkout-cro.css" "mm-checkout-cro-css" | sed 's/^/  /'
+  echo ""
   css_to_js "$SRC/ticker.css" "mm-ticker-css" | sed 's/^/  /'
   echo ""
 

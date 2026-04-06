@@ -50,10 +50,14 @@
     strip.className = 'mm-trust-strip';
     if (id) strip.id = id;
 
+    /* Ícones: Lucide family, stroke 2, todos visual weight similar.
+       - Compra segura: lock
+       - Troca em 7 dias: rotate-ccw (1 arrow circular, leve)
+       - Garantia 12 meses: shield-check (escudo + check dentro) */
     var items = [
       { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>', label: 'Compra segura' },
-      { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>', label: 'Troca em 7 dias' },
-      { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', label: 'Garantia 12 meses' }
+      { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>', label: 'Troca em 7 dias' },
+      { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>', label: 'Garantia 12 meses' }
     ];
 
     items.forEach(function(item) {
@@ -160,18 +164,26 @@
       }
     })();
 
-    /* 2. Trust strip — dentro do conteúdo, não no rodapé fixo */
+    /* 2. Trust strip — colado no CTA Finalizar compra (desktop + mobile)
+       Desktop: insere antes do #finalizar-compra dentro de .proxima-etapa (sidebar direito).
+       Mobile: insere antes do #finalizar-compra dentro de .summary-fixed (sticky footer).
+       Ambos usam o mesmo DOM target — só o CSS diverge (ver checkout-cro.css). */
     (function addCartTrust() {
       if (document.getElementById('mm-cart-trust')) return;
 
-      /* Colocar acima do "Resumo da compra" ou após os produtos */
+      var finalizarBtn = document.getElementById('finalizar-compra');
+      if (finalizarBtn && finalizarBtn.parentElement) {
+        finalizarBtn.parentElement.insertBefore(
+          createTrustStrip('mm-cart-trust'),
+          finalizarBtn
+        );
+        return;
+      }
+
+      /* Fallback: se a estrutura mudou e não achamos o botão, cai no #resumo-compra */
       var resumo = document.getElementById('resumo-compra');
       if (resumo) {
-        resumo.insertBefore(createTrustStrip('mm-cart-trust'), resumo.firstChild);
-      } else {
-        /* Fallback: acima do último botão no conteúdo (não no .summary-fixed) */
-        var container = mainArea.querySelector('.container');
-        if (container) container.appendChild(createTrustStrip('mm-cart-trust'));
+        resumo.appendChild(createTrustStrip('mm-cart-trust'));
       }
     })();
   }

@@ -17,41 +17,56 @@
 
 
 /* ==========================================
-   TRUST STRIP — Componente reutilizável
-   Usado em cart, identify e onepage
+   TRUST STRIP — Inline minimalista (integrado)
+   Sem background, sem borda, sem card-in-card.
+   Flex row, items lado-a-lado, wrap gracioso se faltar espaço.
+   Usado em cart (near CTA), identify e onepage.
    ========================================== */
 
 .mm-trust-strip {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
   justify-content: center !important;
   flex-wrap: wrap !important;
-  gap: 16px !important;
-  padding: 10px 16px !important;
-  margin: 12px 0 !important;
-  background: #f0faf0 !important;
-  border: 1px solid #e0ece0 !important;
-  border-radius: 8px !important;
-  font-size: 12px !important;
-  color: #444 !important;
-  line-height: 1.3 !important;
+  gap: 6px 18px !important;
+  margin: 10px 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
   font-family: inherit !important;
+  /* Reset grid da versão anterior (caso alguém ainda tenha cache) */
+  grid-template-columns: none !important;
 }
 
 .mm-trust-strip-item {
   display: inline-flex !important;
   align-items: center !important;
   gap: 5px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #6b7f6b !important;
   white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+/* Reset do nth-child da versão grid — todos items iguais agora */
+.mm-trust-strip-item:nth-child(3) {
+  grid-column: auto !important;
+  justify-content: flex-start !important;
 }
 
 .mm-trust-strip-item svg {
   flex-shrink: 0 !important;
+  width: 13px !important;
+  height: 13px !important;
+  stroke: #2e7d32 !important;
 }
 
 .mm-trust-strip-item b {
-  font-weight: 600 !important;
-  color: #333 !important;
+  font-weight: 500 !important;
+  color: #6b7f6b !important;
 }
 
 
@@ -141,20 +156,42 @@
 
 
 /* ==========================================
-   MOBILE RESPONSIVE — 375px e menor
+   STICKY FOOTER MOBILE — Trust integrado acima do CTA
+   Usa :has() para só virar flex column quando o trust
+   realmente existir dentro do summary-fixed.
+   Herda o resto da base .mm-trust-strip (flex row minimalista).
+   ========================================== */
+
+body .summary-fixed:has(.mm-trust-strip) {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  padding-top: 10px !important;
+}
+
+body .summary-fixed .mm-trust-strip {
+  margin: 0 !important;
+  padding: 0 0 8px !important;
+  width: 100% !important;
+  border-bottom: 1px solid #eef0ee !important;
+  gap: 4px 14px !important;
+}
+
+body .summary-fixed .mm-trust-strip-item {
+  font-size: 10.5px !important;
+}
+
+body .summary-fixed .mm-trust-strip-item svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+
+/* ==========================================
+   MOBILE RESPONSIVE — 480px e menor
    ========================================== */
 
 @media (max-width: 480px) {
-  .mm-trust-strip {
-    gap: 8px !important;
-    padding: 8px 12px !important;
-    justify-content: space-between !important;
-  }
-
-  .mm-trust-strip-item {
-    font-size: 11px !important;
-  }
-
   .mm-shipping-bar {
     margin: 8px 0 12px !important;
   }
