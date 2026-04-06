@@ -165,11 +165,36 @@ echo "Gerando loader..."
   echo '.mm-ready #produto-react-app .exibe-botao-whatsapp { visibility: visible; }'
   echo '/* Esconder WhatsApp original (substituído pelo nosso) */'
   echo '#popup-msg-whats { display: none !important; }'
+  echo '/* DEV mode indicator — só ativa quando localStorage.mm_dev_url está setado */'
+  echo 'html.mm-dev-mode::before{content:"\26a1 DEV MODE \2014 localhost";position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;font:bold 11px/20px monospace;text-align:center;z-index:999999;padding:2px 8px}'
+  echo 'html.mm-dev-mode body{margin-top:20px !important}'
   echo '</style>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"
   echo ''
-  echo "<script src=\"$CDN_BASE/madeira-mania.js\" async></script>"
+  # Switchable loader: usa bundle local (localStorage.mm_dev_url) se setado, senão jsDelivr
+  cat <<LOADER_EOF
+<script>
+(function(){
+  var PROD = '$CDN_BASE/madeira-mania.js';
+  var devUrl;
+  try { devUrl = localStorage.getItem('mm_dev_url'); } catch(e) {}
+  var s = document.createElement('script');
+  s.src = devUrl || PROD;
+  s.async = true;
+  if (devUrl) {
+    document.documentElement.classList.add('mm-dev-mode');
+    s.onerror = function(){
+      console.warn('[mm-dev] falhou ao carregar dev bundle, fallback prod');
+      var f = document.createElement('script');
+      f.src = PROD; f.async = true;
+      document.head.appendChild(f);
+    };
+  }
+  document.head.appendChild(s);
+})();
+</script>
+LOADER_EOF
 } > "$DIST/loaders/loader.html"
 
 LSIZE=$(wc -c < "$DIST/loaders/loader.html")

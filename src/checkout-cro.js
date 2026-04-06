@@ -153,11 +153,13 @@
           + '</div>';
       }
 
-      /* Inserir acima do #cart-area (dentro de #main-cart-area) */
-      var cartArea = document.getElementById('cart-area');
+      /* Inserir como sibling ANTES de #main-cart-area (full-width, fora do flex row).
+         #main-cart-area é display:flex space-between — se inserir DENTRO dele, a bar
+         vira um flex item squeezed de ~137px. Inserindo ANTES, fica full width do
+         container pai naturalmente. */
       var mainCartArea = document.getElementById('main-cart-area');
-      if (mainCartArea && cartArea) {
-        mainCartArea.insertBefore(bar, cartArea);
+      if (mainCartArea && mainCartArea.parentElement) {
+        mainCartArea.parentElement.insertBefore(bar, mainCartArea);
       } else {
         var container = mainArea.querySelector('.container');
         if (container) container.insertBefore(bar, container.firstChild);
