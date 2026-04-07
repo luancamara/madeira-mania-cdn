@@ -24,11 +24,10 @@
   var path = location.pathname;
   var isCart = path.indexOf('/checkout/cart') !== -1;
   var isIdentify = path.indexOf('/checkout/identify') !== -1;
-  var isOnepage =
-    path.indexOf('/checkout/onepage') !== -1 ||
-    path.indexOf('/checkout/payment') !== -1;
+  var isOnepage = path.indexOf('/checkout/onepage') !== -1;
+  var isPayment = path.indexOf('/checkout/payment') !== -1;
 
-  if (!isCart && !isIdentify && !isOnepage) return;
+  if (!isCart && !isIdentify && !isOnepage && !isPayment) return;
 
   /* Retry até Magazord montar o DOM do checkout */
   initCheckoutCRO._retries = (initCheckoutCRO._retries || 0) + 1;
@@ -254,7 +253,9 @@
   /* Custom checkout header — substitui o header-checkout da Magazord
      ui-ux-pro-max applied: visual hierarchy via size > color, premium spacing,
      clear progress indicator, big readable trust signal.
-     currentStep: 'cart' | 'identify' | 'payment' (default 'cart') */
+     currentStep: 'cart' | 'delivery' | 'payment' (default 'cart')
+     Note: 'delivery' cobre /checkout/identify E /checkout/onepage —
+     ambas marcam "Entrega" como ativo (continuidade visual entre telas) */
   function renderCheckoutHeader(currentStep) {
     currentStep = currentStep || 'cart';
     var lockBig = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
@@ -277,7 +278,7 @@
           '<ol>' +
             step('cart', 'Carrinho') +
             '<li class="mm-checkout-step-sep" aria-hidden="true">›</li>' +
-            step('identify', 'Identificação') +
+            step('delivery', 'Entrega') +
             '<li class="mm-checkout-step-sep" aria-hidden="true">›</li>' +
             step('payment', 'Pagamento') +
           '</ol>' +
@@ -1118,7 +1119,7 @@
     layout.classList.add('mm-id-layout');
 
     layout.innerHTML =
-      renderCheckoutHeader('identify') +
+      renderCheckoutHeader('delivery') +
       '<div class="mm-grid mm-id-grid">' +
         renderIdentifyForm() +
         renderIdentifySummary(snap) +
@@ -1152,6 +1153,9 @@
 
   /* ----- handlers de submit ----- */
   function submitMagazordEmailForm(email) {
+    /* Salva email pra reuso no onepage Fase 3 (pré-preenche o input) */
+    STORAGE.set('mm_user_email', email);
+
     var hidden = mainArea.querySelector('#login');
     if (!hidden) return false;
     hidden.value = email;
@@ -1361,21 +1365,587 @@
 
 
   /* =============================================
-     ONEPAGE / PAYMENT — input modes + security label
+     ONEPAGE — Fase 3 — shadow-render do form de dados + endereço
+     /checkout/onepage = "Entrega" no stepper
+
+     Estratégia:
+     1. Esconde Magazord forms (mm-shadow-mode)
+     2. Renderiza #mm-layout 2-col: form (esquerda) + summary (direita sticky)
+     3. Form tem 2 cards: dados pessoais (4 campos) + endereço (CEP + autofill)
+     4. Email pré-preenchido via localStorage.mm_user_email (set na Fase 2)
+     5. CEP autofill via ViaCEP API (fallback Zord)
+     6. Frete calculado automaticamente após CEP+número
+     7. Auto-detect localStorage.mm_checkout_mode='guest' (set na Fase 2)
+     8. Submit: copia values pros inputs Magazord originais + clica btn next
      ============================================= */
 
-  if (isOnepage) {
-    var cepInput2 = mainArea.querySelector('#cep, input[placeholder*="00000" i]');
-    if (cepInput2) cepInput2.inputMode = 'numeric';
+  /* ----- helpers de máscara (compartilhados com qualquer fase) ----- */
+  function maskCPF(raw) {
+    var d = String(raw || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+    if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+    return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+  }
+  function maskPhone(raw) {
+    var d = String(raw || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 2) return d.length ? '(' + d : '';
+    if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+    if (d.length <= 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+    return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+  }
+  function maskCEP(raw) {
+    var d = String(raw || '').replace(/\D/g, '').slice(0, 8);
+    if (d.length <= 5) return d;
+    return d.slice(0, 5) + '-' + d.slice(5);
+  }
 
+  /* ----- ViaCEP fetch ----- */
+  function fetchViaCep(cep, callback) {
+    var clean = String(cep || '').replace(/\D/g, '');
+    if (clean.length !== 8) { callback(null); return; }
+    try {
+      fetch('https://viacep.com.br/ws/' + clean + '/json/', {
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || data.erro) { callback(null); return; }
+          callback({
+            logradouro: data.logradouro || '',
+            bairro: data.bairro || '',
+            cidade: data.localidade || '',
+            estado: data.uf || ''
+          });
+        })
+        .catch(function() { callback(null); });
+    } catch (e) { callback(null); }
+  }
+
+  /* ----- icons usados no onepage form ----- */
+  var ICONS_OP = {
+    mail: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+    user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    doc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/></svg>',
+    phone: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+    pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
+  };
+
+  /* ----- render do form onepage (dados + endereço) ----- */
+  function renderOnepageForm(prefilledEmail) {
+    var emailVal = prefilledEmail ? ' value="' + escapeHTML(prefilledEmail) + '"' : '';
+    return (
+      '<section class="mm-op-form-col">' +
+        '<h2 class="mm-id-h2">Falta pouco. Onde entregar?</h2>' +
+        '<p class="mm-id-sub">Preencha seus dados e o endereço de entrega — o frete é calculado automaticamente.</p>' +
+
+        /* CARD 1 — Dados pessoais */
+        '<form class="mm-op-form" data-mm-act="onepage-submit" novalidate>' +
+          '<div class="mm-op-card">' +
+            '<h3 class="mm-op-card-title">' + ICONS_OP.user + '<span>Quem vai receber</span></h3>' +
+            '<div class="mm-op-grid-2">' +
+              '<div class="mm-input-wrap mm-op-col-2">' +
+                '<span class="mm-input-icon" aria-hidden="true">' + ICONS_OP.mail + '</span>' +
+                '<input type="email" id="mm-op-email" class="mm-input" placeholder="seu@email.com" autocomplete="email" inputmode="email" required' + emailVal + '>' +
+              '</div>' +
+              '<div class="mm-input-wrap mm-op-col-2">' +
+                '<span class="mm-input-icon" aria-hidden="true">' + ICONS_OP.user + '</span>' +
+                '<input type="text" id="mm-op-nome" class="mm-input" placeholder="Nome completo" autocomplete="name" required>' +
+              '</div>' +
+              '<div class="mm-input-wrap">' +
+                '<span class="mm-input-icon" aria-hidden="true">' + ICONS_OP.doc + '</span>' +
+                '<input type="tel" id="mm-op-cpf" class="mm-input" placeholder="CPF" inputmode="numeric" autocomplete="off" maxlength="14" required>' +
+              '</div>' +
+              '<div class="mm-input-wrap">' +
+                '<span class="mm-input-icon" aria-hidden="true">' + ICONS_OP.phone + '</span>' +
+                '<input type="tel" id="mm-op-tel" class="mm-input" placeholder="(11) 91234-5678" inputmode="tel" autocomplete="tel" maxlength="15" required>' +
+              '</div>' +
+            '</div>' +
+            '<p class="mm-op-microcopy-soft">Usamos seus dados só pra emitir nota fiscal e te avisar da entrega.</p>' +
+          '</div>' +
+
+          /* CARD 2 — Endereço */
+          '<div class="mm-op-card">' +
+            '<h3 class="mm-op-card-title">' + ICONS_OP.pin + '<span>Endereço de entrega</span></h3>' +
+            '<div class="mm-op-grid-2">' +
+              '<div class="mm-input-wrap">' +
+                '<span class="mm-input-icon" aria-hidden="true">' + ICONS_OP.pin + '</span>' +
+                '<input type="tel" id="mm-op-cep" class="mm-input" placeholder="CEP — 00000-000" inputmode="numeric" autocomplete="postal-code" maxlength="9" required>' +
+                '<span class="mm-input-status" id="mm-op-cep-status" aria-live="polite"></span>' +
+              '</div>' +
+              '<a class="mm-op-cep-help" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Não sei meu CEP</a>' +
+              '<div class="mm-input-wrap mm-op-col-2">' +
+                '<span class="mm-input-icon" aria-hidden="true">' + ICONS_OP.home + '</span>' +
+                '<input type="text" id="mm-op-rua" class="mm-input" placeholder="Rua, Av, Travessa..." autocomplete="address-line1" required>' +
+              '</div>' +
+              '<div class="mm-input-wrap">' +
+                '<input type="tel" id="mm-op-num" class="mm-input mm-input-noicon" placeholder="Número" inputmode="numeric" required>' +
+              '</div>' +
+              '<div class="mm-input-wrap">' +
+                '<input type="text" id="mm-op-comp" class="mm-input mm-input-noicon" placeholder="Complemento (opcional)" autocomplete="address-line2">' +
+              '</div>' +
+              '<div class="mm-input-wrap mm-op-col-2">' +
+                '<input type="text" id="mm-op-bairro" class="mm-input mm-input-noicon" placeholder="Bairro" autocomplete="address-level3" required>' +
+              '</div>' +
+              '<div class="mm-input-wrap">' +
+                '<input type="text" id="mm-op-cidade" class="mm-input mm-input-noicon" placeholder="Cidade" autocomplete="address-level2" required>' +
+              '</div>' +
+              '<div class="mm-input-wrap">' +
+                '<input type="text" id="mm-op-uf" class="mm-input mm-input-noicon" placeholder="UF" maxlength="2" autocomplete="address-level1" required>' +
+              '</div>' +
+            '</div>' +
+
+            /* Frete display — só renderiza após cálculo */
+            '<div class="mm-op-frete" id="mm-op-frete-slot"></div>' +
+          '</div>' +
+
+          /* CTA — última etapa pagamento */
+          '<button type="submit" class="mm-cta mm-op-cta">' +
+            'Última etapa: pagamento' + ICON.arrow +
+          '</button>' +
+          '<p class="mm-id-microcopy mm-op-cta-sub">' + ICON.lock + '<span>Você revisa tudo antes de finalizar</span></p>' +
+        '</form>' +
+
+        /* trust + help */
+        '<div class="mm-trust mm-id-trust">' +
+          '<span class="mm-trust-item">' + ICON.lock + '<span>Pagamento seguro</span></span>' +
+          '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
+          '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
+        '</div>' +
+
+        '<a class="mm-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener">' +
+          ICON.whats +
+          '<span><strong>Ficou com alguma dúvida?</strong> Fale com a gente no WhatsApp</span>' +
+        '</a>' +
+      '</section>'
+    );
+  }
+
+  /* ----- monta layout completo do onepage ----- */
+  function buildOnepageLayout(snap, prefilledEmail) {
+    if (document.getElementById('mm-layout')) return document.getElementById('mm-layout');
+
+    var layout = document.createElement('div');
+    layout.id = 'mm-layout';
+    layout.classList.add('mm-id-layout');
+    layout.classList.add('mm-op-layout');
+
+    layout.innerHTML =
+      renderCheckoutHeader('delivery') +
+      '<div class="mm-grid mm-id-grid mm-op-grid">' +
+        renderOnepageForm(prefilledEmail) +
+        renderIdentifySummary(snap) +
+      '</div>';
+
+    mainArea.insertBefore(layout, mainArea.firstChild);
+    document.body.classList.add('mm-checkout-rebuild');
+    mainArea.classList.add('mm-shadow-mode');
+    document.documentElement.classList.remove('mm-cart-loading');
+    return layout;
+  }
+
+  /* ----- frete cálculo: usa Zord API se disponível, lê resultado do DOM Magazord ----- */
+  function renderFreteResult(state) {
+    var slot = document.getElementById('mm-op-frete-slot');
+    if (!slot) return;
+    if (state === 'loading') {
+      slot.innerHTML =
+        '<div class="mm-op-frete-loading">' +
+          '<div class="mm-op-frete-spinner"></div>' +
+          '<span>Calculando frete...</span>' +
+        '</div>';
+      return;
+    }
+    if (state === 'error') {
+      slot.innerHTML =
+        '<div class="mm-op-frete-error">' +
+          '<span>Não conseguimos calcular o frete. Confira o CEP e tente novamente.</span>' +
+        '</div>';
+      return;
+    }
+    /* state = { value: number|0, deadline: string } */
+    var isFree = state.value === 0;
+    var valueLabel = isFree
+      ? '<strong class="mm-op-frete-value is-free">' + ICON.check + ' Frete grátis</strong>'
+      : '<strong class="mm-op-frete-value">' + formatBRL(state.value) + '</strong>';
+    var deadlineLabel = state.deadline
+      ? '<span class="mm-op-frete-deadline">Entrega em ' + escapeHTML(state.deadline) + '</span>'
+      : '';
+    slot.innerHTML =
+      '<div class="mm-op-frete-card">' +
+        ICON.truck +
+        '<div class="mm-op-frete-body">' + valueLabel + deadlineLabel + '</div>' +
+      '</div>';
+  }
+
+  function calcFreteOnepage() {
+    var cepInput = document.getElementById('mm-op-cep');
+    if (!cepInput) return;
+    var digits = (cepInput.value || '').replace(/\D/g, '');
+    if (digits.length !== 8) return;
+
+    /* Salva no global localStorage pra cross-page */
+    saveCep(digits);
+
+    /* Aplica no input hidden Magazord pra disparar cálculo nativo */
+    var hidden = mainArea.querySelector('#cep, .input-cep');
+    if (hidden) {
+      hidden.value = formatCep(digits);
+      triggerInputEvent(hidden);
+    }
+
+    renderFreteResult('loading');
+
+    /* Usa Zord API se disponível pro cálculo real */
+    try {
+      if (window.Zord && window.Zord.Cart && typeof window.Zord.Cart.calculaFreteCarrinho === 'function') {
+        window.Zord.Cart.calculaFreteCarrinho();
+      }
+    } catch (e) {}
+
+    /* Read result após delay (Magazord atualiza DOM async) — múltiplas tentativas.
+       Procura em vários locais possíveis: cart usa #resumo-compra .frete-calculado,
+       onepage usa .line-entrega .valor-frete, payment pode usar outros. */
+    var attempts = 0;
+    var maxAttempts = 18;
+    function readFreteFromDom() {
+      /* Onepage: .line.line-entrega .valor-frete + .nome-servico-frete */
+      var opVal = mainArea.querySelector('.line-entrega .valor-frete, .value.valor-frete');
+      if (opVal && opVal.textContent.trim()) {
+        var raw = opVal.textContent.trim();
+        var nome = (mainArea.querySelector('.nome-servico-frete') || {}).textContent || '';
+        var deadline = '';
+        var dm = nome.match(/(\d+)\s*dias?/i);
+        if (dm) deadline = dm[1] + ' dias úteis';
+        if (/gr[aá]tis/i.test(raw)) return { value: 0, deadline: deadline };
+        var p = parseBRL(raw);
+        if (p > 0) return { value: p, deadline: deadline };
+      }
+      /* Cart: #resumo-compra .frete-calculado */
+      var cartEl = mainArea.querySelector('#resumo-compra .frete-calculado');
+      if (cartEl && cartEl.textContent.trim()) {
+        var raw2 = cartEl.textContent.trim();
+        var value = null, deadline2 = '';
+        if (/gr[aá]tis/i.test(raw2)) {
+          value = 0;
+        } else {
+          var p2 = parseBRL(raw2);
+          if (p2 > 0) value = p2;
+        }
+        var dm2 = raw2.match(/(\d+)\s*dias?/i);
+        if (dm2) deadline2 = dm2[1] + ' dias úteis';
+        if (value !== null) return { value: value, deadline: deadline2 };
+      }
+      return null;
+    }
+
+    function pollFrete() {
+      attempts++;
+      var result = readFreteFromDom();
+      if (result) {
+        renderFreteResult(result);
+        /* Atualiza summary lateral também */
+        var snap = loadCartSnapshot();
+        if (snap) {
+          snap.shipping = result.value;
+          snap.shippingDeadline = result.deadline;
+          STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
+          rehydrateIdentifySummary(snap);
+        }
+        return;
+      }
+      if (attempts < maxAttempts) {
+        setTimeout(pollFrete, 350);
+      } else {
+        renderFreteResult('error');
+      }
+    }
+    setTimeout(pollFrete, 400);
+  }
+
+  /* ----- bind eventos do onepage ----- */
+  function bindOnepageEvents() {
+    var layout = document.getElementById('mm-layout');
+    if (!layout || layout._mmOpBound) return;
+    layout._mmOpBound = true;
+
+    /* Submit form principal */
+    layout.addEventListener('submit', function(e) {
+      var form = e.target.closest('[data-mm-act="onepage-submit"]');
+      if (!form) return;
+      e.preventDefault();
+
+      var data = {
+        email: (document.getElementById('mm-op-email') || {}).value || '',
+        nome: (document.getElementById('mm-op-nome') || {}).value || '',
+        cpf: (document.getElementById('mm-op-cpf') || {}).value || '',
+        tel: (document.getElementById('mm-op-tel') || {}).value || '',
+        cep: (document.getElementById('mm-op-cep') || {}).value || '',
+        rua: (document.getElementById('mm-op-rua') || {}).value || '',
+        num: (document.getElementById('mm-op-num') || {}).value || '',
+        comp: (document.getElementById('mm-op-comp') || {}).value || '',
+        bairro: (document.getElementById('mm-op-bairro') || {}).value || '',
+        cidade: (document.getElementById('mm-op-cidade') || {}).value || '',
+        uf: (document.getElementById('mm-op-uf') || {}).value || ''
+      };
+
+      /* Validação inline */
+      var errors = [];
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) errors.push('mm-op-email');
+      if (data.nome.trim().split(/\s+/).length < 2) errors.push('mm-op-nome');
+      if (data.cpf.replace(/\D/g, '').length !== 11) errors.push('mm-op-cpf');
+      if (data.tel.replace(/\D/g, '').length < 10) errors.push('mm-op-tel');
+      if (data.cep.replace(/\D/g, '').length !== 8) errors.push('mm-op-cep');
+      if (!data.rua.trim()) errors.push('mm-op-rua');
+      if (!data.num.trim()) errors.push('mm-op-num');
+      if (!data.bairro.trim()) errors.push('mm-op-bairro');
+      if (!data.cidade.trim()) errors.push('mm-op-cidade');
+      if (!data.uf.trim()) errors.push('mm-op-uf');
+
+      if (errors.length) {
+        errors.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.classList.add('mm-input-error');
+            setTimeout(function() { el.classList.remove('mm-input-error'); }, 1800);
+          }
+        });
+        var first = document.getElementById(errors[0]);
+        if (first) {
+          first.focus();
+          first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        return;
+      }
+
+      /* Loading state */
+      var btn = form.querySelector('.mm-cta');
+      if (btn) btn.classList.add('is-loading');
+
+      /* Persistir email + checkoutmode pra próxima etapa */
+      STORAGE.set('mm_user_email', data.email.trim());
+
+      /* Copiar values pros inputs Magazord originais */
+      submitOnepageToMagazord(data);
+    });
+
+    /* Auto-fill via CEP — quando user preenche CEP completo */
+    layout.addEventListener('input', function(e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.id === 'mm-op-cpf') {
+        t.value = maskCPF(t.value);
+      } else if (t.id === 'mm-op-tel') {
+        t.value = maskPhone(t.value);
+      } else if (t.id === 'mm-op-cep') {
+        t.value = maskCEP(t.value);
+        var digits = t.value.replace(/\D/g, '');
+        if (digits.length === 8) {
+          handleCepComplete(digits);
+        }
+      } else if (t.id === 'mm-op-uf') {
+        t.value = (t.value || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 2);
+      } else if (t.id === 'mm-op-num') {
+        /* Se número foi preenchido + CEP completo, dispara cálculo de frete */
+        var cep = (document.getElementById('mm-op-cep') || {}).value || '';
+        if (cep.replace(/\D/g, '').length === 8 && t.value) {
+          if (calcFreteOnepage._t) clearTimeout(calcFreteOnepage._t);
+          calcFreteOnepage._t = setTimeout(calcFreteOnepage, 400);
+        }
+      }
+    });
+  }
+
+  /* CEP completo: dispara ViaCEP fetch + auto-fill + cálculo de frete */
+  function handleCepComplete(digits) {
+    var statusEl = document.getElementById('mm-op-cep-status');
+    if (statusEl) {
+      statusEl.className = 'mm-input-status is-loading';
+      statusEl.textContent = 'Buscando...';
+    }
+    fetchViaCep(digits, function(data) {
+      if (statusEl) statusEl.className = 'mm-input-status';
+      if (!data) {
+        if (statusEl) {
+          statusEl.className = 'mm-input-status is-error';
+          statusEl.textContent = 'CEP não encontrado';
+          setTimeout(function() {
+            statusEl.className = 'mm-input-status';
+            statusEl.textContent = '';
+          }, 2500);
+        }
+        return;
+      }
+      if (statusEl) {
+        statusEl.className = 'mm-input-status is-ok';
+        statusEl.innerHTML = ICON.check;
+        setTimeout(function() {
+          statusEl.className = 'mm-input-status';
+          statusEl.innerHTML = '';
+        }, 1800);
+      }
+      /* Auto-fill */
+      var fields = [
+        ['mm-op-rua', data.logradouro],
+        ['mm-op-bairro', data.bairro],
+        ['mm-op-cidade', data.cidade],
+        ['mm-op-uf', data.estado]
+      ];
+      fields.forEach(function(pair) {
+        var el = document.getElementById(pair[0]);
+        if (el && pair[1] && !el.value) el.value = pair[1];
+      });
+      /* Foca no número (próximo campo lógico) */
+      var num = document.getElementById('mm-op-num');
+      if (num) setTimeout(function() { num.focus(); }, 100);
+
+      /* Dispara cálculo de frete imediato (não espera número) */
+      if (calcFreteOnepage._t) clearTimeout(calcFreteOnepage._t);
+      calcFreteOnepage._t = setTimeout(calcFreteOnepage, 200);
+    });
+  }
+
+  /* Submit final: copia values pros inputs Magazord + clica botão next */
+  function submitOnepageToMagazord(data) {
+    /* O Magazord onepage tem múltiplos forms (PF, PJ, anonymous, endereço).
+       Os forms anonymous (id _3) e endereço são os que importam pro guest flow.
+       Forms PF (id _2) também podem ser usados como fallback. */
+    var setVal = function(sel, value) {
+      var el = mainArea.querySelector(sel);
+      if (!el) return false;
+      try {
+        var nativeSet = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nativeSet.call(el, value);
+      } catch (e) { el.value = value; }
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.dispatchEvent(new Event('blur', { bubbles: true }));
+      return true;
+    };
+
+    /* Dados pessoais — tenta tanto _2 (PF) quanto _3 (anonymous) */
+    setVal('#nome-completo_2', data.nome.trim()) || setVal('#nome-completo_3', data.nome.trim());
+    setVal('#cpf_2', data.cpf) || setVal('#cpf_3', data.cpf);
+    setVal('#email_3', data.email.trim()) || setVal('#email-pessoa-fisica', data.email.trim());
+    setVal('#telefone_2', data.tel) || setVal('#telefone_3', data.tel);
+
+    /* Endereço */
+    setVal('#cep', data.cep);
+    setVal('#logradouro', data.rua.trim());
+    setVal('#numero', data.num);
+    setVal('#complemento', data.comp);
+    setVal('#bairro', data.bairro.trim());
+    setVal('#cidade', data.cidade.trim());
+    setVal('#estado', data.uf.trim());
+
+    /* Tenta clicar nos botões de "Próxima etapa" do Magazord pra avançar
+       (eles fazem POST + navegam pra payment) */
+    setTimeout(function() {
+      /* Botão de endereço — finaliza onepage e vai pra payment */
+      var nextBtns = mainArea.querySelectorAll('button.button-next, button.button-endereco, button[type="submit"]');
+      var clicked = false;
+      for (var i = 0; i < nextBtns.length; i++) {
+        var b = nextBtns[i];
+        var t = (b.textContent || '').toLowerCase();
+        if (t.indexOf('próxima') !== -1 || t.indexOf('proxima') !== -1 || t.indexOf('finalizar') !== -1) {
+          if (b.offsetParent !== null || b.offsetWidth > 0) {
+            b.click();
+            clicked = true;
+            break;
+          }
+        }
+      }
+      /* Fallback: navega direto pra /checkout/payment */
+      if (!clicked) {
+        setTimeout(function() {
+          if (location.pathname.indexOf('/checkout/onepage') !== -1) {
+            location.href = '/checkout/payment';
+          }
+        }, 800);
+      }
+    }, 300);
+  }
+
+  /* ----- mount entry ----- */
+  if (isOnepage) {
+    function waitForOnepageDom(attempt) {
+      attempt = attempt || 0;
+      if (attempt > 30) { mountOnepage(); return; }
+      var hasForm = mainArea.querySelector('#cep, .box-area-dados, #nome-completo_2');
+      if (hasForm || attempt > 8) {
+        mountOnepage();
+      } else {
+        setTimeout(function() { waitForOnepageDom(attempt + 1); }, 250);
+      }
+    }
+
+    function mountOnepage() {
+      var snap = loadCartSnapshot();
+      var prefilledEmail = STORAGE.get('mm_user_email') || '';
+
+      /* Limpa flag mm_checkout_mode (já foi usada pra entrar no flow guest) */
+      STORAGE.remove('mm_checkout_mode');
+
+      buildOnepageLayout(snap, prefilledEmail);
+      bindOnepageEvents();
+
+      /* Garante que o tab "Compra sem cadastro" do Magazord esteja ativo
+         (caso não esteja por default) — clicamos no link nativo */
+      try {
+        var sememCadLink = Array.from(mainArea.querySelectorAll('a, button')).find(function(el) {
+          var t = (el.textContent || '').toLowerCase();
+          return t.indexOf('sem cadastro') !== -1 && el.offsetParent !== null;
+        });
+        if (sememCadLink && !sememCadLink.classList.contains('active')) {
+          sememCadLink.click();
+        }
+      } catch (e) {}
+
+      /* Auto-fetch cart snapshot fallback (mesmo padrão da Fase 2) */
+      if (!snap || !snap.items || snap.items.length === 0) {
+        fetchCartSnapshotFallback(function(freshSnap) {
+          if (freshSnap && freshSnap.items && freshSnap.items.length > 0) {
+            rehydrateIdentifySummary(freshSnap);
+          }
+        });
+      }
+
+      /* Auto-preenche CEP e dispara fetch se já tem CEP salvo */
+      var savedCep = STORAGE.get(CEP_KEY);
+      if (savedCep && savedCep.length === 8) {
+        var cepInput = document.getElementById('mm-op-cep');
+        if (cepInput) {
+          cepInput.value = formatCep(savedCep);
+          setTimeout(function() { handleCepComplete(savedCep); }, 400);
+        }
+      }
+
+      /* Auto-focus primeiro input vazio (mobile-friendly: skip se touch) */
+      setTimeout(function() {
+        if ('ontouchstart' in window) return;
+        var inputs = ['mm-op-email', 'mm-op-nome', 'mm-op-cpf', 'mm-op-tel', 'mm-op-cep'];
+        for (var i = 0; i < inputs.length; i++) {
+          var el = document.getElementById(inputs[i]);
+          if (el && !el.value) { el.focus(); break; }
+        }
+      }, 350);
+    }
+
+    waitForOnepageDom();
+  }
+
+
+  /* =============================================
+     PAYMENT — Fase 4 (TODO) — minimal input modes por enquanto
+     ============================================= */
+
+  if (isPayment) {
     var cardNumInput = mainArea.querySelector('input[placeholder*="numero do cart" i]');
     if (cardNumInput) cardNumInput.inputMode = 'numeric';
 
     var cvvInput = mainArea.querySelector('input[placeholder*="000" i]');
     if (cvvInput && (!cvvInput.maxLength || cvvInput.maxLength <= 4)) cvvInput.inputMode = 'numeric';
-
-    var cpfInput = mainArea.querySelector('input[placeholder*="CPF" i]');
-    if (cpfInput) cpfInput.inputMode = 'numeric';
   }
 
 })();

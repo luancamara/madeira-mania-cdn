@@ -178,7 +178,7 @@ echo "Gerando loader..."
   echo 'html.mm-dev-mode body{margin-top:20px !important}'
   echo '</style>'
   echo '<script>'
-  echo '(function(){var p=location.pathname;if(/\/checkout\/(cart|identify)/.test(p)){document.documentElement.classList.add("mm-cart-loading")}document.documentElement.classList.add("mm-footer-loading")})();'
+  echo '(function(){var p=location.pathname;if(/\/checkout\/(cart|identify|onepage)/.test(p)){document.documentElement.classList.add("mm-cart-loading")}document.documentElement.classList.add("mm-footer-loading")})();'
   echo '</script>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"
