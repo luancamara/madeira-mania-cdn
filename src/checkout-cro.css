@@ -2212,12 +2212,41 @@ body.mm-checkout-rebuild .checkout-main {
 }
 
 /* ----- Frete revealed card ----- */
+/* Frete slot — reserva espaço pra evitar CLS (ui-ux-pro-max §3 content-jumping).
+   Quando vazio mostra placeholder neutro; quando preenchido vira card colorido. */
 #mm-layout .mm-op-frete {
   margin-top: 16px;
-  min-height: 0;
+  min-height: 62px;
 }
-#mm-layout .mm-op-frete:empty {
-  display: none;
+#mm-layout .mm-op-frete:empty::before {
+  content: "Informe o CEP para calcular o frete";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  background: #FAFAFA;
+  border: 1px dashed var(--mm-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--mm-fg-subtle);
+  min-height: 48px;
+}
+
+/* Tabular nums em preços — previne layout shift quando valores mudam
+   (ui-ux-pro-max §6 number-tabular) */
+#mm-layout .mm-total-value,
+#mm-layout .mm-total-pix,
+#mm-layout .mm-total-parcela,
+#mm-layout .mm-row-value,
+#mm-layout .mm-id-thumb-price,
+#mm-layout .mm-op-frete-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* WhatsApp help na sidebar — margin-top pra separar do summary card */
+#mm-layout .mm-sum-help {
+  margin-top: 14px;
 }
 
 #mm-layout .mm-op-frete-loading {

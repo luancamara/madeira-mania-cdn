@@ -1048,6 +1048,11 @@
             '<span>Editar carrinho</span>' +
           '</a>' +
         '</div>' +
+        /* WhatsApp help — ABAIXO do summary (contexto de dúvida = ver o total) */
+        '<a class="mm-help mm-sum-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener" data-mm-track="help-whats-sum">' +
+          ICON.whats +
+          '<span><strong>Ficou com alguma dúvida?</strong> Fale com a gente no WhatsApp</span>' +
+        '</a>' +
       '</aside>'
     );
   }
@@ -1097,12 +1102,6 @@
           '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
           '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
         '</div>' +
-
-        /* whatsapp help */
-        '<a class="mm-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener" data-mm-track="help-whats-id">' +
-          ICON.whats +
-          '<span><strong>Ficou com alguma dúvida?</strong> Fale com a gente no WhatsApp</span>' +
-        '</a>' +
 
         /* política de privacidade */
         '<p class="mm-id-lgpd">Ao continuar, você concorda com nossa <a href="/politica-de-privacidade" target="_blank" rel="noopener">Política de Privacidade</a></p>' +
@@ -1507,17 +1506,12 @@
           '<p class="mm-id-microcopy mm-op-cta-sub">' + ICON.lock + '<span>Você revisa tudo antes de finalizar</span></p>' +
         '</form>' +
 
-        /* trust + help */
+        /* trust strip — WhatsApp help foi movido pra sidebar (abaixo do summary) */
         '<div class="mm-trust mm-id-trust">' +
           '<span class="mm-trust-item">' + ICON.lock + '<span>Pagamento seguro</span></span>' +
           '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
           '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
         '</div>' +
-
-        '<a class="mm-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener">' +
-          ICON.whats +
-          '<span><strong>Ficou com alguma dúvida?</strong> Fale com a gente no WhatsApp</span>' +
-        '</a>' +
       '</section>'
     );
   }
@@ -1579,16 +1573,66 @@
       '</div>';
   }
 
+  /* Lê frete do DOM Magazord — busca deadline em múltiplos lugares (onepage
+     às vezes coloca prazo em .line-entrega texto, .info-entrega, ou nome-servico) */
+  function readFreteFromDom() {
+    function parseDeadline(text) {
+      if (!text) return '';
+      var m = text.match(/(\d+)(?:\s*[aà]\s*(\d+))?\s*dias?/i);
+      if (!m) return '';
+      return m[2] ? m[1] + ' a ' + m[2] + ' dias úteis' : m[1] + ' dias úteis';
+    }
+    /* Onepage: .line.line-entrega contém valor + prazo no mesmo bloco */
+    var lineEntrega = mainArea.querySelector('.line-entrega');
+    if (lineEntrega) {
+      var fullText = (lineEntrega.textContent || '').trim();
+      if (fullText) {
+        var nome = (mainArea.querySelector('.nome-servico-frete') || {}).textContent || '';
+        var infoEntrega = (mainArea.querySelector('.info-entrega, .prazo-entrega, .line-entrega .sub') || {}).textContent || '';
+        var deadline = parseDeadline(infoEntrega) || parseDeadline(nome) || parseDeadline(fullText);
+        if (/gr[aá]tis/i.test(fullText)) return { value: 0, deadline: deadline };
+        var p = parseBRL(fullText);
+        if (p > 0) return { value: p, deadline: deadline };
+      }
+    }
+    /* Cart: #resumo-compra .frete-calculado */
+    var cartEl = mainArea.querySelector('#resumo-compra .frete-calculado');
+    if (cartEl && cartEl.textContent.trim()) {
+      var raw2 = cartEl.textContent.trim();
+      var value = null;
+      if (/gr[aá]tis/i.test(raw2)) {
+        value = 0;
+      } else {
+        var p2 = parseBRL(raw2);
+        if (p2 > 0) value = p2;
+      }
+      if (value !== null) return { value: value, deadline: parseDeadline(raw2) };
+    }
+    return null;
+  }
+
+  /* calcFreteOnepage — dedupe por CEP: só recalcula se o CEP mudou desde
+     o último cálculo. Evita múltiplos polls concorrentes ao digitar número. */
   function calcFreteOnepage() {
     var cepInput = document.getElementById('mm-op-cep');
     if (!cepInput) return;
     var digits = (cepInput.value || '').replace(/\D/g, '');
     if (digits.length !== 8) return;
 
-    /* Salva no global localStorage pra cross-page */
+    /* Dedupe: se já calculamos pra este CEP e o resultado está no slot,
+       não recalcula. Previne bug de keystroke no número disparar fetch. */
+    if (calcFreteOnepage._lastCep === digits) {
+      var slot = document.getElementById('mm-op-frete-slot');
+      if (slot && slot.querySelector('.mm-op-frete-card')) return;
+    }
+    calcFreteOnepage._lastCep = digits;
+
+    /* Token cancela polls anteriores — novo cálculo invalida o anterior */
+    var myToken = (calcFreteOnepage._token || 0) + 1;
+    calcFreteOnepage._token = myToken;
+
     saveCep(digits);
 
-    /* Aplica no input hidden Magazord pra disparar cálculo nativo */
     var hidden = mainArea.querySelector('#cep, .input-cep');
     if (hidden) {
       hidden.value = formatCep(digits);
@@ -1597,55 +1641,21 @@
 
     renderFreteResult('loading');
 
-    /* Usa Zord API se disponível pro cálculo real */
     try {
       if (window.Zord && window.Zord.Cart && typeof window.Zord.Cart.calculaFreteCarrinho === 'function') {
         window.Zord.Cart.calculaFreteCarrinho();
       }
     } catch (e) {}
 
-    /* Read result após delay (Magazord atualiza DOM async) — múltiplas tentativas.
-       Procura em vários locais possíveis: cart usa #resumo-compra .frete-calculado,
-       onepage usa .line-entrega .valor-frete, payment pode usar outros. */
     var attempts = 0;
     var maxAttempts = 18;
-    function readFreteFromDom() {
-      /* Onepage: .line.line-entrega .valor-frete + .nome-servico-frete */
-      var opVal = mainArea.querySelector('.line-entrega .valor-frete, .value.valor-frete');
-      if (opVal && opVal.textContent.trim()) {
-        var raw = opVal.textContent.trim();
-        var nome = (mainArea.querySelector('.nome-servico-frete') || {}).textContent || '';
-        var deadline = '';
-        var dm = nome.match(/(\d+)\s*dias?/i);
-        if (dm) deadline = dm[1] + ' dias úteis';
-        if (/gr[aá]tis/i.test(raw)) return { value: 0, deadline: deadline };
-        var p = parseBRL(raw);
-        if (p > 0) return { value: p, deadline: deadline };
-      }
-      /* Cart: #resumo-compra .frete-calculado */
-      var cartEl = mainArea.querySelector('#resumo-compra .frete-calculado');
-      if (cartEl && cartEl.textContent.trim()) {
-        var raw2 = cartEl.textContent.trim();
-        var value = null, deadline2 = '';
-        if (/gr[aá]tis/i.test(raw2)) {
-          value = 0;
-        } else {
-          var p2 = parseBRL(raw2);
-          if (p2 > 0) value = p2;
-        }
-        var dm2 = raw2.match(/(\d+)\s*dias?/i);
-        if (dm2) deadline2 = dm2[1] + ' dias úteis';
-        if (value !== null) return { value: value, deadline: deadline2 };
-      }
-      return null;
-    }
-
     function pollFrete() {
+      /* Cancelado por cálculo mais recente? aborta silenciosamente */
+      if (calcFreteOnepage._token !== myToken) return;
       attempts++;
       var result = readFreteFromDom();
       if (result) {
         renderFreteResult(result);
-        /* Atualiza summary lateral também */
         var snap = loadCartSnapshot();
         if (snap) {
           snap.shipping = result.value;
@@ -1746,14 +1756,12 @@
         }
       } else if (t.id === 'mm-op-uf') {
         t.value = (t.value || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 2);
-      } else if (t.id === 'mm-op-num') {
-        /* Se número foi preenchido + CEP completo, dispara cálculo de frete */
-        var cep = (document.getElementById('mm-op-cep') || {}).value || '';
-        if (cep.replace(/\D/g, '').length === 8 && t.value) {
-          if (calcFreteOnepage._t) clearTimeout(calcFreteOnepage._t);
-          calcFreteOnepage._t = setTimeout(calcFreteOnepage, 400);
-        }
       }
+      /* Nota: NÃO recalcula frete no input número — o CEP já é suficiente
+         pro Magazord calcular (o número influencia só a entrega física,
+         não o valor/prazo do frete). Recalcular a cada keystroke causava
+         múltiplos polls concorrentes e prazo perdido. Dedupe em calcFreteOnepage
+         + trigger único no handleCepComplete resolvem o problema. */
     });
   }
 
