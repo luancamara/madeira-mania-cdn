@@ -15,6 +15,8 @@
   'use strict';
 
   var CEP_KEY = 'mm_cep';
+  var CART_SNAPSHOT_KEY = 'mm_cart_snapshot';
+  var CART_SNAPSHOT_TTL_MS = 30 * 60 * 1000; /* 30 min */
   var FRETE_GRATIS_THRESHOLD = 2000;
   var MM_LOGO_URL = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
   var MM_WHATSAPP_URL = 'https://api.whatsapp.com/send?phone=5511915299488&text=' + encodeURIComponent('Olá! Estou no checkout e gostaria de tirar uma dúvida sobre meu pedido.');
@@ -81,8 +83,49 @@
 
   var STORAGE = {
     get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
-    set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+    set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
+    remove: function(k) { try { localStorage.removeItem(k); } catch(e) {} }
   };
+
+  /* Cart snapshot helpers — usados pra alimentar o resumo lateral em outras
+     páginas do checkout (identify/onepage) sem ter o cart no DOM. */
+  function saveCartSnapshot(state) {
+    try {
+      var snap = {
+        ts: Date.now(),
+        items: state.items.map(function(it) {
+          return {
+            name: it.name,
+            variant: it.variant,
+            imgSrc: it.imgSrc,
+            quantity: it.quantity,
+            lineTotal: it.lineTotal,
+            lineTotalPix: it.lineTotalPix,
+            isPix: it.isPix,
+            deposito: it.deposito
+          };
+        }),
+        subtotalPix: state.subtotalPix,
+        subtotalFull: state.subtotalFull,
+        discount: state.discount,
+        couponCode: state.couponCode,
+        shipping: state.shipping,
+        shippingDeadline: state.shippingDeadline,
+        cepValue: state.cepValue
+      };
+      STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
+    } catch (e) {}
+  }
+  function loadCartSnapshot() {
+    try {
+      var raw = STORAGE.get(CART_SNAPSHOT_KEY);
+      if (!raw) return null;
+      var snap = JSON.parse(raw);
+      if (!snap || !snap.ts) return null;
+      if (Date.now() - snap.ts > CART_SNAPSHOT_TTL_MS) return null;
+      return snap;
+    } catch (e) { return null; }
+  }
 
 
   /* =============================================
@@ -210,9 +253,20 @@
 
   /* Custom checkout header — substitui o header-checkout da Magazord
      ui-ux-pro-max applied: visual hierarchy via size > color, premium spacing,
-     clear progress indicator, big readable trust signal */
-  function renderCheckoutHeader() {
+     clear progress indicator, big readable trust signal.
+     currentStep: 'cart' | 'identify' | 'payment' (default 'cart') */
+  function renderCheckoutHeader(currentStep) {
+    currentStep = currentStep || 'cart';
     var lockBig = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+    function step(key, label) {
+      var isActive = key === currentStep;
+      var cls = 'mm-checkout-step' + (isActive ? ' is-active' : '');
+      var ariaCurrent = isActive ? ' aria-current="step"' : '';
+      return '<li class="' + cls + '"' + ariaCurrent + '>' +
+               '<span class="mm-checkout-step-label">' + label + '</span>' +
+             '</li>';
+    }
 
     return (
       '<header class="mm-checkout-header">' +
@@ -221,17 +275,11 @@
         '</a>' +
         '<nav class="mm-checkout-steps" aria-label="Etapas do checkout">' +
           '<ol>' +
-            '<li class="mm-checkout-step is-active" aria-current="step">' +
-              '<span class="mm-checkout-step-label">Carrinho</span>' +
-            '</li>' +
+            step('cart', 'Carrinho') +
             '<li class="mm-checkout-step-sep" aria-hidden="true">›</li>' +
-            '<li class="mm-checkout-step">' +
-              '<span class="mm-checkout-step-label">Identificação</span>' +
-            '</li>' +
+            step('identify', 'Identificação') +
             '<li class="mm-checkout-step-sep" aria-hidden="true">›</li>' +
-            '<li class="mm-checkout-step">' +
-              '<span class="mm-checkout-step-label">Pagamento</span>' +
-            '</li>' +
+            step('payment', 'Pagamento') +
           '</ol>' +
         '</nav>' +
         '<div class="mm-checkout-secure">' +
@@ -442,7 +490,7 @@
     var container = mainArea.querySelector('.container') || mainArea;
 
     layout.innerHTML =
-      renderCheckoutHeader() +
+      renderCheckoutHeader('cart') +
       '<div class="mm-grid">' +
         '<section class="mm-items">' +
           '<h2 class="mm-h">Carrinho</h2>' +
@@ -529,7 +577,12 @@
       }
     }
 
-    /* Se a UI mostrar um cupom aplicado, sincroniza o cupom label */
+    /* Salva snapshot pra outras telas do checkout (identify/onepage)
+       só persiste quando há itens — evita sobrescrever com cart vazio */
+    if (state.items && state.items.length > 0) {
+      saveCartSnapshot(state);
+    }
+
     return state;
   }
 
@@ -857,32 +910,470 @@
 
 
   /* =============================================
-     IDENTIFY — minimal CRO copy
+     IDENTIFY — shadow-render strategy
+     1. Esconde forms Magazord (.page.page-login) via mm-shadow-mode
+     2. Renderiza #mm-layout com header + 2-col grid (form + summary)
+     3. Re-parenta .social-login-area (Google iframe) pro nosso slot
+     4. On submit: copia value pro #login Magazord, dispara click no btn nativo
+     5. Guest CTA expande inline o form do #full-anonymous-buy-form-etapa-01
      ============================================= */
 
+  /* ----- helpers de máscara ----- */
+  function maskCPF(raw) {
+    var d = String(raw || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+    if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+    return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+  }
+  function maskPhone(raw) {
+    var d = String(raw || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 2) return d.length ? '(' + d : '';
+    if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+    if (d.length <= 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+    return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+  }
+
+  /* ----- render do summary lateral (lê do snapshot) ----- */
+  function renderIdentifySummary(snap) {
+    if (!snap || !snap.items || !snap.items.length) {
+      return (
+        '<aside class="mm-id-sum mm-sum">' +
+          '<h2 class="mm-h">Resumo</h2>' +
+          '<div class="mm-sum-card">' +
+            '<div class="mm-sum-empty">' +
+              '<p>Não conseguimos carregar o resumo do seu pedido.</p>' +
+              '<a class="mm-btn-secondary" href="/checkout/cart">Voltar ao carrinho</a>' +
+            '</div>' +
+          '</div>' +
+        '</aside>'
+      );
+    }
+
+    /* thumbs (até 3) */
+    var maxThumbs = 3;
+    var displayItems = snap.items.slice(0, maxThumbs);
+    var extraCount = snap.items.length - maxThumbs;
+    var thumbsHTML = displayItems.map(function(it) {
+      var img = it.imgSrc
+        ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
+        : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
+      var qtyBadge = it.quantity > 1
+        ? '<span class="mm-id-thumb-qty">' + it.quantity + '</span>'
+        : '';
+      var price = it.lineTotalPix > 0 ? it.lineTotalPix : it.lineTotal;
+      return (
+        '<div class="mm-id-thumb">' +
+          '<div class="mm-id-thumb-img">' + img + qtyBadge + '</div>' +
+          '<div class="mm-id-thumb-body">' +
+            '<p class="mm-id-thumb-name">' + escapeHTML(it.name) + '</p>' +
+            (it.variant ? '<p class="mm-id-thumb-variant">' + escapeHTML(it.variant) + '</p>' : '') +
+          '</div>' +
+          '<div class="mm-id-thumb-price">' + formatBRL(price) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+    if (extraCount > 0) {
+      thumbsHTML +=
+        '<div class="mm-id-thumb-more">' +
+          '+ ' + extraCount + ' ' + (extraCount === 1 ? 'item' : 'itens') + ' a mais' +
+        '</div>';
+    }
+
+    /* totals */
+    var subtotalFull = snap.subtotalFull > 0 ? snap.subtotalFull : snap.subtotalPix;
+    var rows =
+      '<div class="mm-row">' +
+        '<span class="mm-row-label">Subtotal</span>' +
+        '<span class="mm-row-value">' + formatBRL(subtotalFull) + '</span>' +
+      '</div>';
+    if (snap.shipping !== null && snap.shipping !== undefined) {
+      var freteValue;
+      if (snap.shipping === 0) {
+        freteValue = '<span class="mm-row-value is-free">' + ICON.check + ' Grátis</span>';
+      } else {
+        freteValue = '<span class="mm-row-value">' + formatBRL(snap.shipping) + '</span>';
+      }
+      rows +=
+        '<div class="mm-row">' +
+          '<span class="mm-row-label">Frete' +
+            (snap.shippingDeadline ? ' <span class="mm-row-sub">· ' + escapeHTML(snap.shippingDeadline) + '</span>' : '') +
+          '</span>' +
+          freteValue +
+        '</div>';
+    }
+    if (snap.discount > 0) {
+      rows +=
+        '<div class="mm-row">' +
+          '<span class="mm-row-label">Desconto' +
+            (snap.couponCode ? ' <span class="mm-row-sub">· ' + escapeHTML(snap.couponCode) + '</span>' : '') +
+          '</span>' +
+          '<span class="mm-row-value is-discount">− ' + formatBRL(snap.discount) + '</span>' +
+        '</div>';
+    }
+
+    var totalBlock;
+    var shippingNum = (snap.shipping !== null && snap.shipping !== undefined) ? snap.shipping : 0;
+    if (snap.shipping !== null && snap.shipping !== undefined) {
+      var totalFull = Math.max(0, subtotalFull + shippingNum - (snap.discount || 0));
+      var totalPix = Math.max(0, snap.subtotalPix + shippingNum - (snap.discount || 0));
+      var save = totalFull - totalPix;
+      var parcela = totalFull / 12;
+      totalBlock =
+        '<div class="mm-total">' +
+          '<div class="mm-total-label">Total</div>' +
+          '<div class="mm-total-value">' + formatBRL(totalFull) + '</div>' +
+          '<div class="mm-total-pix">' +
+            '<span>' + formatBRL(totalPix) + ' à vista no PIX</span>' +
+            (save > 0 ? '<span class="mm-total-pix-save">economia de ' + formatBRL(save) + '</span>' : '') +
+          '</div>' +
+          '<div class="mm-total-parcela">ou 12x de ' + formatBRL(parcela) + ' sem juros</div>' +
+        '</div>';
+    } else {
+      var parcelaNoFrete = subtotalFull / 12;
+      totalBlock =
+        '<div class="mm-total">' +
+          '<div class="mm-total-label">Subtotal</div>' +
+          '<div class="mm-total-value">' + formatBRL(snap.subtotalPix) + '</div>' +
+          '<div class="mm-total-pix"><span>à vista no PIX</span></div>' +
+          '<div class="mm-total-parcela">ou 12x de ' + formatBRL(parcelaNoFrete) + ' sem juros</div>' +
+        '</div>';
+    }
+
+    return (
+      '<aside class="mm-id-sum mm-sum">' +
+        '<h2 class="mm-h">Resumo do pedido</h2>' +
+        '<div class="mm-sum-card">' +
+          '<div class="mm-id-thumbs">' + thumbsHTML + '</div>' +
+          '<div class="mm-rows">' + rows + '</div>' +
+          totalBlock +
+          '<a class="mm-id-edit-cart" href="/checkout/cart">' +
+            '<span>Editar carrinho</span>' +
+          '</a>' +
+        '</div>' +
+      '</aside>'
+    );
+  }
+
+  /* ----- render do form principal (email + Google + guest + trust) ----- */
+  function renderIdentifyForm() {
+    var mailIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
+    var userIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    var docIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/></svg>';
+    var phoneIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+
+    return (
+      '<section class="mm-id-form-col">' +
+        '<h2 class="mm-id-h2">Quase lá! Identifique-se</h2>' +
+        '<p class="mm-id-sub">Informe seu e-mail para finalizar a compra de forma rápida e segura.</p>' +
+
+        /* form principal email */
+        '<form class="mm-id-form" data-mm-act="identify-submit" novalidate>' +
+          '<label class="mm-input-wrap">' +
+            '<span class="mm-input-icon">' + mailIcon + '</span>' +
+            '<input type="email" id="mm-id-email" name="mm-email" class="mm-input" ' +
+              'placeholder="seu@email.com" autocomplete="email" inputmode="email" required>' +
+          '</label>' +
+          '<p class="mm-id-microcopy">' + ICON.lock + '<span>Seu e-mail é seguro · Não compartilhamos com terceiros</span></p>' +
+          '<button type="submit" class="mm-cta">Continuar' + ICON.arrow + '</button>' +
+        '</form>' +
+
+        /* divider */
+        '<div class="mm-id-divider"><span>ou</span></div>' +
+
+        /* google login slot — .social-login-area é movido pra cá via JS */
+        '<div class="mm-id-google-slot"></div>' +
+
+        /* guest CTA */
+        '<button type="button" class="mm-id-guest-toggle" data-mm-act="guest-toggle" aria-expanded="false" aria-controls="mm-id-guest-panel">' +
+          '<span>' + userIcon + ' Não quero criar conta — comprar como visitante</span>' +
+        '</button>' +
+
+        /* guest form (collapsed by default) */
+        '<div class="mm-id-guest-panel" id="mm-id-guest-panel" hidden>' +
+          '<form class="mm-id-form" data-mm-act="guest-submit" novalidate>' +
+            '<label class="mm-input-wrap">' +
+              '<span class="mm-input-icon">' + userIcon + '</span>' +
+              '<input type="text" id="mm-id-guest-nome" name="mm-guest-nome" class="mm-input" ' +
+                'placeholder="Nome completo" autocomplete="name" required>' +
+            '</label>' +
+            '<label class="mm-input-wrap">' +
+              '<span class="mm-input-icon">' + mailIcon + '</span>' +
+              '<input type="email" id="mm-id-guest-email" name="mm-guest-email" class="mm-input" ' +
+                'placeholder="seu@email.com" autocomplete="email" inputmode="email" required>' +
+            '</label>' +
+            '<label class="mm-input-wrap">' +
+              '<span class="mm-input-icon">' + docIcon + '</span>' +
+              '<input type="tel" id="mm-id-guest-cpf" name="mm-guest-cpf" class="mm-input" ' +
+                'placeholder="CPF" inputmode="numeric" autocomplete="off" maxlength="14" required>' +
+            '</label>' +
+            '<label class="mm-input-wrap">' +
+              '<span class="mm-input-icon">' + phoneIcon + '</span>' +
+              '<input type="tel" id="mm-id-guest-tel" name="mm-guest-tel" class="mm-input" ' +
+                'placeholder="(11) 91234-5678" inputmode="tel" autocomplete="tel" maxlength="15" required>' +
+            '</label>' +
+            '<label class="mm-id-checkbox">' +
+              '<input type="checkbox" id="mm-id-guest-ofertas" name="mm-guest-ofertas">' +
+              '<span>Quero receber ofertas e novidades por e-mail</span>' +
+            '</label>' +
+            '<button type="submit" class="mm-cta">Próxima etapa' + ICON.arrow + '</button>' +
+          '</form>' +
+        '</div>' +
+
+        /* trust strip */
+        '<div class="mm-trust mm-id-trust">' +
+          '<span class="mm-trust-item">' + ICON.lock + '<span>Pagamento seguro</span></span>' +
+          '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
+          '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
+        '</div>' +
+
+        /* whatsapp help */
+        '<a class="mm-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener" data-mm-track="help-whats-id">' +
+          ICON.whats +
+          '<span><strong>Ficou com alguma dúvida?</strong> Fale com a gente no WhatsApp</span>' +
+        '</a>' +
+
+        /* política de privacidade */
+        '<p class="mm-id-lgpd">Ao continuar, você concorda com nossa <a href="/politica-de-privacidade" target="_blank" rel="noopener">Política de Privacidade</a></p>' +
+      '</section>'
+    );
+  }
+
+  /* ----- monta o layout completo do identify ----- */
+  function buildIdentifyLayout(snap) {
+    if (document.getElementById('mm-layout')) return document.getElementById('mm-layout');
+
+    var layout = document.createElement('div');
+    layout.id = 'mm-layout';
+    layout.classList.add('mm-id-layout');
+
+    layout.innerHTML =
+      renderCheckoutHeader('identify') +
+      '<div class="mm-grid mm-id-grid">' +
+        renderIdentifyForm() +
+        renderIdentifySummary(snap) +
+      '</div>';
+
+    /* IMPORTANTE: insere direto no mainArea (não no .container).
+       Identify NÃO usa .container como wrapper — o único .container é
+       #recomendacao-checkout no rodapé. Os forms Magazord são filhos
+       diretos do mainArea. */
+    mainArea.insertBefore(layout, mainArea.firstChild);
+    document.body.classList.add('mm-checkout-rebuild');
+    /* Reparenta Google ANTES de aplicar shadow-mode pra evitar iframe reload */
+    reparentGoogleLogin();
+    mainArea.classList.add('mm-shadow-mode');
+    document.documentElement.classList.remove('mm-cart-loading');
+    return layout;
+  }
+
+  /* ----- move .social-login-area (Google iframe) pro nosso slot -----
+     Tenta appendChild — se a iframe re-renderizar, Google preserva sessão. */
+  function reparentGoogleLogin() {
+    var slot = document.querySelector('.mm-id-google-slot');
+    var social = mainArea.querySelector('.social-login-area');
+    if (!slot || !social) return;
+    if (slot.contains(social)) return; /* já movido */
+    try {
+      slot.appendChild(social);
+      slot.classList.add('is-loaded');
+    } catch (e) {}
+  }
+
+  /* ----- handlers de submit ----- */
+  function submitMagazordEmailForm(email) {
+    var hidden = mainArea.querySelector('#login');
+    if (!hidden) return false;
+    hidden.value = email;
+    triggerInputEvent(hidden);
+    /* Encontra o button.button-send dentro do form pai do #login */
+    var form = hidden.closest('form');
+    var btn = form ? form.querySelector('button.button-send, button[type="submit"]') : null;
+    if (btn) {
+      btn.click();
+      return true;
+    }
+    if (form) {
+      form.submit();
+      return true;
+    }
+    return false;
+  }
+
+  function submitMagazordGuestForm(data) {
+    /* Mapeia nossos values pros inputs Magazord */
+    var map = [
+      ['#nome-completo_3', data.nome],
+      ['#email_3', data.email],
+      ['#cpf_3', data.cpf],
+      ['#telefone_3', data.telefone]
+    ];
+    map.forEach(function(pair) {
+      var el = mainArea.querySelector(pair[0]);
+      if (el) {
+        el.value = pair[1];
+        triggerInputEvent(el);
+      }
+    });
+    var ofertas = mainArea.querySelector('#receber-ofertas_3');
+    if (ofertas) {
+      ofertas.checked = !!data.ofertas;
+      ofertas.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    /* Submit: clica no btn .next.action-button.button-success do form etapa-01 */
+    var form = mainArea.querySelector('#full-anonymous-buy-form-etapa-01');
+    var btn = form ? form.querySelector('button.next.action-button, button.button-success, button[type="submit"]') : null;
+    if (btn) {
+      btn.click();
+      return true;
+    }
+    if (form) {
+      form.submit();
+      return true;
+    }
+    return false;
+  }
+
+  /* ----- bind eventos do identify ----- */
+  function bindIdentifyEvents() {
+    var layout = document.getElementById('mm-layout');
+    if (!layout || layout._mmBound) return;
+    layout._mmBound = true;
+
+    /* Submit do form email principal */
+    layout.addEventListener('submit', function(e) {
+      var emailForm = e.target.closest('[data-mm-act="identify-submit"]');
+      if (emailForm) {
+        e.preventDefault();
+        var input = emailForm.querySelector('#mm-id-email');
+        var val = input ? input.value.trim() : '';
+        if (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+          if (input) {
+            input.classList.add('mm-input-error');
+            input.focus();
+            setTimeout(function() { input.classList.remove('mm-input-error'); }, 1500);
+          }
+          return;
+        }
+        var ok = submitMagazordEmailForm(val);
+        if (ok) {
+          var btn = emailForm.querySelector('.mm-cta');
+          if (btn) btn.classList.add('is-loading');
+        }
+        return;
+      }
+
+      var guestForm = e.target.closest('[data-mm-act="guest-submit"]');
+      if (guestForm) {
+        e.preventDefault();
+        var nome = (document.getElementById('mm-id-guest-nome') || {}).value || '';
+        var email = (document.getElementById('mm-id-guest-email') || {}).value || '';
+        var cpf = (document.getElementById('mm-id-guest-cpf') || {}).value || '';
+        var tel = (document.getElementById('mm-id-guest-tel') || {}).value || '';
+        var ofertas = (document.getElementById('mm-id-guest-ofertas') || {}).checked;
+
+        var errors = [];
+        if (nome.trim().split(/\s+/).length < 2) errors.push('mm-id-guest-nome');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('mm-id-guest-email');
+        if (cpf.replace(/\D/g, '').length !== 11) errors.push('mm-id-guest-cpf');
+        if (tel.replace(/\D/g, '').length < 10) errors.push('mm-id-guest-tel');
+        if (errors.length) {
+          errors.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+              el.classList.add('mm-input-error');
+              setTimeout(function() { el.classList.remove('mm-input-error'); }, 1500);
+            }
+          });
+          var first = document.getElementById(errors[0]);
+          if (first) first.focus();
+          return;
+        }
+
+        var ok2 = submitMagazordGuestForm({
+          nome: nome.trim(),
+          email: email.trim(),
+          cpf: cpf,
+          telefone: tel,
+          ofertas: ofertas
+        });
+        if (ok2) {
+          var gbtn = guestForm.querySelector('.mm-cta');
+          if (gbtn) gbtn.classList.add('is-loading');
+        }
+      }
+    });
+
+    /* Click delegation */
+    layout.addEventListener('click', function(e) {
+      var actEl = e.target.closest('[data-mm-act]');
+      if (!actEl) return;
+      var act = actEl.getAttribute('data-mm-act');
+      if (act === 'guest-toggle') {
+        var panel = document.getElementById('mm-id-guest-panel');
+        if (!panel) return;
+        var isOpen = !panel.hasAttribute('hidden');
+        if (isOpen) {
+          panel.setAttribute('hidden', '');
+          actEl.setAttribute('aria-expanded', 'false');
+          actEl.classList.remove('is-open');
+        } else {
+          panel.removeAttribute('hidden');
+          actEl.setAttribute('aria-expanded', 'true');
+          actEl.classList.add('is-open');
+          var firstInput = panel.querySelector('input');
+          if (firstInput) setTimeout(function() {
+            firstInput.focus();
+            firstInput.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }, 100);
+        }
+      }
+    });
+
+    /* Máscaras de input */
+    layout.addEventListener('input', function(e) {
+      var t = e.target;
+      if (!t) return;
+      if (t.id === 'mm-id-guest-cpf') {
+        t.value = maskCPF(t.value);
+      } else if (t.id === 'mm-id-guest-tel') {
+        t.value = maskPhone(t.value);
+      }
+    });
+  }
+
+  /* ----- mount entry ----- */
   if (isIdentify) {
-    var h2 = mainArea.querySelector('h2');
-    if (h2 && h2.textContent.indexOf('Acesse') !== -1) {
-      h2.textContent = 'Quase lá! Identifique-se';
-    }
-    var subtitleEls = mainArea.querySelectorAll('div, span, p');
-    for (var d = 0; d < subtitleEls.length; d++) {
-      var txt = subtitleEls[d].textContent.trim();
-      if (txt === 'Informe seu e-mail ou CPF/CNPJ para continuar.' && subtitleEls[d].children.length === 0) {
-        subtitleEls[d].textContent = 'Informe seu e-mail para finalizar a compra de forma rápida e segura.';
-        break;
+    function waitForIdentifyDom(attempt) {
+      attempt = attempt || 0;
+      if (attempt > 30) { mountIdentify(); return; }
+      var hasForm = mainArea.querySelector('#login, #login-form-etapa-01');
+      if (hasForm || attempt > 8) {
+        mountIdentify();
+      } else {
+        setTimeout(function() { waitForIdentifyDom(attempt + 1); }, 250);
       }
     }
-    var allP = mainArea.querySelectorAll('p');
-    for (var p = 0; p < allP.length; p++) {
-      if (allP[p].textContent.indexOf('Nunca postaremos') !== -1) {
-        allP[p].style.display = 'none';
-      }
+
+    function mountIdentify() {
+      var snap = loadCartSnapshot();
+      buildIdentifyLayout(snap);
+      bindIdentifyEvents();
+      reparentGoogleLogin();
+
+      /* Tenta novamente o reparent depois pra cobrir caso .social-login-area
+         tenha sido injetada async pelo Google script */
+      setTimeout(reparentGoogleLogin, 600);
+      setTimeout(reparentGoogleLogin, 1500);
+
+      /* Auto-focus no input email após mount */
+      setTimeout(function() {
+        var emailInput = document.getElementById('mm-id-email');
+        if (emailInput && !('ontouchstart' in window)) emailInput.focus();
+      }, 250);
     }
-    var emailInput = mainArea.querySelector('input[type="text"]');
-    if (emailInput && emailInput.placeholder && emailInput.placeholder.indexOf('e-mail') !== -1) {
-      emailInput.type = 'email';
-    }
+
+    waitForIdentifyDom();
   }
 
 
