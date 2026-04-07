@@ -1428,7 +1428,13 @@
     doc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/></svg>',
     phone: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
     pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'
+    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    /* Fase 4 — step 3 payment */
+    pix: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4.5L4.5 7.5a3 3 0 0 0 0 4.24l.38.38M7.5 19.5l-3-3a3 3 0 0 1 0-4.24l.38-.38M16.5 19.5l3-3a3 3 0 0 0 0-4.24l-.38-.38M16.5 4.5l3 3a3 3 0 0 1 0 4.24l-.38.38"/><path d="M9.88 6.5 7 9.38a3 3 0 0 0 0 4.24L9.88 16.5m4.24 0L17 13.62a3 3 0 0 0 0-4.24L14.12 6.5"/></svg>',
+    cardBig: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>',
+    barcode: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5v14M6 5v14M9 5v10M12 5v14M15 5v14M18 5v10M21 5v14"/></svg>',
+    alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    editPencil: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>'
   };
 
   /* ----- render do form onepage (dados + endereço) ----- */
@@ -1938,17 +1944,28 @@
              Magazord onepage tem dados + endereço + pagamento INLINE
              na mesma URL — /checkout/payment é só a tela de processing/done.
 
-             Quando detectamos os radios de pagamento, removemos o overlay
-             e o user vê o Magazord original pra escolher forma + finalizar.
-             Fase 4 (futura) vai rebuildar essa parte visualmente. */
+             Quando detectamos os radios de pagamento → Fase 4 hijack:
+             re-ativa shadow-mode + re-renderiza #mm-layout com nosso
+             step 3 premium (radios PIX/cartão/boleto, cartão form inline,
+             botão Finalizar compra). Os forms nativos Magazord ficam
+             hidden atrás, sincronizamos valores via native setter e
+             delegamos o submit final pra form.requestSubmit(). */
           var paymentDetectAttempts = 0;
           function pollForPaymentStep() {
             paymentDetectAttempts++;
             var paymentRadio = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
             if (paymentRadio && paymentRadio.offsetParent !== null) {
-              /* Magazord chegou no step 3 — remove overlay, user vê pagamento */
-              var ov = document.getElementById('mm-op-overlay');
-              if (ov) ov.remove();
+              /* Magazord chegou no step 3 — hijack pra nosso layout premium */
+              try {
+                mountStep3Payment(data);
+              } catch (e) {
+                /* Fallback: se o hijack falhar, remove overlay e deixa o
+                   user no Magazord native (degradação graceful) */
+                var ovErr = document.getElementById('mm-op-overlay');
+                if (ovErr) ovErr.remove();
+                var layoutErr = document.getElementById('mm-layout');
+                if (layoutErr) layoutErr.style.display = 'none';
+              }
               return;
             }
             if (paymentDetectAttempts < 30) {
@@ -1964,6 +1981,860 @@
         }, 1500);
       }, 150);
     }, 100);
+  }
+
+  /* =============================================
+     FASE 4 — Step 3 Payment (inline no /onepage)
+     =============================================
+     Hijack quando Magazord chega no step 3 de pagamento. Re-renderiza
+     #mm-layout com UI premium: radios PIX/cartão/boleto, cartão form com
+     auto-detect de bandeira + parcelas sincronizadas com Zord, summary
+     lateral com total dinâmico por forma selecionada, trust máximo.
+
+     Mental models aplicados:
+     - Goal-gradient: stepper "Pagamento" ativo + copy "última etapa"
+     - Loss aversion: PIX badge "Economize R$ X" + anchor no cartão
+     - Default effect: PIX pre-selecionado (respeita Zord default)
+     - Progressive disclosure: cartão form só expande quando ativo
+     - Commitment & consistency: summary lateral reforça passos concluídos
+     - Regret aversion: trust signals + garantia próximos ao CTA
+     ========================================== */
+
+  /* Lê Zord.Calculo.FormasPagamentoPedido e consolida info por forma.
+     Retorna objeto { pix: {...}, cartao: {...}, boleto: {...} } com
+     preços, parcelas e condições — robusto a estruturas variáveis.
+
+     Estratégia de detecção ROBUSTA (2 passadas):
+     1) Cartão: isCartao=true (pode ter múltiplos gateways — pega o mais rico)
+     2) PIX / Boleto: ambos têm isCartao=false e label "À Vista" genérico,
+        então NÃO dá pra distinguir por nome. Usamos fonte confiável: DOM
+        do Magazord native — o forma-pagto-pix radio tem o valorTotal real
+        e o forma-pagto-boleto também. Linkamos cada forma Magazord ao
+        id do Zord por meio do data-pagamento-tipo ou pelo form[name]. */
+  function readFormasPagamento() {
+    var out = { pix: null, cartao: null, boleto: null };
+    var list = [];
+    try {
+      list = (window.Zord && window.Zord.Calculo && window.Zord.Calculo.FormasPagamentoPedido) || [];
+    } catch (e) {}
+
+    /* Cartão: iteração por isCartao flag */
+    list.forEach(function(fp) {
+      var formaId = fp.formaPagamento && fp.formaPagamento.id;
+      var isCartao = fp.formaPagamento && fp.formaPagamento.isCartao;
+      var condicoes = fp.condicoes || [];
+      if (!condicoes.length || !isCartao) return;
+
+      if (!out.cartao || condicoes.length > out.cartao.condicoes.length) {
+        out.cartao = {
+          formaId: formaId,
+          valorTotal: condicoes[0].valorTotal,
+          condicoes: condicoes.map(function(c) {
+            return {
+              nome: c.condicaoPagamento && c.condicaoPagamento.nome,
+              numParcelas: c.condicaoPagamento && c.condicaoPagamento.numeroParcelas,
+              valorParcela: c.valorParcela,
+              valorTotal: c.valorTotal
+            };
+          })
+        };
+      }
+    });
+
+    /* PIX: fonte primária = DOM Magazord (#valor-total-pedido-pix ou
+       data-valor-total no elemento PIX). Fonte secundária = Zord list
+       com formaId=17 (id padrão Magazord pra PIX). */
+    function parseValorFromEl(el) {
+      if (!el) return 0;
+      var dv = el.getAttribute && el.getAttribute('data-valor-total');
+      if (dv) { var v = parseFloat(dv); if (v > 0) return v; }
+      var txt = (el.textContent || '').replace(/[^\d,.]/g, '');
+      /* BRL: "1.234,56" → "1234.56" */
+      if (txt.indexOf(',') !== -1) {
+        txt = txt.replace(/\./g, '').replace(',', '.');
+      }
+      return parseFloat(txt) || 0;
+    }
+
+    /* PIX real: lê do form nativo pix */
+    var pixEl = document.querySelector('#valor-total-pedido-pix, .valor-total-pix[data-valor-total]');
+    var pixVal = parseValorFromEl(pixEl);
+    if (pixVal > 0) {
+      out.pix = { formaId: 17, valorTotal: pixVal };
+    } else {
+      /* Fallback: Zord list id=17 */
+      var pixFp = list.find && list.find(function(fp) {
+        return fp.formaPagamento && fp.formaPagamento.id === 17;
+      });
+      if (pixFp && pixFp.condicoes && pixFp.condicoes[0]) {
+        out.pix = { formaId: 17, valorTotal: pixFp.condicoes[0].valorTotal };
+      }
+    }
+
+    /* BOLETO real: lê do form nativo boleto */
+    var boletoEl = document.querySelector('#valor-total-pedido-boleto, .valor-total-boleto[data-valor-total]');
+    var boletoVal = parseValorFromEl(boletoEl);
+    if (boletoVal > 0) {
+      out.boleto = { valorTotal: boletoVal };
+    } else {
+      /* Fallback: Zord list — primeiro não-cartão, não-id-17 */
+      var bolFp = list.find && list.find(function(fp) {
+        var fpId = fp.formaPagamento && fp.formaPagamento.id;
+        var fpCart = fp.formaPagamento && fp.formaPagamento.isCartao;
+        return !fpCart && fpId !== 17 && fp.condicoes && fp.condicoes.length;
+      });
+      if (bolFp) {
+        out.boleto = { formaId: bolFp.formaPagamento.id, valorTotal: bolFp.condicoes[0].valorTotal };
+      }
+    }
+
+    /* Cartão fallback: se não pegou da Zord list, pega do DOM */
+    if (!out.cartao) {
+      var carEl = document.querySelector('.valor-parcela-cartao');
+      if (carEl) {
+        var parcNum = parseValorFromEl(carEl);
+        if (parcNum > 0) {
+          out.cartao = { valorTotal: parcNum * 12, condicoes: [] };
+        }
+      }
+    }
+
+    return out;
+  }
+
+  /* Hijack principal: re-ativa shadow-mode + re-renderiza #mm-layout
+     com o step 3 payment UI + bind de eventos. */
+  function mountStep3Payment(userData) {
+    var snap = loadCartSnapshot();
+    var formas = readFormasPagamento();
+
+    /* Re-ativa shadow-mode (tinha sido removido no submit chain) */
+    mainArea.classList.add('mm-shadow-mode');
+
+    /* Rebuild layout */
+    var layout = document.getElementById('mm-layout');
+    if (!layout) {
+      layout = document.createElement('div');
+      layout.id = 'mm-layout';
+      mainArea.appendChild(layout);
+    }
+    layout.className = 'mm-op-layout mm-op-step3-layout';
+    layout.style.display = '';
+    layout.innerHTML = buildStep3Layout(snap, userData, formas);
+
+    /* Remove overlay */
+    var ov = document.getElementById('mm-op-overlay');
+    if (ov) ov.remove();
+
+    /* Scroll top pra user ver header + stepper */
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+
+    bindStep3Events(userData, formas);
+  }
+
+  function buildStep3Layout(snap, userData, formas) {
+    var footerHTML = typeof renderGlobalFooter === 'function' ? renderGlobalFooter() : '';
+
+    return (
+      renderCheckoutHeader('payment') +
+      '<main class="mm-op-main">' +
+        '<div class="mm-op-step3-grid">' +
+          '<section class="mm-op-step3-left">' +
+            renderStep3CompletedCards(userData) +
+            renderStep3PaymentCard(formas) +
+            renderStep3TrustFooter() +
+          '</section>' +
+          '<aside class="mm-id-sum-wrap mm-op-step3-sum-wrap">' +
+            renderStep3Summary(snap, formas, 'pix') +
+          '</aside>' +
+        '</div>' +
+      '</main>' +
+      footerHTML
+    );
+  }
+
+  function renderStep3CompletedCards(userData) {
+    var u = userData || {};
+    var nome = escapeHTML(u.nome || '');
+    var email = escapeHTML(u.email || '');
+    var cpf = escapeHTML(u.cpf || '');
+    var tel = escapeHTML(u.tel || '');
+    var rua = escapeHTML(u.rua || '');
+    var num = escapeHTML(u.num || '');
+    var comp = u.comp ? ', ' + escapeHTML(u.comp) : '';
+    var bairro = escapeHTML(u.bairro || '');
+    var cidade = escapeHTML(u.cidade || '');
+    var uf = escapeHTML(u.uf || '');
+    var cep = escapeHTML(u.cep || '');
+
+    return (
+      '<div class="mm-op-step3-completed">' +
+        '<div class="mm-op-completed-card" data-section="dados">' +
+          '<div class="mm-op-completed-head">' +
+            '<span class="mm-op-completed-check">' + ICON.check + '</span>' +
+            '<h3 class="mm-op-completed-title">Dados pessoais</h3>' +
+            '<a href="/checkout/onepage" class="mm-op-completed-edit" data-mm-act="edit-dados" aria-label="Editar dados">' + ICONS_OP.editPencil + ' Editar</a>' +
+          '</div>' +
+          '<dl class="mm-op-completed-body">' +
+            (nome ? '<div><dt>Nome</dt><dd>' + nome + '</dd></div>' : '') +
+            (email ? '<div><dt>E-mail</dt><dd>' + email + '</dd></div>' : '') +
+            (cpf ? '<div><dt>CPF</dt><dd>' + cpf + '</dd></div>' : '') +
+            (tel ? '<div><dt>Telefone</dt><dd>' + tel + '</dd></div>' : '') +
+          '</dl>' +
+        '</div>' +
+        '<div class="mm-op-completed-card" data-section="endereco">' +
+          '<div class="mm-op-completed-head">' +
+            '<span class="mm-op-completed-check">' + ICON.check + '</span>' +
+            '<h3 class="mm-op-completed-title">Endereço de entrega</h3>' +
+            '<a href="/checkout/onepage" class="mm-op-completed-edit" data-mm-act="edit-endereco" aria-label="Editar endereço">' + ICONS_OP.editPencil + ' Editar</a>' +
+          '</div>' +
+          '<address class="mm-op-completed-address">' +
+            rua + ', ' + num + comp + '<br>' +
+            bairro + ' — ' + cidade + '/' + uf + '<br>' +
+            (cep ? 'CEP ' + cep : '') +
+          '</address>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderStep3PaymentCard(formas) {
+    var pixVal = formas.pix ? formas.pix.valorTotal : 0;
+    var cartaoVal = formas.cartao ? formas.cartao.valorTotal : 0;
+    var boletoVal = formas.boleto ? formas.boleto.valorTotal : 0;
+    var save = cartaoVal > pixVal ? cartaoVal - pixVal : 0;
+
+    /* Parcelas label do cartão: última condição (normalmente 12x sem juros) */
+    var maxParcela = null;
+    if (formas.cartao && formas.cartao.condicoes && formas.cartao.condicoes.length) {
+      maxParcela = formas.cartao.condicoes[formas.cartao.condicoes.length - 1];
+    }
+    var cartaoSub = maxParcela
+      ? 'até ' + maxParcela.numParcelas + 'x de ' + formatBRL(maxParcela.valorParcela) + ' sem juros'
+      : (cartaoVal > 0 ? 'até 12x sem juros' : 'Cartão de crédito');
+
+    var pixRadio =
+      '<label class="mm-op-pay-radio is-active" data-forma="pix">' +
+        '<input type="radio" name="mm-pay" value="pix" checked>' +
+        '<div class="mm-op-pay-head">' +
+          '<span class="mm-op-pay-radio-dot" aria-hidden="true"></span>' +
+          '<span class="mm-op-pay-icon">' + ICONS_OP.pix + '</span>' +
+          '<div class="mm-op-pay-body">' +
+            '<span class="mm-op-pay-title">PIX</span>' +
+            '<span class="mm-op-pay-sub">Aprovação instantânea · em 1 minuto</span>' +
+          '</div>' +
+          '<div class="mm-op-pay-price">' +
+            (save > 0 ? '<span class="mm-op-pay-badge-save">Economize ' + formatBRL(save) + '</span>' : '') +
+            '<span class="mm-op-pay-amount">' + formatBRL(pixVal) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mm-op-pay-detail">' +
+          (save > 0
+            ? '<p class="mm-op-pay-highlight">' + ICON.bolt + ' Você economiza <strong>' + formatBRL(save) + '</strong> pagando no PIX</p>'
+            : '') +
+          '<ul class="mm-op-pay-benefits">' +
+            '<li>' + ICON.check + '<span>QR Code e Copia-e-Cola após confirmar</span></li>' +
+            '<li>' + ICON.check + '<span>Pedido aprovado em até 1 minuto</span></li>' +
+            '<li>' + ICON.check + '<span>Pagamento 100% seguro · sem dados de cartão</span></li>' +
+          '</ul>' +
+        '</div>' +
+      '</label>';
+
+    var bandeirasHTML =
+      '<div class="mm-op-pay-brands">' +
+        '<img src="https://public-resources.zordcdn.com.br/assets/global/payment-vector/cartao-visa.svg" alt="Visa" width="32" height="20">' +
+        '<img src="https://public-resources.zordcdn.com.br/assets/global/payment-vector/cartao-mastercard.svg" alt="Mastercard" width="32" height="20">' +
+        '<img src="https://public-resources.zordcdn.com.br/assets/global/payment-vector/cartao-american-express.svg" alt="American Express" width="32" height="20">' +
+        '<img src="https://public-resources.zordcdn.com.br/assets/global/payment-vector/cartao-elo.svg" alt="Elo" width="32" height="20">' +
+        '<img src="https://public-resources.zordcdn.com.br/assets/global/payment-vector/cartao-hipercard.svg" alt="Hipercard" width="32" height="20">' +
+      '</div>';
+
+    var cartaoForm =
+      '<div class="mm-op-card-form">' +
+        '<div class="mm-op-card-field mm-op-card-field-full">' +
+          '<label for="mm-pay-card-num">Número do cartão</label>' +
+          '<div class="mm-input-wrap mm-input-wrap-card">' +
+            ICON.card +
+            '<input id="mm-pay-card-num" type="tel" class="mm-input" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="23">' +
+            '<span class="mm-op-card-brand-detected" aria-live="polite"></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mm-op-card-field mm-op-card-field-full">' +
+          '<label for="mm-pay-card-name">Nome impresso no cartão</label>' +
+          '<input id="mm-pay-card-name" type="text" class="mm-input mm-input-noicon" autocomplete="cc-name" placeholder="Como aparece no cartão" maxlength="100">' +
+        '</div>' +
+        '<div class="mm-op-card-field mm-op-card-field-half">' +
+          '<label for="mm-pay-card-exp">Validade</label>' +
+          '<input id="mm-pay-card-exp" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5">' +
+        '</div>' +
+        '<div class="mm-op-card-field mm-op-card-field-half">' +
+          '<label for="mm-pay-card-cvv">CVV</label>' +
+          '<input id="mm-pay-card-cvv" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-csc" placeholder="000" maxlength="4">' +
+        '</div>' +
+        '<div class="mm-op-card-field mm-op-card-field-full">' +
+          '<label for="mm-pay-card-installments">Condições de pagamento</label>' +
+          '<select id="mm-pay-card-installments" class="mm-input mm-input-noicon mm-op-card-installments">' +
+            '<option value="">Digite o cartão pra ver as condições</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>';
+
+    var cartaoRadio =
+      '<label class="mm-op-pay-radio" data-forma="cartao">' +
+        '<input type="radio" name="mm-pay" value="cartao">' +
+        '<div class="mm-op-pay-head">' +
+          '<span class="mm-op-pay-radio-dot" aria-hidden="true"></span>' +
+          '<span class="mm-op-pay-icon">' + ICONS_OP.cardBig + '</span>' +
+          '<div class="mm-op-pay-body">' +
+            '<span class="mm-op-pay-title">Cartão de Crédito</span>' +
+            '<span class="mm-op-pay-sub">' + escapeHTML(cartaoSub) + '</span>' +
+          '</div>' +
+          '<div class="mm-op-pay-price">' +
+            '<span class="mm-op-pay-amount">' + formatBRL(cartaoVal) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mm-op-pay-detail">' +
+          bandeirasHTML +
+          cartaoForm +
+        '</div>' +
+      '</label>';
+
+    var boletoRadio =
+      '<label class="mm-op-pay-radio" data-forma="boleto">' +
+        '<input type="radio" name="mm-pay" value="boleto">' +
+        '<div class="mm-op-pay-head">' +
+          '<span class="mm-op-pay-radio-dot" aria-hidden="true"></span>' +
+          '<span class="mm-op-pay-icon">' + ICONS_OP.barcode + '</span>' +
+          '<div class="mm-op-pay-body">' +
+            '<span class="mm-op-pay-title">Boleto Bancário</span>' +
+            '<span class="mm-op-pay-sub">Aprovação em 1 a 3 dias úteis</span>' +
+          '</div>' +
+          '<div class="mm-op-pay-price">' +
+            '<span class="mm-op-pay-amount">' + formatBRL(boletoVal) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mm-op-pay-detail">' +
+          '<div class="mm-op-pay-warning">' +
+            ICONS_OP.alert +
+            '<span>Pedido só é separado após a compensação do pagamento (1–3 dias úteis).</span>' +
+          '</div>' +
+          '<ul class="mm-op-pay-benefits">' +
+            '<li>' + ICON.check + '<span>Código de barras enviado por e-mail</span></li>' +
+            '<li>' + ICON.check + '<span>Pagamento em banco, lotérica ou app</span></li>' +
+            '<li>' + ICON.check + '<span>Vencimento em 3 dias úteis</span></li>' +
+          '</ul>' +
+        '</div>' +
+      '</label>';
+
+    return (
+      '<section class="mm-op-step3-card" aria-labelledby="mm-op-step3-h">' +
+        '<div class="mm-op-step3-heading">' +
+          '<h2 id="mm-op-step3-h" class="mm-h">Como você quer pagar?</h2>' +
+          '<p class="mm-op-step3-sub">Última etapa · escolha sua forma de pagamento ' +
+            (save > 0 ? '· PIX tem desconto de ' + formatBRL(save) : '') +
+          '</p>' +
+        '</div>' +
+        '<div class="mm-op-pay-radios" role="radiogroup" aria-label="Forma de pagamento">' +
+          pixRadio +
+          cartaoRadio +
+          boletoRadio +
+        '</div>' +
+        '<button type="button" class="mm-cta mm-op-cta mm-op-finalizar" data-mm-act="finalizar-compra">' +
+          ICON.lock +
+          '<span class="mm-op-finalizar-label">Finalizar compra · ' + formatBRL(pixVal) + '</span>' +
+        '</button>' +
+        '<p class="mm-op-finalizar-sub">' +
+          ICON.shield +
+          '<span>Pagamento seguro · criptografia SSL-256 · seus dados não são armazenados</span>' +
+        '</p>' +
+      '</section>'
+    );
+  }
+
+  function renderStep3TrustFooter() {
+    return (
+      '<div class="mm-op-trust-payment">' +
+        '<div class="mm-op-trust-payment-row">' +
+          '<span class="mm-trust-item">' + ICON.lock + '<span>Site 100% seguro</span></span>' +
+          '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
+          '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias pra trocar</span></span>' +
+          '<span class="mm-trust-item">' + ICON.whats + '<span>Atendimento humano</span></span>' +
+        '</div>' +
+        '<p class="mm-op-trust-payment-note">Ao finalizar, você concorda com os ' +
+          '<a href="/termos-de-uso" target="_blank" rel="noopener">termos de compra</a> e a ' +
+          '<a href="/politica-privacidade" target="_blank" rel="noopener">política de privacidade</a>.' +
+        '</p>' +
+      '</div>'
+    );
+  }
+
+  /* Summary lateral do step 3 — reaproveita renderIdentifySummary e sobrepõe
+     o total baseado na forma ativa (PIX mostra com desconto, cartão/boleto
+     mostra valor cheio). Usa um wrapper com .mm-op-step3-sum e data-forma
+     pra CSS/JS destacar a opção ativa. */
+  function renderStep3Summary(snap, formas, activeForma) {
+    if (!snap || !snap.items || !snap.items.length) {
+      return (
+        '<aside class="mm-id-sum mm-sum mm-op-step3-sum">' +
+          '<h2 class="mm-h">Resumo</h2>' +
+          '<div class="mm-sum-card">' +
+            '<p class="mm-sum-empty">Não conseguimos carregar o resumo do seu pedido.</p>' +
+          '</div>' +
+        '</aside>'
+      );
+    }
+
+    var pixVal = formas.pix ? formas.pix.valorTotal : 0;
+    var cartaoVal = formas.cartao ? formas.cartao.valorTotal : 0;
+    var boletoVal = formas.boleto ? formas.boleto.valorTotal : 0;
+    var save = cartaoVal > pixVal ? cartaoVal - pixVal : 0;
+
+    /* Total dinâmico por forma */
+    var activeTotal = activeForma === 'pix' ? pixVal : (activeForma === 'boleto' ? boletoVal : cartaoVal);
+    var activeLabel = activeForma === 'pix' ? 'no PIX' : (activeForma === 'boleto' ? 'no boleto' : 'no cartão');
+
+    /* Thumbs (até 3) */
+    var maxThumbs = 3;
+    var displayItems = snap.items.slice(0, maxThumbs);
+    var extraCount = snap.items.length - maxThumbs;
+    var thumbsHTML = displayItems.map(function(it) {
+      var img = it.imgSrc
+        ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
+        : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
+      var qtyPrefix = it.quantity > 1 ? '<strong class="mm-id-thumb-qty">' + it.quantity + '×</strong> ' : '';
+      var price = it.lineTotalPix > 0 ? it.lineTotalPix : it.lineTotal;
+      return (
+        '<div class="mm-id-thumb">' +
+          '<div class="mm-id-thumb-img">' + img + '</div>' +
+          '<div class="mm-id-thumb-body">' +
+            '<p class="mm-id-thumb-name">' + qtyPrefix + escapeHTML(it.name) + '</p>' +
+            (it.variant ? '<p class="mm-id-thumb-variant">' + escapeHTML(it.variant) + '</p>' : '') +
+          '</div>' +
+          '<div class="mm-id-thumb-price">' + formatBRL(price) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+    if (extraCount > 0) {
+      thumbsHTML += '<div class="mm-id-thumb-more">+ ' + extraCount + ' ' + (extraCount === 1 ? 'item' : 'itens') + ' a mais</div>';
+    }
+
+    /* Rows subtotal + frete + desconto */
+    var subtotalFull = snap.subtotalFull > 0 ? snap.subtotalFull : snap.subtotalPix;
+    var rows =
+      '<div class="mm-row">' +
+        '<span class="mm-row-label">Subtotal</span>' +
+        '<span class="mm-row-value">' + formatBRL(subtotalFull) + '</span>' +
+      '</div>';
+    if (snap.shipping !== null && snap.shipping !== undefined) {
+      var freteValue = snap.shipping === 0
+        ? '<span class="mm-row-value is-free">' + ICON.check + ' Grátis</span>'
+        : '<span class="mm-row-value">' + formatBRL(snap.shipping) + '</span>';
+      rows +=
+        '<div class="mm-row">' +
+          '<span class="mm-row-label">Frete' +
+            (snap.shippingDeadline ? ' <span class="mm-row-sub">· ' + escapeHTML(snap.shippingDeadline) + '</span>' : '') +
+          '</span>' +
+          freteValue +
+        '</div>';
+    }
+    if (snap.discount > 0) {
+      rows +=
+        '<div class="mm-row">' +
+          '<span class="mm-row-label">Cupom' + (snap.couponCode ? ' <span class="mm-row-sub">· ' + escapeHTML(snap.couponCode) + '</span>' : '') + '</span>' +
+          '<span class="mm-row-value is-discount">− ' + formatBRL(snap.discount) + '</span>' +
+        '</div>';
+    }
+    if (save > 0 && activeForma === 'pix') {
+      rows +=
+        '<div class="mm-row mm-row-pix-discount">' +
+          '<span class="mm-row-label">' + ICON.bolt + ' Desconto PIX</span>' +
+          '<span class="mm-row-value is-discount">− ' + formatBRL(save) + '</span>' +
+        '</div>';
+    }
+
+    var totalBlock =
+      '<div class="mm-total">' +
+        '<div class="mm-total-label">Total</div>' +
+        '<div class="mm-total-value" data-mm-total>' + formatBRL(activeTotal) + '</div>' +
+        '<div class="mm-total-pix" data-mm-total-sub>' +
+          '<span>' + activeLabel + '</span>' +
+        '</div>' +
+      '</div>';
+
+    return (
+      '<aside class="mm-id-sum mm-sum mm-op-step3-sum" data-active-forma="' + escapeHTML(activeForma) + '">' +
+        '<h2 class="mm-h">Resumo do pedido</h2>' +
+        '<div class="mm-sum-card">' +
+          '<div class="mm-id-thumbs">' + thumbsHTML + '</div>' +
+          '<div class="mm-sum-rows">' + rows + '</div>' +
+          totalBlock +
+        '</div>' +
+      '</aside>'
+    );
+  }
+
+  /* ============ Bind events ============ */
+  function bindStep3Events(userData, formas) {
+    var layout = document.getElementById('mm-layout');
+    if (!layout || layout._mmStep3Bound) return;
+    layout._mmStep3Bound = true;
+
+    var snap = loadCartSnapshot();
+    var state = {
+      activeForma: 'pix',
+      cardNumValid: false,
+      cardBrand: null,
+      cardInstallments: null, /* {numero, valorParcela} */
+      submitting: false
+    };
+
+    /* ---- Click delegation: radio cards ---- */
+    layout.addEventListener('click', function(e) {
+      var radio = e.target.closest('.mm-op-pay-radio');
+      if (radio) {
+        /* Previne navegação default do label wrapping um input */
+        var input = radio.querySelector('input[type="radio"]');
+        if (input && !input.checked) {
+          e.preventDefault();
+          input.checked = true;
+          setActiveForma(radio.getAttribute('data-forma'));
+        }
+        return;
+      }
+
+      /* Finalizar compra */
+      if (e.target.closest('[data-mm-act="finalizar-compra"]')) {
+        e.preventDefault();
+        submitFinalizar();
+        return;
+      }
+
+      /* Editar dados/endereço — recarrega onepage (volta ao form) */
+      var editBtn = e.target.closest('[data-mm-act="edit-dados"], [data-mm-act="edit-endereco"]');
+      if (editBtn) {
+        e.preventDefault();
+        location.reload();
+        return;
+      }
+    });
+
+    /* ---- Input delegation: cartão form ---- */
+    layout.addEventListener('input', function(e) {
+      var t = e.target;
+      if (!t || !t.id) return;
+      if (t.id === 'mm-pay-card-num') handleCardNumInput(t);
+      else if (t.id === 'mm-pay-card-exp') handleCardExpInput(t);
+      else if (t.id === 'mm-pay-card-cvv') t.value = (t.value || '').replace(/\D/g, '').slice(0, 4);
+    });
+
+    /* ---- Change: parcelas dropdown ---- */
+    layout.addEventListener('change', function(e) {
+      if (e.target && e.target.id === 'mm-pay-card-installments') {
+        var sel = e.target;
+        var opt = sel.options[sel.selectedIndex];
+        if (opt && opt.value) {
+          state.cardInstallments = {
+            numero: parseInt(opt.value, 10),
+            label: opt.textContent || ''
+          };
+          /* Sync pro select nativo Magazord */
+          syncMagazordInstallments(opt.value);
+        }
+      }
+    });
+
+    /* ---- Funções ---- */
+    function setActiveForma(forma) {
+      if (!forma || state.activeForma === forma) return;
+      state.activeForma = forma;
+
+      /* Visual: marca o radio card ativo */
+      layout.querySelectorAll('.mm-op-pay-radio').forEach(function(el) {
+        el.classList.toggle('is-active', el.getAttribute('data-forma') === forma);
+      });
+
+      /* Sync pro radio nativo Magazord */
+      var nativeRadio = document.getElementById('forma-pagto-' + forma);
+      if (nativeRadio && !nativeRadio.checked) {
+        try { nativeRadio.click(); } catch (e) {}
+      }
+
+      /* Atualiza summary lateral (total + label + destaque) */
+      updateSummaryForForma(forma);
+
+      /* Atualiza CTA label (valor + texto conforme forma) */
+      updateCtaLabel(forma);
+
+      /* Se cartão ativo, foca no input do cartão (próximo step lógico) */
+      if (forma === 'cartao') {
+        setTimeout(function() {
+          var cardInput = document.getElementById('mm-pay-card-num');
+          if (cardInput && !cardInput.value) cardInput.focus();
+        }, 250);
+      }
+    }
+
+    function updateSummaryForForma(forma) {
+      var sum = layout.querySelector('.mm-op-step3-sum');
+      if (!sum) return;
+      sum.setAttribute('data-active-forma', forma);
+      /* Re-render summary com o total certo (simples: regen o innerHTML do wrap) */
+      var wrap = layout.querySelector('.mm-op-step3-sum-wrap');
+      if (wrap) wrap.innerHTML = renderStep3Summary(snap, formas, forma);
+    }
+
+    function updateCtaLabel(forma) {
+      var label = layout.querySelector('.mm-op-finalizar-label');
+      if (!label) return;
+      var val = forma === 'pix' ? (formas.pix && formas.pix.valorTotal)
+              : forma === 'boleto' ? (formas.boleto && formas.boleto.valorTotal)
+              : (formas.cartao && formas.cartao.valorTotal);
+      label.textContent = 'Finalizar compra · ' + formatBRL(val || 0);
+    }
+
+    /* Bandeira detection básica por primeiros dígitos (BIN simplificado).
+       Não substitui o backend Zord — só mostra feedback visual imediato. */
+    function detectCardBrand(num) {
+      var n = (num || '').replace(/\D/g, '');
+      if (!n) return null;
+      if (/^4/.test(n)) return 'visa';
+      if (/^(5[1-5]|22[2-9]|2[3-6]|27[01]|2720)/.test(n)) return 'mastercard';
+      if (/^3[47]/.test(n)) return 'amex';
+      if (/^(4011|4312|4389|4514|4573|5041|5066|5067|509|6277|6362|6363|650|6516|6550)/.test(n)) return 'elo';
+      if (/^(606282|384100|384140|384160|606|637095|637568|637599|637609|637612)/.test(n)) return 'hipercard';
+      return null;
+    }
+
+    function handleCardNumInput(t) {
+      var raw = (t.value || '').replace(/\D/g, '').slice(0, 19);
+      /* Formata com espaço a cada 4 dígitos */
+      var formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+      if (formatted !== t.value) {
+        var pos = t.selectionStart;
+        t.value = formatted;
+        try { t.setSelectionRange(pos + 1, pos + 1); } catch (e) {}
+      }
+
+      /* Detect brand + update UI */
+      var brand = detectCardBrand(raw);
+      state.cardBrand = brand;
+      state.cardNumValid = raw.length >= 13;
+
+      var brandSlot = layout.querySelector('.mm-op-card-brand-detected');
+      if (brandSlot) {
+        brandSlot.className = 'mm-op-card-brand-detected' + (brand ? ' is-' + brand : '');
+        brandSlot.textContent = brand ? brand.toUpperCase() : '';
+      }
+
+      /* Sync com Magazord native (trigger Zord BIN detection + parcelas fetch) */
+      if (raw.length >= 6) {
+        syncMagazordCardNum(raw);
+        /* Observer: aguarda o select #pag-cartao-parcela populate e copia opções */
+        watchMagazordInstallments();
+      }
+    }
+
+    function handleCardExpInput(t) {
+      var raw = (t.value || '').replace(/\D/g, '').slice(0, 4);
+      var formatted = raw.length > 2 ? raw.slice(0, 2) + '/' + raw.slice(2) : raw;
+      t.value = formatted;
+
+      /* Quando 5 chars (MM/AA), sync pros selects nativos de validade */
+      if (raw.length === 4) {
+        var mm = raw.slice(0, 2);
+        var aa = '20' + raw.slice(2);
+        syncMagazordSelect('pag-cartao-mes-validade', String(parseInt(mm, 10)));
+        syncMagazordSelect('pag-cartao-ano-validade', aa);
+      }
+    }
+
+    function syncMagazordCardNum(num) {
+      var native = document.getElementById('pag-cartao-numero');
+      if (!native) return;
+      try {
+        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(native, num);
+      } catch (e) { native.value = num; }
+      native.dispatchEvent(new Event('input', { bubbles: true }));
+      native.dispatchEvent(new Event('change', { bubbles: true }));
+      native.dispatchEvent(new Event('blur', { bubbles: true }));
+    }
+
+    function syncMagazordSelect(id, value) {
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      try {
+        var setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value').set;
+        setter.call(sel, value);
+      } catch (e) { sel.value = value; }
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function syncMagazordInstallments(parcelas) {
+      syncMagazordSelect('pag-cartao-parcela', parcelas);
+    }
+
+    /* Observer nas opções do select nativo de parcelas — quando Zord popula
+       após o BIN detection, copia pro nosso select shadow */
+    var _installmentsObserver = null;
+    function watchMagazordInstallments() {
+      if (_installmentsObserver) return;
+      var native = document.getElementById('pag-cartao-parcela');
+      if (!native) return;
+
+      var ourSelect = document.getElementById('mm-pay-card-installments');
+      if (!ourSelect) return;
+
+      function syncOptions() {
+        var opts = native.querySelectorAll('option');
+        if (opts.length <= 1) return; /* ainda não populou */
+
+        var html = '';
+        opts.forEach(function(opt) {
+          if (!opt.value) {
+            html += '<option value="">Selecione as parcelas</option>';
+            return;
+          }
+          html += '<option value="' + escapeHTML(opt.value) + '">' + escapeHTML(opt.textContent.trim()) + '</option>';
+        });
+        ourSelect.innerHTML = html;
+
+        /* Auto-seleciona a primeira opção válida (geralmente max parcelas) */
+        if (ourSelect.options.length > 1) {
+          ourSelect.selectedIndex = 1;
+          state.cardInstallments = {
+            numero: parseInt(ourSelect.options[1].value, 10) || 1,
+            label: ourSelect.options[1].textContent
+          };
+        }
+      }
+
+      syncOptions();
+      _installmentsObserver = new MutationObserver(syncOptions);
+      _installmentsObserver.observe(native, { childList: true, subtree: true });
+    }
+
+    /* Submit final — direciona pro form nativo Magazord correto */
+    function submitFinalizar() {
+      if (state.submitting) return;
+
+      var forma = state.activeForma;
+      var btn = layout.querySelector('.mm-op-finalizar');
+      if (!btn) return;
+
+      /* Validação básica por forma */
+      if (forma === 'cartao') {
+        var num = document.getElementById('mm-pay-card-num');
+        var name = document.getElementById('mm-pay-card-name');
+        var exp = document.getElementById('mm-pay-card-exp');
+        var cvv = document.getElementById('mm-pay-card-cvv');
+        var inst = document.getElementById('mm-pay-card-installments');
+
+        var errors = [];
+        if (!num || (num.value || '').replace(/\D/g, '').length < 13) errors.push('mm-pay-card-num');
+        if (!name || (name.value || '').trim().split(/\s+/).length < 2) errors.push('mm-pay-card-name');
+        if (!exp || (exp.value || '').replace(/\D/g, '').length !== 4) errors.push('mm-pay-card-exp');
+        if (!cvv || (cvv.value || '').replace(/\D/g, '').length < 3) errors.push('mm-pay-card-cvv');
+        if (!inst || !inst.value) errors.push('mm-pay-card-installments');
+
+        if (errors.length) {
+          errors.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+              el.classList.add('mm-input-error');
+              setTimeout(function() { el.classList.remove('mm-input-error'); }, 1800);
+            }
+          });
+          var first = document.getElementById(errors[0]);
+          if (first) {
+            first.focus();
+            try { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+          }
+          return;
+        }
+
+        /* Sync titular + CPF do titular (usa CPF do buyer como default) */
+        var titularNative = document.getElementById('pag-cartao-titular');
+        if (titularNative) {
+          try {
+            var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(titularNative, name.value.trim());
+          } catch (e) { titularNative.value = name.value.trim(); }
+          titularNative.dispatchEvent(new Event('input', { bubbles: true }));
+          titularNative.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+
+        var cvvNative = document.getElementById('pag-cartao-vericacao');
+        if (cvvNative) {
+          try {
+            var setterCvv = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setterCvv.call(cvvNative, cvv.value.replace(/\D/g, ''));
+          } catch (e) { cvvNative.value = cvv.value.replace(/\D/g, ''); }
+          cvvNative.dispatchEvent(new Event('input', { bubbles: true }));
+          cvvNative.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+
+        /* CPF do titular (usa o do buyer) */
+        var cpfNative = document.getElementById('pag-cartao-cpf');
+        if (cpfNative && userData && userData.cpf) {
+          try {
+            var setterCpf = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setterCpf.call(cpfNative, userData.cpf);
+          } catch (e) { cpfNative.value = userData.cpf; }
+          cpfNative.dispatchEvent(new Event('input', { bubbles: true }));
+          cpfNative.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+      }
+
+      /* Loading state */
+      state.submitting = true;
+      btn.classList.add('is-loading');
+      btn.setAttribute('aria-busy', 'true');
+      var lbl = btn.querySelector('.mm-op-finalizar-label');
+      if (lbl) lbl.textContent = 'Processando pagamento...';
+
+      /* Overlay fullscreen (reusa o do F3) */
+      showSubmitOverlay('Finalizando seu pedido...');
+
+      /* Delay pra garantir que todos os inputs sincronizaram + Zord processou */
+      setTimeout(function() {
+        /* Aceita termos bcash se cartão */
+        if (forma === 'cartao') {
+          var terms = document.getElementById('aceito-termos-bcash-one-card');
+          if (terms && !terms.checked) {
+            terms.checked = true;
+            terms.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+
+        /* Pega o form nativo correto por ID */
+        var formId = forma === 'pix' ? 'form-pag-pix'
+                   : forma === 'boleto' ? 'form-pag-boleto'
+                   : 'form-pag-cartao';
+        var form = document.getElementById(formId);
+
+        /* Fallback: alguns submits precisam do click no botão nativo (eventos
+           delegados pelo Magazord JS). Tentamos requestSubmit primeiro, e
+           se não funcionar em 1s, clicamos no botão visível. */
+        if (form && typeof form.requestSubmit === 'function') {
+          try { form.requestSubmit(); }
+          catch (e) {
+            var btnNative = form.querySelector('button.button-success, button[type="submit"], input[type="submit"]');
+            if (btnNative) btnNative.click();
+          }
+        } else if (form) {
+          var btnFallback = form.querySelector('button.button-success, button[type="submit"], input[type="submit"]');
+          if (btnFallback) btnFallback.click();
+          else form.submit();
+        }
+
+        /* Tenta esconder nosso layout pra Magazord assumir (processing page) */
+        setTimeout(function() {
+          mainArea.classList.remove('mm-shadow-mode');
+          if (layout) layout.style.display = 'none';
+        }, 400);
+      }, 500);
+    }
   }
 
   /* ----- mount entry ----- */
