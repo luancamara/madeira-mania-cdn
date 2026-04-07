@@ -1820,7 +1820,8 @@ body.mm-checkout-rebuild .checkout-main {
   margin: 0 auto !important;
 }
 
-/* guest CTA toggle — !important defensivo pra Magazord button overrides */
+/* guest CTA — navegação direta pra onepage (não toggle de panel)
+   !important defensivo pra Magazord button overrides */
 #mm-layout button.mm-id-guest-toggle,
 #mm-layout .mm-id-guest-toggle {
   display: flex !important;
@@ -1849,18 +1850,19 @@ body.mm-checkout-rebuild .checkout-main {
 #mm-layout .mm-id-guest-toggle:hover {
   border-color: var(--mm-olive) !important;
   background: var(--mm-olive-soft) !important;
+  transform: translateY(-1px);
 }
 #mm-layout .mm-id-guest-toggle:focus-visible {
   outline: none !important;
   border-color: var(--mm-olive) !important;
   box-shadow: 0 0 0 3px var(--mm-olive-soft) !important;
 }
-#mm-layout .mm-id-guest-toggle.is-open {
-  background: var(--mm-olive-soft) !important;
-  border-style: solid !important;
-  border-color: var(--mm-olive) !important;
+#mm-layout .mm-id-guest-toggle.is-loading {
+  pointer-events: none !important;
+  opacity: 0.7 !important;
 }
-#mm-layout .mm-id-guest-toggle .mm-id-guest-icon {
+#mm-layout .mm-id-guest-toggle .mm-id-guest-icon,
+#mm-layout .mm-id-guest-toggle .mm-id-guest-arrow {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1868,7 +1870,17 @@ body.mm-checkout-rebuild .checkout-main {
   margin: 0 !important;
   padding: 0 !important;
 }
-#mm-layout .mm-id-guest-toggle .mm-id-guest-icon svg {
+#mm-layout .mm-id-guest-toggle .mm-id-guest-arrow {
+  margin-left: auto !important;
+  opacity: 0.6;
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+#mm-layout .mm-id-guest-toggle:hover .mm-id-guest-arrow {
+  transform: translateX(3px);
+  opacity: 1;
+}
+#mm-layout .mm-id-guest-toggle .mm-id-guest-icon svg,
+#mm-layout .mm-id-guest-toggle .mm-id-guest-arrow svg {
   display: block !important;
 }
 #mm-layout .mm-id-guest-toggle .mm-id-guest-label {
@@ -1877,42 +1889,6 @@ body.mm-checkout-rebuild .checkout-main {
   padding: 0 !important;
   font: inherit !important;
   color: inherit !important;
-}
-
-/* guest panel — collapsed by default */
-#mm-layout .mm-id-guest-panel[hidden] {
-  display: none;
-}
-#mm-layout .mm-id-guest-panel {
-  margin-top: 16px;
-  padding: 24px;
-  background: #FAFAFA;
-  border: 1px solid var(--mm-border);
-  border-radius: 12px;
-  animation: mm-fade-up 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-#mm-layout .mm-id-guest-panel .mm-id-form {
-  gap: 12px;
-}
-
-/* checkbox row */
-#mm-layout .mm-id-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
-  color: var(--mm-fg-soft);
-  cursor: pointer;
-  padding: 4px 0;
-  user-select: none;
-}
-#mm-layout .mm-id-checkbox input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--mm-olive);
-  cursor: pointer;
-  flex-shrink: 0;
 }
 
 /* trust strip identify */
@@ -2005,18 +1981,6 @@ body.mm-checkout-rebuild .checkout-main {
   width: 100%;
   height: 100%;
   color: var(--mm-fg-subtle);
-}
-
-/* Erro inline do guest form */
-#mm-layout .mm-id-guest-error {
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #FEF2F2;
-  border: 1px solid #FCA5A5;
-  border-radius: 8px;
-  color: #B91C1C;
-  font-size: 13px;
-  line-height: 1.4;
 }
 
 /* Qty inline prefix no nome (não mais badge sobre a imagem) */

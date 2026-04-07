@@ -927,22 +927,6 @@
      5. Guest CTA expande inline o form do #full-anonymous-buy-form-etapa-01
      ============================================= */
 
-  /* ----- helpers de máscara ----- */
-  function maskCPF(raw) {
-    var d = String(raw || '').replace(/\D/g, '').slice(0, 11);
-    if (d.length <= 3) return d;
-    if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
-    if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
-    return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
-  }
-  function maskPhone(raw) {
-    var d = String(raw || '').replace(/\D/g, '').slice(0, 11);
-    if (d.length <= 2) return d.length ? '(' + d : '';
-    if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
-    if (d.length <= 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
-    return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
-  }
-
   /* ----- render do summary lateral (lê do snapshot) ----- */
   function renderIdentifySummary(snap) {
     if (!snap || !snap.items || !snap.items.length) {
@@ -1097,42 +1081,14 @@
         /* google login slot — .social-login-area é movido pra cá via JS */
         '<div class="mm-id-google-slot"></div>' +
 
-        /* guest CTA — ícone e texto como filhos diretos do button (flex+gap) */
-        '<button type="button" class="mm-id-guest-toggle" data-mm-act="guest-toggle" aria-expanded="false" aria-controls="mm-id-guest-panel">' +
+        /* guest CTA — navegação direta pra onepage (sem coletar dados aqui;
+           evita digitar nome/CPF/email duas vezes — isso será coletado na
+           Fase 3 do rebuild da onepage com auto-fill via mm_checkout_mode flag) */
+        '<button type="button" class="mm-id-guest-toggle" data-mm-act="guest-go" aria-label="Continuar como visitante">' +
           '<span class="mm-id-guest-icon" aria-hidden="true">' + userIcon + '</span>' +
-          '<span class="mm-id-guest-label">Não quero criar conta — comprar como visitante</span>' +
+          '<span class="mm-id-guest-label">Continuar como visitante (sem criar conta)</span>' +
+          '<span class="mm-id-guest-arrow" aria-hidden="true">' + ICON.arrow + '</span>' +
         '</button>' +
-
-        /* guest form (collapsed by default) */
-        '<div class="mm-id-guest-panel" id="mm-id-guest-panel" hidden>' +
-          '<form class="mm-id-form" data-mm-act="guest-submit" novalidate>' +
-            '<div class="mm-input-wrap">' +
-              '<span class="mm-input-icon" aria-hidden="true">' + userIcon + '</span>' +
-              '<input type="text" id="mm-id-guest-nome" name="mm-guest-nome" class="mm-input" ' +
-                'placeholder="Nome completo" autocomplete="name" required>' +
-            '</div>' +
-            '<div class="mm-input-wrap">' +
-              '<span class="mm-input-icon" aria-hidden="true">' + mailIcon + '</span>' +
-              '<input type="email" id="mm-id-guest-email" name="mm-guest-email" class="mm-input" ' +
-                'placeholder="seu@email.com" autocomplete="email" inputmode="email" required>' +
-            '</div>' +
-            '<div class="mm-input-wrap">' +
-              '<span class="mm-input-icon" aria-hidden="true">' + docIcon + '</span>' +
-              '<input type="tel" id="mm-id-guest-cpf" name="mm-guest-cpf" class="mm-input" ' +
-                'placeholder="CPF" inputmode="numeric" autocomplete="off" maxlength="14" required>' +
-            '</div>' +
-            '<div class="mm-input-wrap">' +
-              '<span class="mm-input-icon" aria-hidden="true">' + phoneIcon + '</span>' +
-              '<input type="tel" id="mm-id-guest-tel" name="mm-guest-tel" class="mm-input" ' +
-                'placeholder="(11) 91234-5678" inputmode="tel" autocomplete="tel" maxlength="15" required>' +
-            '</div>' +
-            '<label class="mm-id-checkbox">' +
-              '<input type="checkbox" id="mm-id-guest-ofertas" name="mm-guest-ofertas">' +
-              '<span>Quero receber ofertas e novidades por e-mail</span>' +
-            '</label>' +
-            '<button type="submit" class="mm-cta">Próxima etapa' + ICON.arrow + '</button>' +
-          '</form>' +
-        '</div>' +
 
         /* trust strip */
         '<div class="mm-trust mm-id-trust">' +
@@ -1214,58 +1170,6 @@
     return false;
   }
 
-  /* Submit guest checkout via fetch direto pro endpoint Magazord:
-     POST /checkout/payment?operation=compraSemCadadastroEtapa01
-     Body: tipo + email + nome-completo + cpf + telefone
-     Response: "1" = sucesso → navega pra /checkout/onepage (etapa endereço)
-
-     Não usa form.submit() porque o form Magazord original espera estar
-     visible + inserido na sessão guest, e o response é AJAX (sem redirect).
-     Fazendo fetch manual replicamos o que o JS Magazord faria após sucesso. */
-  function submitMagazordGuestForm(data, callbacks) {
-    callbacks = callbacks || {};
-    var body = new URLSearchParams();
-    body.append('tipo', '1');
-    body.append('email', data.email);
-    body.append('nome-completo', data.nome);
-    body.append('cpf', data.cpf);
-    body.append('telefone', data.telefone);
-    if (data.ofertas) body.append('receber-ofertas', 'on');
-
-    try {
-      fetch('/checkout/payment?operation=compraSemCadadastroEtapa01', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': '*/*'
-        },
-        body: body.toString()
-      })
-        .then(function(r) { return r.text(); })
-        .then(function(txt) {
-          var trimmed = (txt || '').trim();
-          if (trimmed === '1' || /^\s*1\s*$/.test(trimmed)) {
-            /* Sucesso — navega pra etapa de endereço */
-            location.href = '/checkout/onepage';
-          } else {
-            /* Backend retornou erro/mensagem */
-            console.warn('[mm-id] guest submit non-success:', trimmed.substring(0, 200));
-            if (callbacks.error) callbacks.error(trimmed);
-          }
-        })
-        .catch(function(err) {
-          console.warn('[mm-id] guest submit fetch failed', err);
-          if (callbacks.error) callbacks.error(err && err.message);
-        });
-      return true;
-    } catch (e) {
-      console.warn('[mm-id] guest submit threw', e);
-      return false;
-    }
-  }
-
   /* ----- bind eventos do identify ----- */
   function bindIdentifyEvents() {
     var layout = document.getElementById('mm-layout');
@@ -1295,96 +1199,18 @@
         return;
       }
 
-      var guestForm = e.target.closest('[data-mm-act="guest-submit"]');
-      if (guestForm) {
-        e.preventDefault();
-        var nome = (document.getElementById('mm-id-guest-nome') || {}).value || '';
-        var email = (document.getElementById('mm-id-guest-email') || {}).value || '';
-        var cpf = (document.getElementById('mm-id-guest-cpf') || {}).value || '';
-        var tel = (document.getElementById('mm-id-guest-tel') || {}).value || '';
-        var ofertas = (document.getElementById('mm-id-guest-ofertas') || {}).checked;
-
-        var errors = [];
-        if (nome.trim().split(/\s+/).length < 2) errors.push('mm-id-guest-nome');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('mm-id-guest-email');
-        if (cpf.replace(/\D/g, '').length !== 11) errors.push('mm-id-guest-cpf');
-        if (tel.replace(/\D/g, '').length < 10) errors.push('mm-id-guest-tel');
-        if (errors.length) {
-          errors.forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) {
-              el.classList.add('mm-input-error');
-              setTimeout(function() { el.classList.remove('mm-input-error'); }, 1500);
-            }
-          });
-          var first = document.getElementById(errors[0]);
-          if (first) first.focus();
-          return;
-        }
-
-        var gbtn = guestForm.querySelector('.mm-cta');
-        if (gbtn) gbtn.classList.add('is-loading');
-
-        submitMagazordGuestForm({
-          nome: nome.trim(),
-          email: email.trim(),
-          cpf: cpf,
-          telefone: tel,
-          ofertas: ofertas
-        }, {
-          error: function(msg) {
-            if (gbtn) gbtn.classList.remove('is-loading');
-            /* Mostra erro abaixo do form */
-            var errorSlot = guestForm.querySelector('.mm-id-guest-error');
-            if (!errorSlot) {
-              errorSlot = document.createElement('div');
-              errorSlot.className = 'mm-id-guest-error';
-              guestForm.appendChild(errorSlot);
-            }
-            var displayMsg = (typeof msg === 'string' && msg.length < 200 && msg.length > 0)
-              ? msg
-              : 'Não foi possível continuar. Verifique os dados e tente novamente.';
-            errorSlot.textContent = displayMsg;
-            errorSlot.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }
-        });
-      }
     });
 
-    /* Click delegation */
+    /* Click delegation — guest CTA navega direto pra onepage.
+       Salva flag pra Fase 3 detectar e auto-selecionar "Compra sem cadastro" */
     layout.addEventListener('click', function(e) {
       var actEl = e.target.closest('[data-mm-act]');
       if (!actEl) return;
       var act = actEl.getAttribute('data-mm-act');
-      if (act === 'guest-toggle') {
-        var panel = document.getElementById('mm-id-guest-panel');
-        if (!panel) return;
-        var isOpen = !panel.hasAttribute('hidden');
-        if (isOpen) {
-          panel.setAttribute('hidden', '');
-          actEl.setAttribute('aria-expanded', 'false');
-          actEl.classList.remove('is-open');
-        } else {
-          panel.removeAttribute('hidden');
-          actEl.setAttribute('aria-expanded', 'true');
-          actEl.classList.add('is-open');
-          var firstInput = panel.querySelector('input');
-          if (firstInput) setTimeout(function() {
-            firstInput.focus();
-            firstInput.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
-        }
-      }
-    });
-
-    /* Máscaras de input */
-    layout.addEventListener('input', function(e) {
-      var t = e.target;
-      if (!t) return;
-      if (t.id === 'mm-id-guest-cpf') {
-        t.value = maskCPF(t.value);
-      } else if (t.id === 'mm-id-guest-tel') {
-        t.value = maskPhone(t.value);
+      if (act === 'guest-go') {
+        STORAGE.set('mm_checkout_mode', 'guest');
+        actEl.classList.add('is-loading');
+        location.href = '/checkout/onepage';
       }
     });
   }
