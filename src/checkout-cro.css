@@ -1,212 +1,1597 @@
 /* =============================================
-   CHECKOUT CRO - Madeira Mania
-   Melhorias de conversão no checkout
-
-   Design system:
-   - Paleta: herda do site (#4b664a verde, #2e7d32 trust)
-   - Font mínimo: 16px inputs, 14px body, 12px micro
-   - Touch targets: min 44px height
-   - Spacing: 8/12/16/24px (8dp grid)
-   - Border radius: 8px cards, herda botões
-   - Ícones: SVG stroke 2px (sem emojis)
-   - Regras: UI/UX Pro Max checklist
-
-   Aplica em: /checkout/* (todas as etapas)
-   Dispositivo: TODOS
+   CHECKOUT CRO - Madeira Mania (rebuild v2)
+   Rebuild limpo: "shadow render" strategy
+   - Esconde .cart-area + #resumo-compra .conteudo-resumo (source of truth)
+   - Renderiza #mm-layout com nossos próprios componentes
+   - Delega mutações pro Zord API (Zord.checkout.*)
+   - Re-renderiza em $(document).ajaxComplete
+   Design DNA: medusa storefront tokens adaptados ao brand real Madeira Mania
    ============================================= */
 
-
-/* ==========================================
-   TRUST STRIP — Inline minimalista (integrado)
-   Sem background, sem borda, sem card-in-card.
-   Flex row, items lado-a-lado, wrap gracioso se faltar espaço.
-   Usado em cart (near CTA), identify e onepage.
-   ========================================== */
-
-.mm-trust-strip {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-wrap: wrap !important;
-  gap: 6px 18px !important;
-  margin: 10px 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  font-family: inherit !important;
-  /* Reset grid da versão anterior (caso alguém ainda tenha cache) */
-  grid-template-columns: none !important;
-}
-
-.mm-trust-strip-item {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: #6b7f6b !important;
-  white-space: nowrap !important;
-  line-height: 1 !important;
-}
-
-/* Reset do nth-child da versão grid — todos items iguais agora */
-.mm-trust-strip-item:nth-child(3) {
-  grid-column: auto !important;
-  justify-content: flex-start !important;
-}
-
-.mm-trust-strip-item svg {
-  flex-shrink: 0 !important;
-  width: 13px !important;
-  height: 13px !important;
-  stroke: #2e7d32 !important;
-}
-
-.mm-trust-strip-item b {
-  font-weight: 500 !important;
-  color: #6b7f6b !important;
-}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
 
 
 /* ==========================================
-   BARRA FRETE GRÁTIS — Minimalista, sem card
-   Inserida antes de #main-cart-area, full-width.
+   ZONA 1 — Esconder Magazord (source of truth fica no DOM pra leitura)
    ========================================== */
 
-.mm-shipping-bar {
-  display: block !important;
-  padding: 0 !important;
-  margin: 0 0 16px !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  font-family: inherit !important;
-  width: 100% !important;
-  max-width: 520px !important;
+/* Header checkout original Magazord (logo + Google + stepper) */
+body.mm-checkout-rebuild .header-checkout,
+body.mm-checkout-rebuild .header-template-checkout-03,
+body.mm-checkout-rebuild .pagina-conteudo-adicional.conteudo-adicional-25 {
+  display: none !important;
 }
 
-.mm-shipping-bar-text {
-  font-size: 13px !important;
-  color: #3d5a3d !important;
-  margin: 0 0 8px !important;
-  font-weight: 500 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  line-height: 1.3 !important;
+/* Esconder distrações no checkout: ticker bar + popup whats flutuante */
+body.mm-checkout-rebuild #tickerBar,
+body.mm-checkout-rebuild .ticker-bar,
+body.mm-checkout-rebuild #popup-msg-whats {
+  display: none !important;
 }
 
-.mm-shipping-bar-text svg {
-  flex-shrink: 0 !important;
-  stroke: #2e7d32 !important;
+/* Override do padding inflado do .checkout-main da Magazord */
+body.mm-checkout-rebuild #checkout-main-area.checkout-main,
+body.mm-checkout-rebuild #checkout-main-area,
+body.mm-checkout-rebuild .checkout-main {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
 }
 
-.mm-shipping-bar-text strong {
-  color: #1a1a1a !important;
-  font-weight: 600 !important;
-}
-
-.mm-shipping-bar-text .mm-green {
-  color: #2e7d32 !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.3px !important;
-}
-
-.mm-shipping-bar-track {
-  background: #e8ece8 !important;
-  border-radius: 999px !important;
-  height: 4px !important;
+#checkout-main-area.mm-shadow-mode .title-cart-area,
+#checkout-main-area.mm-shadow-mode #cart-area,
+#checkout-main-area.mm-shadow-mode .cart-area,
+#checkout-main-area.mm-shadow-mode #resumo-compra,
+#checkout-main-area.mm-shadow-mode .proxima-etapa,
+#checkout-main-area.mm-shadow-mode > .container > *:not(#mm-layout) {
+  position: absolute !important;
+  left: -99999px !important;
+  top: -99999px !important;
+  width: 1px !important;
+  height: 1px !important;
   overflow: hidden !important;
-  width: 100% !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
 
-.mm-shipping-bar-fill {
-  background: linear-gradient(90deg, #4caf50 0%, #2e7d32 100%) !important;
-  height: 100% !important;
-  border-radius: 999px !important;
-  transition: width 0.3s ease !important;
+/* Libera o resumo-compra novamente SE ele for descendente do mm-layout (não é, mas paranoia) */
+#checkout-main-area.mm-shadow-mode #mm-layout,
+#checkout-main-area.mm-shadow-mode #mm-layout * {
+  position: static;
+  left: auto;
+  top: auto;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  pointer-events: auto;
+  opacity: 1;
 }
 
 
 /* ==========================================
-   INPUTS — Touch targets + iOS zoom prevention
+   ZONA 2 — Design tokens (scoped em #mm-layout)
    ========================================== */
 
-.checkout-etapa-1 input,
+#mm-layout {
+  /* Brand — olive do ticker/header + forest da PDP CTA */
+  --mm-olive:        #4B664A;
+  --mm-olive-dark:   #3D4733;
+  --mm-olive-soft:   rgba(75, 102, 74, 0.08);
+  --mm-cta:          #1b7a45;
+  --mm-cta-dark:     #155a33;
+  --mm-cta-soft:     rgba(27, 122, 69, 0.08);
+
+  /* Neutros (medusa-inspired) */
+  --mm-bg:           #FAFAFA;
+  --mm-card:         #FFFFFF;
+  --mm-border:       #E7E7E7;
+  --mm-border-soft:  #F0F0F0;
+  --mm-divider:      #EFEFEF;
+
+  /* Texto (escala WCAG-safe — todos os tons garantem 4.5:1 em 11px+) */
+  --mm-fg:           #121212;  /* ratio 17.4 — primary  */
+  --mm-fg-soft:      #374151;  /* ratio 10.4 — secondary  */
+  --mm-fg-meta:      #4B5563;  /* ratio 7.14 — tertiary, body small  */
+  --mm-fg-subtle:    #6B7280;  /* ratio 4.86 — meta info readable    */
+  --mm-fg-muted:     #9CA3AF;  /* ratio 2.54 — DECORATIVE ONLY (icons, dividers)  */
+
+  /* Semantic */
+  --mm-danger:       #DC2626;
+  --mm-danger-soft:  rgba(220, 38, 38, 0.08);
+  --mm-success:      #1b7a45;
+
+  /* Typography */
+  --mm-sans:         'Poppins', system-ui, -apple-system, sans-serif;
+  --mm-serif:        'Libre Baskerville', Georgia, serif;
+
+  /* Spacing (4px base) */
+  --mm-s1: 4px;
+  --mm-s2: 8px;
+  --mm-s3: 12px;
+  --mm-s4: 16px;
+  --mm-s5: 20px;
+  --mm-s6: 24px;
+  --mm-s8: 32px;
+  --mm-s10: 40px;
+
+  /* Radius */
+  --mm-r-sm:   4px;
+  --mm-r:      8px;
+  --mm-r-lg:   16px;
+  --mm-r-full: 9999px;
+
+  /* Shadows (flat brand — uso minimal) */
+  --mm-shadow-sm:  0 1px 2px rgba(17, 24, 39, 0.04);
+  --mm-shadow:     0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);
+  --mm-shadow-lg:  0 8px 24px rgba(17, 24, 39, 0.08);
+
+  /* Transitions — 500ms é slow-intentional ("premium feel" medusa) */
+  --mm-tr-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --mm-tr:      320ms cubic-bezier(0.16, 1, 0.3, 1);
+  --mm-tr-slow: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  font-family: var(--mm-sans);
+  color: var(--mm-fg);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* ==========================================
+   ZONA 3 — Layout grid
+   ========================================== */
+
+#mm-layout {
+  display: block;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--mm-s6) var(--mm-s4) var(--mm-s10);
+  box-sizing: border-box;
+  animation: mm-fade-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#mm-layout *,
+#mm-layout *::before,
+#mm-layout *::after {
+  box-sizing: border-box;
+}
+
+.mm-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mm-s6);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  #mm-layout {
+    padding: var(--mm-s8) var(--mm-s6) var(--mm-s10);
+  }
+  .mm-grid {
+    grid-template-columns: 1fr 380px;
+    gap: var(--mm-s10);
+  }
+}
+
+
+/* ==========================================
+   ZONA 4 — Títulos + headings
+   ========================================== */
+
+.mm-h {
+  font-family: var(--mm-serif);
+  font-weight: 400;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--mm-fg);
+  margin: 0 0 var(--mm-s5);
+  padding: 0;
+}
+
+.mm-eyebrow {
+  font-family: var(--mm-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mm-fg-muted);
+  margin: 0;
+}
+
+
+/* ==========================================
+   ZONA 5 — Custom checkout header (substitui o Magazord)
+   Single-row layout: logo left, stepper center, secure right
+   Vertical alignment perfect via grid 3-col + center align
+   ========================================== */
+
+.mm-checkout-header {
+  padding: var(--mm-s5) 0;
+  margin-bottom: var(--mm-s5);
+  border-bottom: 1px solid var(--mm-border-soft);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--mm-s5);
+  min-height: 72px;
+  animation: mm-fade-down 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mm-checkout-header-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--mm-fg);
+  justify-self: start;
+  line-height: 0;
+}
+
+.mm-checkout-header-logo img {
+  height: 44px;
+  width: auto;
+  max-width: 180px;
+  display: block;
+}
+
+/* Stepper centered in middle column */
+.mm-checkout-steps {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+}
+
+.mm-checkout-steps ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-s3);
+}
+
+.mm-checkout-step {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mm-fg-subtle);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.mm-checkout-step.is-active {
+  color: var(--mm-fg);
+  font-weight: 700;
+  position: relative;
+}
+
+.mm-checkout-step.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 2px;
+  background: var(--mm-olive);
+  border-radius: 2px;
+}
+
+.mm-checkout-step-sep {
+  font-size: 14px;
+  color: var(--mm-fg-muted);
+  user-select: none;
+  line-height: 1;
+}
+
+/* Secure badge — right column */
+.mm-checkout-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-s2);
+  text-decoration: none;
+  color: var(--mm-fg);
+  justify-self: end;
+}
+
+.mm-checkout-secure svg {
+  color: var(--mm-olive);
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.mm-checkout-secure-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.mm-checkout-secure-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mm-fg);
+  letter-spacing: -0.01em;
+}
+
+.mm-checkout-secure-text small {
+  font-size: 12px;
+  color: var(--mm-fg-meta);
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+/* Mobile: 2 rows — logo+secure on top, stepper on bottom */
+@media (max-width: 1023px) {
+  .mm-checkout-header {
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      "logo secure"
+      "steps steps";
+    gap: var(--mm-s3) var(--mm-s4);
+    padding: var(--mm-s4) 0;
+    margin-bottom: var(--mm-s4);
+    min-height: 0;
+  }
+  .mm-checkout-header-logo {
+    grid-area: logo;
+  }
+  .mm-checkout-header-logo img {
+    height: 36px;
+  }
+  .mm-checkout-secure {
+    grid-area: secure;
+  }
+  .mm-checkout-secure svg {
+    width: 16px;
+    height: 16px;
+  }
+  .mm-checkout-secure-text strong { font-size: 12px; }
+  .mm-checkout-secure-text small { font-size: 11px; }
+  .mm-checkout-steps {
+    grid-area: steps;
+    justify-self: center;
+    padding-top: var(--mm-s2);
+  }
+  .mm-checkout-steps ol { gap: var(--mm-s2); }
+  .mm-checkout-step { font-size: 12px; }
+
+  /* Touch target compliance: bump qty buttons to 44 on mobile */
+  .mm-qty-btn {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  .mm-qty-value {
+    min-width: 36px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 540px) {
+  .mm-checkout-secure-text { display: none; }
+  .mm-checkout-header-logo img { height: 32px; }
+}
+
+
+/* ==========================================
+   ZONA 5b — Shipping nudge (goal-gradient)
+   Só renderiza ENQUANTO falta valor; some quando atinge.
+   ========================================== */
+
+.mm-nudge {
+  background: var(--mm-olive-soft);
+  border: 1px solid rgba(75, 102, 74, 0.15);
+  border-radius: var(--mm-r);
+  padding: var(--mm-s3) var(--mm-s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mm-s2);
+  animation: mm-fade-in 320ms var(--mm-tr) both;
+}
+
+.mm-nudge-head {
+  display: flex;
+  align-items: center;
+  gap: var(--mm-s2);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--mm-fg);
+  font-weight: 500;
+}
+
+.mm-nudge-head svg {
+  flex-shrink: 0;
+  color: var(--mm-olive);
+}
+
+.mm-nudge-head strong {
+  color: var(--mm-olive);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-nudge-track {
+  background: rgba(75, 102, 74, 0.18);
+  border-radius: var(--mm-r-full);
+  height: 4px;
+  overflow: hidden;
+}
+
+.mm-nudge-fill {
+  background: var(--mm-olive);
+  height: 100%;
+  border-radius: var(--mm-r-full);
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: width;
+}
+
+
+/* ==========================================
+   ZONA 6 — Cart items (single card with internal dividers)
+   ========================================== */
+
+.mm-items {
+  min-width: 0;
+}
+
+.mm-items-card {
+  background: var(--mm-card);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-r-lg);
+  padding: 0 var(--mm-s5);
+  animation: mm-fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+}
+
+.mm-items > .mm-h {
+  animation: mm-fade-down 380ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
+}
+
+#mm-item-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.mm-item {
+  padding: var(--mm-s5) 0;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: var(--mm-s4);
+  align-items: flex-start;
+  position: relative;
+  min-width: 0;
+  border-bottom: 1px solid var(--mm-border-soft);
+  transition: opacity var(--mm-tr);
+  animation: mm-fade-up 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stagger entrada dos cart items (até 6) */
+.mm-item:nth-child(1) { animation-delay: 140ms; }
+.mm-item:nth-child(2) { animation-delay: 200ms; }
+.mm-item:nth-child(3) { animation-delay: 260ms; }
+.mm-item:nth-child(4) { animation-delay: 320ms; }
+.mm-item:nth-child(5) { animation-delay: 380ms; }
+.mm-item:nth-child(6) { animation-delay: 440ms; }
+
+.mm-item:last-child {
+  border-bottom: none;
+}
+
+.mm-item > * {
+  min-width: 0;
+}
+
+.mm-item.is-updating {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.mm-item-thumb {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--mm-r);
+  overflow: hidden;
+  background: var(--mm-bg);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.mm-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mm-item-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--mm-s2);
+  padding-right: var(--mm-s6);
+}
+
+.mm-item-name {
+  font-family: var(--mm-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--mm-fg);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.mm-item-name:hover {
+  color: var(--mm-olive);
+}
+
+.mm-item-name:focus-visible {
+  outline: 2px solid var(--mm-olive);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.mm-checkout-header-logo:focus-visible {
+  outline: 2px solid var(--mm-olive);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.mm-item-variant {
+  font-size: 12px;
+  color: var(--mm-fg-subtle);
+  margin: 0;
+}
+
+.mm-item-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-s1);
+  background: #EEF3EE;  /* olive 8% on white, solid pra contrast checkers */
+  color: var(--mm-olive);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--mm-r-full);
+  margin-top: var(--mm-s1);
+  align-self: flex-start;
+  line-height: 1.2;
+}
+
+.mm-item-badge svg {
+  flex-shrink: 0;
+}
+
+.mm-item-controls {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--mm-s4);
+  margin-top: var(--mm-s3);
+}
+
+.mm-item-price {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.mm-item-price-value {
+  font-family: var(--mm-sans);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--mm-fg);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-item-price-sub {
+  font-size: 12px;
+  color: var(--mm-olive);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.mm-item-price-unit {
+  font-size: 12px;
+  color: var(--mm-fg-subtle);
+  font-weight: 400;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+
+/* ==========================================
+   ZONA 7 — Quantity selector (rounded-full pill)
+   ========================================== */
+
+.mm-qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-r-full);
+  padding: 4px;
+  background: var(--mm-card);
+  transition: border-color var(--mm-tr);
+}
+
+.mm-qty:hover {
+  border-color: #D1D5DB;
+}
+
+.mm-qty-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: var(--mm-r-full) !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  color: var(--mm-fg-soft);
+  cursor: pointer;
+  padding: 0 !important;
+  font-family: var(--mm-sans);
+  transition: background-color var(--mm-tr-slow), color var(--mm-tr-slow);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mm-qty-btn svg {
+  flex-shrink: 0;
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.mm-qty-btn:hover:not(:disabled) {
+  background: var(--mm-bg);
+  color: var(--mm-fg);
+}
+
+.mm-qty-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.mm-qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mm-qty-btn:focus-visible {
+  outline: 2px solid var(--mm-olive);
+  outline-offset: 2px;
+}
+
+.mm-qty-value {
+  min-width: 32px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mm-fg);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  padding: 0 var(--mm-s2);
+}
+
+
+/* Remove button (icon-only, minimalist, 44pt hit area) */
+.mm-item-remove {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  color: var(--mm-fg-subtle);
+  cursor: pointer;
+  padding: 0 !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border-radius: var(--mm-r-full) !important;
+  transition: color var(--mm-tr), background-color var(--mm-tr);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mm-item-remove:hover {
+  color: var(--mm-danger);
+  background: var(--mm-danger-soft) !important;
+}
+
+.mm-item-remove:focus-visible {
+  outline: 2px solid var(--mm-olive);
+  outline-offset: 2px;
+}
+
+.mm-item-remove svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+
+/* ==========================================
+   ZONA 8 — Summary card
+   ========================================== */
+
+.mm-sum {
+  min-width: 0;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .mm-sum {
+    position: sticky;
+    top: var(--mm-s5);
+  }
+}
+
+.mm-sum-card {
+  background: var(--mm-card);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-r-lg);
+  padding: var(--mm-s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mm-s4);
+  animation: mm-fade-up 540ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+.mm-sum > .mm-h {
+  animation: mm-fade-down 380ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+.mm-help {
+  animation: mm-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 480ms both;
+}
+
+.mm-trust {
+  animation: mm-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 380ms both;
+}
+
+/* Sum stack: groups dynamic content (rows + coupon + total) with consistent gap */
+.mm-sum-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mm-s4);
+}
+
+
+/* ---- CEP input block ---- */
+.mm-cep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mm-s2);
+}
+
+.mm-cep-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mm-s2);
+}
+
+.mm-cep-label-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mm-fg-subtle);
+}
+
+.mm-cep-label-link {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mm-olive);
+  text-decoration: none;
+  border-bottom: 1px solid var(--mm-olive-soft);
+  padding-bottom: 1px;
+  transition: border-color var(--mm-tr);
+}
+
+.mm-cep-label-link:hover {
+  border-bottom-color: var(--mm-olive);
+}
+
+.mm-cep-label-link:focus-visible {
+  outline: 2px solid var(--mm-olive);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.mm-cep-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mm-s2);
+}
+
+.mm-input {
+  flex: 1;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 0 var(--mm-s5) !important;
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-full) !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 16px !important;  /* 16px previne zoom no iOS */
+  font-weight: 500 !important;
+  color: var(--mm-fg) !important;
+  outline: none !important;
+  transition: border-color var(--mm-tr-slow), box-shadow var(--mm-tr-slow);
+  min-width: 0;
+  box-sizing: border-box !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mm-input::placeholder {
+  color: var(--mm-fg-subtle);
+  font-weight: 400;
+}
+
+.mm-input:hover {
+  border-color: #D1D5DB !important;
+}
+
+.mm-input:focus,
+.mm-input:focus-visible {
+  border-color: var(--mm-olive) !important;
+  box-shadow: 0 0 0 3px var(--mm-olive-soft) !important;
+}
+
+.mm-btn-secondary {
+  flex-shrink: 0;
+  height: 48px !important;
+  min-height: 48px !important;
+  padding: 0 var(--mm-s5) !important;
+  background: var(--mm-fg) !important;
+  color: #FFF !important;
+  border: none !important;
+  border-radius: var(--mm-r-full) !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color var(--mm-tr-slow), transform 150ms;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mm-s1);
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box !important;
+}
+
+.mm-btn-secondary:hover {
+  background: var(--mm-olive-dark) !important;
+}
+
+.mm-btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.mm-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mm-btn-secondary:focus-visible {
+  outline: 3px solid var(--mm-olive);
+  outline-offset: 2px;
+}
+
+
+/* ---- Shipping result display ---- */
+.mm-shipping-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--mm-s3);
+  background: var(--mm-bg);
+  border-radius: var(--mm-r);
+  border: 1px solid var(--mm-border-soft);
+  animation: mm-fade-in 320ms var(--mm-tr) both;
+}
+
+.mm-shipping-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mm-s2);
+  font-size: 12px;
+}
+
+.mm-shipping-result-label {
+  color: var(--mm-fg-soft);
+  font-weight: 500;
+}
+
+.mm-shipping-result-value {
+  color: var(--mm-fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-shipping-result-value.is-free {
+  color: var(--mm-olive);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mm-shipping-result-deadline {
+  color: var(--mm-fg-muted);
+  font-size: 11px;
+}
+
+
+/* ---- Divider ---- */
+.mm-divider {
+  border: none;
+  border-top: 1px solid var(--mm-divider);
+  margin: 0;
+}
+
+
+/* ---- Summary rows (Subtotal / Frete / Desconto) ---- */
+.mm-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mm-s3);
+}
+
+.mm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mm-s3);
+  font-size: 13px;
+}
+
+.mm-row-label {
+  color: var(--mm-fg-soft);
+  font-weight: 500;
+}
+
+.mm-row-sub {
+  color: var(--mm-fg-subtle);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.mm-row-value {
+  color: var(--mm-fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-row-value.is-discount {
+  color: var(--mm-cta);
+}
+
+.mm-row-value.is-free {
+  color: var(--mm-olive);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mm-row-value.is-free svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+
+/* ---- Total block ---- */
+.mm-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--mm-s3);
+  border-top: 1px solid var(--mm-divider);
+}
+
+.mm-total-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mm-fg-subtle);
+  margin-bottom: 2px;
+}
+
+.mm-total-value {
+  font-family: var(--mm-serif);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--mm-fg);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  animation: mm-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.mm-total-pix {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mm-s1) var(--mm-s2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mm-olive);
+  margin-top: var(--mm-s2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-total-pix-save {
+  color: var(--mm-fg-muted);
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.mm-total-parcela {
+  font-size: 12px;
+  color: var(--mm-fg-soft);
+  font-weight: 500;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mm-total-pending {
+  font-size: 12px;
+  color: var(--mm-fg-subtle);
+  font-weight: 500;
+  line-height: 1.4;
+  padding: var(--mm-s3) 0 0;
+}
+
+
+/* ---- Coupon (collapsible) ---- */
+.mm-coupon-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-s2);
+  background: transparent;
+  border: 1px dashed var(--mm-border);
+  border-radius: var(--mm-r-full);
+  padding: var(--mm-s3) var(--mm-s4);
+  min-height: 44px;
+  font-family: var(--mm-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mm-fg-soft);
+  cursor: pointer;
+  align-self: flex-start;
+  transition: border-color var(--mm-tr), color var(--mm-tr);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mm-coupon-toggle:hover {
+  border-color: var(--mm-olive);
+  color: var(--mm-olive);
+}
+
+.mm-coupon-toggle:focus-visible {
+  outline: 2px solid var(--mm-olive);
+  outline-offset: 2px;
+}
+
+.mm-coupon-form {
+  display: none;
+  gap: var(--mm-s2);
+  align-items: stretch;
+}
+
+.mm-coupon.is-open .mm-coupon-toggle {
+  display: none;
+}
+
+.mm-coupon.is-open .mm-coupon-form {
+  display: flex;
+  animation: mm-fade-in 240ms var(--mm-tr) both;
+}
+
+.mm-coupon-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mm-s2);
+  background: var(--mm-olive-soft);
+  border: 1px solid var(--mm-olive-soft);
+  border-radius: var(--mm-r-full);
+  padding: var(--mm-s2) var(--mm-s3) var(--mm-s2) var(--mm-s4);
+  font-size: 12px;
+  animation: mm-fade-in 240ms var(--mm-tr) both;
+}
+
+.mm-coupon-applied-left {
+  display: flex;
+  align-items: center;
+  gap: var(--mm-s2);
+  font-weight: 600;
+  color: var(--mm-olive);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mm-coupon-applied-left svg {
+  flex-shrink: 0;
+}
+
+.mm-coupon-applied button {
+  background: transparent;
+  border: none;
+  color: var(--mm-fg-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mm-r-full);
+  transition: color var(--mm-tr);
+}
+
+.mm-coupon-applied button:hover {
+  color: var(--mm-danger);
+}
+
+
+/* ---- Primary CTA ---- */
+.mm-cta {
+  background: var(--mm-cta) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: var(--mm-r-full) !important;
+  padding: var(--mm-s4) var(--mm-s5) !important;
+  min-height: 56px !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  width: 100%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mm-s2);
+  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22) !important;
+  transition: background-color var(--mm-tr-slow), box-shadow var(--mm-tr-slow), transform 150ms;
+  -webkit-tap-highlight-color: transparent;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.mm-cta:hover {
+  background: var(--mm-cta-dark) !important;
+  box-shadow: 0 6px 20px rgba(27, 122, 69, 0.28) !important;
+}
+
+.mm-cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(27, 122, 69, 0.22) !important;
+}
+
+.mm-cta:focus-visible {
+  outline: 3px solid var(--mm-olive) !important;
+  outline-offset: 3px !important;
+}
+
+.mm-cta svg {
+  transition: transform var(--mm-tr-slow);
+}
+
+.mm-cta:hover svg {
+  transform: translateX(3px);
+}
+
+
+/* ---- Trust badges ---- */
+.mm-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding-top: var(--mm-s2);
+}
+
+.mm-trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-s1);
+  font-size: 12px;
+  color: var(--mm-fg-subtle);
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.mm-trust-item svg {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  color: var(--mm-fg-muted);
+}
+
+
+/* ---- WhatsApp help block (objection breaker) ---- */
+.mm-help {
+  display: flex;
+  align-items: center;
+  gap: var(--mm-s3);
+  margin-top: var(--mm-s2);
+  padding: var(--mm-s3) var(--mm-s4);
+  background: #F4FCF7;  /* very subtle green-tint, solid for contrast checkers */
+  border: 1px solid #DDEFE3;
+  border-radius: var(--mm-r);
+  text-decoration: none;
+  color: var(--mm-fg);
+  font-size: 13px;
+  line-height: 1.4;
+  min-height: 56px;
+  transition: background-color var(--mm-tr-slow), border-color var(--mm-tr-slow);
+}
+
+.mm-help:hover {
+  background: #E9F8EE;
+  border-color: #BDDFC9;
+}
+
+.mm-help:focus-visible {
+  outline: 2px solid #25D366;
+  outline-offset: 2px;
+}
+
+.mm-help svg {
+  color: #25D366;
+  flex-shrink: 0;
+}
+
+.mm-help span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mm-help strong {
+  display: block;
+  font-weight: 600;
+  color: var(--mm-fg);
+  font-size: 12px;
+  margin-bottom: 1px;
+}
+
+
+/* ==========================================
+   ZONA 9 — Empty cart state
+   ========================================== */
+
+.mm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--mm-s10) var(--mm-s4);
+  gap: var(--mm-s4);
+  background: var(--mm-card);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-r-lg);
+  animation: mm-fade-up 400ms var(--mm-tr) both;
+}
+
+.mm-empty-icon {
+  color: var(--mm-fg-muted);
+  margin-bottom: var(--mm-s2);
+}
+
+.mm-empty-title {
+  font-family: var(--mm-serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--mm-fg);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.mm-empty-desc {
+  color: var(--mm-fg-soft);
+  font-size: 14px;
+  max-width: 380px;
+  margin: 0;
+}
+
+.mm-empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mm-s2);
+  background: var(--mm-cta);
+  color: #FFF;
+  text-decoration: none;
+  padding: var(--mm-s3) var(--mm-s6);
+  border-radius: var(--mm-r-full);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: var(--mm-s2);
+  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22);
+  transition: background-color var(--mm-tr-slow);
+}
+
+.mm-empty-cta:hover {
+  background: var(--mm-cta-dark);
+}
+
+.mm-empty-perks {
+  font-size: 11px;
+  color: var(--mm-fg-muted);
+  margin-top: var(--mm-s2);
+}
+
+
+/* ==========================================
+   ZONA 10 — Skeleton (loading state)
+   ========================================== */
+
+.mm-skel {
+  background: linear-gradient(
+    90deg,
+    var(--mm-border-soft) 0%,
+    #F7F7F7 50%,
+    var(--mm-border-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: mm-shimmer 1400ms ease-in-out infinite;
+  border-radius: var(--mm-r-sm);
+}
+
+.mm-skel-item {
+  padding: var(--mm-s5) 0;
+  display: grid;
+  grid-template-columns: 112px 1fr auto;
+  gap: var(--mm-s4);
+  align-items: flex-start;
+  border-bottom: 1px solid var(--mm-border-soft);
+}
+
+.mm-skel-item:last-child {
+  border-bottom: none;
+}
+
+.mm-skel-thumb {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--mm-r);
+}
+
+.mm-skel-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mm-s2);
+  padding-top: var(--mm-s1);
+}
+
+.mm-skel-line {
+  height: 12px;
+}
+
+.mm-skel-line.w-full { width: 100%; }
+.mm-skel-line.w-3-4  { width: 75%; }
+.mm-skel-line.w-1-2  { width: 50%; }
+.mm-skel-line.w-1-3  { width: 33%; }
+
+
+/* ==========================================
+   ZONA 11 — Mobile responsive (< 1024px)
+   ========================================== */
+
+@media (max-width: 1023px) {
+  .mm-items-card {
+    padding: 0 var(--mm-s4);
+  }
+
+  .mm-item {
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-areas:
+      "thumb body"
+      "thumb price"
+      "controls controls";
+    gap: var(--mm-s2) var(--mm-s3);
+    padding: var(--mm-s4) 0;
+  }
+
+  .mm-item-thumb {
+    grid-area: thumb;
+    width: 88px;
+    height: 88px;
+    align-self: start;
+  }
+
+  .mm-item-body {
+    grid-area: body;
+    padding-right: 0;
+  }
+
+  .mm-item-controls {
+    grid-area: controls;
+    margin-top: var(--mm-s2);
+    grid-column: auto;
+    justify-content: space-between;
+  }
+
+  .mm-item-price {
+    grid-area: price;
+    align-items: flex-start;
+    text-align: left;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .mm-item-name {
+    font-size: 14px;
+  }
+
+  .mm-item-price-value {
+    font-size: 15px;
+  }
+
+  /* Touch target compliance: bump qty buttons to 44 on mobile (after base rule) */
+  .mm-qty-btn {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  .mm-qty-value {
+    min-width: 36px;
+    font-size: 15px;
+  }
+
+  .mm-skel-item {
+    grid-template-columns: 88px 1fr;
+  }
+
+  .mm-skel-thumb {
+    width: 88px;
+    height: 88px;
+  }
+
+  .mm-h {
+    font-size: 26px;
+    margin-bottom: var(--mm-s3);
+  }
+
+  .mm-sum-card {
+    padding: var(--mm-s4);
+  }
+
+  .mm-total-value {
+    font-size: 30px;
+  }
+
+  .mm-cep-row {
+    flex-direction: row;
+  }
+
+  .mm-btn-secondary {
+    padding: 0 var(--mm-s4);
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  #mm-layout {
+    padding: var(--mm-s4) var(--mm-s3) var(--mm-s10);
+  }
+  .mm-item-thumb {
+    width: 80px;
+    height: 80px;
+  }
+  .mm-item {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+  .mm-item-name {
+    font-size: 13px;
+  }
+  .mm-item-price-value {
+    font-size: 14px;
+  }
+}
+
+
+/* ==========================================
+   ZONA 12 — Keyframes
+   ========================================== */
+
+@keyframes mm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes mm-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mm-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mm-pop {
+  0%   { opacity: 0; transform: scale(0.94); }
+  60%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mm-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Respeitar prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  #mm-layout *,
+  #mm-layout *::before,
+  #mm-layout *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ==========================================
+   ZONA 13 — Identify / Onepage (outras etapas do checkout)
+   Mantém só o mínimo de CRO copy + tap targets
+   ========================================== */
+
 .checkout-etapa-2 input,
 .checkout-etapa-3 input {
   min-height: 44px !important;
   font-size: 16px !important; /* previne zoom iOS */
 }
 
-
-/* ==========================================
-   CTA FINALIZAR — Estilo consistente
-   Não sobrescreve cor — herda do Magazord
-   Apenas garante tamanho e toque adequado
-   ========================================== */
-
 #checkout-main-area .button-success,
 #checkout-main-area button.button-success {
   min-height: 48px !important;
-  font-size: 16px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
-  border-radius: 8px !important;
+  border-radius: 9999px !important;
   width: 100% !important;
-}
-
-
-/* ==========================================
-   IDENTIFY — Ajustes mínimos
-   (nova estrutura email-first do Magazord)
-   ========================================== */
-
-/* "Nunca postaremos" — esconder */
-.checkout-etapa-2 p:last-of-type {
-  /* Seletor frágil — JS faz o trabalho pesado */
-}
-
-
-/* ==========================================
-   STICKY FOOTER MOBILE — Trust integrado acima do CTA
-   Usa :has() para só virar flex column quando o trust
-   realmente existir dentro do summary-fixed.
-   Herda o resto da base .mm-trust-strip (flex row minimalista).
-   ========================================== */
-
-body .summary-fixed:has(.mm-trust-strip) {
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 8px !important;
-  padding-top: 10px !important;
-}
-
-body .summary-fixed .mm-trust-strip {
-  margin: 0 !important;
-  padding: 0 0 8px !important;
-  width: 100% !important;
-  border-bottom: 1px solid #eef0ee !important;
-  gap: 4px 14px !important;
-}
-
-body .summary-fixed .mm-trust-strip-item {
-  font-size: 10.5px !important;
-}
-
-body .summary-fixed .mm-trust-strip-item svg {
-  width: 12px !important;
-  height: 12px !important;
-}
-
-
-/* ==========================================
-   MOBILE RESPONSIVE — 480px e menor
-   ========================================== */
-
-@media (max-width: 480px) {
-  .mm-shipping-bar {
-    margin: 8px 0 12px !important;
-  }
 }

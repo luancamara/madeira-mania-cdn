@@ -6,7 +6,7 @@
      ============================================= */
 
   /* Inject CSS: global.css */
-  (function(){if(document.getElementById("mm-global-css"))return;var s=document.createElement("style");s.id="mm-global-css";s.textContent="/* =============================================\n   GLOBAL CSS - Madeira Mania (Mobile)\n   Melhorias aplicadas em TODAS as páginas\n\n   Todos com !important para sobrescrever Magazord\n\n   Paleta oficial:\n   - Verde base: #4b664a\n   - Verde claro: #5d765d\n   - Verde escuro: #445c43\n   - Texto: #333333\n   - Fundo: #ffffff\n   ============================================= */\n\n@media (max-width: 768px) {\n\n  /* ==========================================\n     1. OVERFLOW - Impedir scroll horizontal\n     ========================================== */\n\n  html, body {\n    overflow-x: hidden !important;\n  }\n\n  #pagina-produto-react-app,\n  #produto-react-app {\n    overflow-x: hidden !important;\n    max-width: 100vw !important;\n  }\n\n\n  /* ==========================================\n     2. LINKS - Cor dentro da paleta do site\n     ========================================== */\n\n  #pagina-produto-react-app a:not([class*=\"bg-\"]):not([class*=\"text-white\"]):not(header a):not(nav a) {\n    color: #4b664a !important;\n  }\n\n\n  /* ==========================================\n     3. VITRINES — Ocultar estrelas com 0 reviews\n     Aplica em homepage e qualquer vitrine\n     ========================================== */\n\n  .average-rating[data-value=\"0.00\"],\n  .average-rating[data-value=\"0.00\"] + .qtd-aval,\n  .average-rating[data-value=\"0\"] + .qtd-aval,\n  .average-rating[data-value=\"0\"] {\n    display: none !important;\n  }\n\n  /* Ocultar .rating inteiro quando contém apenas 0 */\n  .rating:has(.average-rating[data-value=\"0.00\"]) {\n    display: none !important;\n  }\n\n\n}\n\n\n/* =============================================\n   REGRAS GLOBAIS (todos os viewports)\n   ============================================= */\n\n/* Esconder WhatsApp original — substituído por #mm-floating-whatsapp */\n#popup-msg-whats {\n  display: none !important;\n}\n\n/* --- Absorvido de CA-3 (Arredonda imagens) --- */\nfigure { border-radius: 10% !important; }\n.lazyloaded { margin: 0 !important; }\n\n/* --- Absorvido de CA-12 (Menu desktop verde) --- */\n@media (min-width: 992px) {\n  .menu-link-120 {\n    background-color: #4b664a;\n    color: #fff;\n  }\n}\n\n/* ==========================================\n   FLOATING WHATSAPP — Posição por contexto\n   Mobile: acima do bottom nav (60px)\n   PDP Mobile: override em produto.css (acima da sticky bar)\n   Desktop: canto inferior\n   ========================================== */\n\n/* Default mobile: acima do bottom nav (60px nav + 15px gap) */\n#mm-floating-whatsapp {\n  bottom: 75px !important;\n}\n\n/* Back-to-top: acima do WA (75 + 52 WA + 10 gap) */\n.back-to-top {\n  bottom: 137px !important;\n}\n\n/* Desktop: mais baixo (sem bottom nav) */\n@media (min-width: 769px) {\n  #mm-floating-whatsapp {\n    bottom: 24px !important;\n  }\n  .back-to-top {\n    bottom: 86px !important;\n  }\n}\n\n/* Back-to-top — visual, preservar animação do Magazord (right transition) */\n.back-to-top.opened {\n  border-radius: 50% !important;\n  background: #ffffff !important;\n  border: 1.5px solid #dbe1db !important;\n  opacity: 1 !important;\n  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;\n  width: 44px !important;\n  height: 44px !important;\n  display: flex !important;\n  align-items: center !important;\n  justify-content: center !important;\n}\n\n";document.head.appendChild(s)})();
+  (function(){if(document.getElementById("mm-global-css"))return;var s=document.createElement("style");s.id="mm-global-css";s.textContent="/* =============================================\n   GLOBAL CSS - Madeira Mania (Mobile)\n   Melhorias aplicadas em TODAS as páginas\n\n   Todos com !important para sobrescrever Magazord\n\n   Paleta oficial:\n   - Verde base: #4b664a\n   - Verde claro: #5d765d\n   - Verde escuro: #445c43\n   - Texto: #333333\n   - Fundo: #ffffff\n   ============================================= */\n\n@media (max-width: 768px) {\n\n  /* ==========================================\n     1. OVERFLOW - Impedir scroll horizontal\n     ========================================== */\n\n  html, body {\n    overflow-x: hidden !important;\n  }\n\n  #pagina-produto-react-app,\n  #produto-react-app {\n    overflow-x: hidden !important;\n    max-width: 100vw !important;\n  }\n\n\n  /* ==========================================\n     2. LINKS - Cor dentro da paleta do site\n     ========================================== */\n\n  #pagina-produto-react-app a:not([class*=\"bg-\"]):not([class*=\"text-white\"]):not(header a):not(nav a) {\n    color: #4b664a !important;\n  }\n\n\n  /* ==========================================\n     3. VITRINES — Ocultar estrelas com 0 reviews\n     Aplica em homepage e qualquer vitrine\n     ========================================== */\n\n  .average-rating[data-value=\"0.00\"],\n  .average-rating[data-value=\"0.00\"] + .qtd-aval,\n  .average-rating[data-value=\"0\"] + .qtd-aval,\n  .average-rating[data-value=\"0\"] {\n    display: none !important;\n  }\n\n  /* Ocultar .rating inteiro quando contém apenas 0 */\n  .rating:has(.average-rating[data-value=\"0.00\"]) {\n    display: none !important;\n  }\n\n\n}\n\n\n/* =============================================\n   REGRAS GLOBAIS (todos os viewports)\n   ============================================= */\n\n/* Esconder WhatsApp original — substituído por #mm-floating-whatsapp */\n#popup-msg-whats {\n  display: none !important;\n}\n\n/* --- Absorvido de CA-3 (Arredonda imagens) --- */\nfigure { border-radius: 10% !important; }\n.lazyloaded { margin: 0 !important; }\n\n/* --- Absorvido de CA-12 (Menu desktop verde) --- */\n@media (min-width: 992px) {\n  .menu-link-120 {\n    background-color: #4b664a;\n    color: #fff;\n  }\n}\n\n/* ==========================================\n   FLOATING WHATSAPP — Posição por contexto\n   Mobile: acima do bottom nav (60px)\n   PDP Mobile: override em produto.css (acima da sticky bar)\n   Desktop: canto inferior\n   ========================================== */\n\n/* Default mobile: acima do bottom nav (60px nav + 15px gap) */\n#mm-floating-whatsapp {\n  bottom: 75px !important;\n}\n\n/* Back-to-top: acima do WA (75 + 52 WA + 10 gap) */\n.back-to-top {\n  bottom: 137px !important;\n}\n\n/* Desktop: mais baixo (sem bottom nav) */\n@media (min-width: 769px) {\n  #mm-floating-whatsapp {\n    bottom: 24px !important;\n  }\n  .back-to-top {\n    bottom: 86px !important;\n  }\n}\n\n/* Back-to-top — visual, preservar animação do Magazord (right transition) */\n.back-to-top.opened {\n  border-radius: 50% !important;\n  background: #ffffff !important;\n  border: 1.5px solid #dbe1db !important;\n  opacity: 1 !important;\n  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;\n  width: 44px !important;\n  height: 44px !important;\n  display: flex !important;\n  align-items: center !important;\n  justify-content: center !important;\n}\n\n\n/* =============================================\n   FOOTER REBUILD — Hide Magazord + render ours\n   Aplica em TODO o site (não só checkout)\n   ============================================= */\n\n/* Hide Magazord footer + propaganda globally\n   Aplica em TODAS as páginas — substituído por #mm-footer custom */\n#footer-react-app,\nfooter.ra-footer,\n.ra-footer,\n.footer-04,\n.footer-top,\n.footer-middle,\n.footer-about,\n.footer-bottom,\n.footer-checkout-info,\n.horario-atendimento,\n.magazord-logo-container,\n.icon-magazord {\n  display: none !important;\n}\n\n\n@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap');\n\n\n#mm-footer {\n  /* Tokens locais (não dependem de #checkout-main-area) */\n  --f-bg:        #1F2A1E;  /* very dark olive */\n  --f-bg-2:      #283228;  /* trust strip */\n  --f-bg-3:      #161E15;  /* legal bottom */\n  --f-fg:        #E5E7EB;\n  --f-fg-2:      #C4CCC4;  /* secondary text — bumped pra contrast */\n  --f-fg-3:      #A0AA9F;  /* meta info — WCAG-safe em #283228 (ratio 5.58) */\n  --f-heading:   #FFFFFF;\n  --f-accent:    #A0BCA0;  /* light olive hover */\n  --f-border:    rgba(255, 255, 255, 0.08);\n\n  --f-sans:      'Poppins', system-ui, -apple-system, sans-serif;\n  --f-serif:     'Libre Baskerville', Georgia, serif;\n\n  font-family: var(--f-sans);\n  background: var(--f-bg);\n  color: var(--f-fg);\n  font-size: 14px;\n  line-height: 1.6;\n  padding: 0;\n  margin: 0;\n  width: 100%;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\n#mm-footer * {\n  box-sizing: border-box;\n}\n\n#mm-footer a {\n  color: var(--f-fg);\n  text-decoration: none;\n  transition: color 320ms cubic-bezier(0.16, 1, 0.3, 1);\n}\n\n#mm-footer a:hover {\n  color: var(--f-accent);\n}\n\n#mm-footer a:focus-visible {\n  outline: 2px solid var(--f-accent);\n  outline-offset: 3px;\n  border-radius: 2px;\n}\n\n\n/* ---- Main grid ---- */\n.mm-footer-main {\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: 56px 24px 40px;\n}\n\n.mm-footer-grid {\n  display: grid;\n  grid-template-columns: 1.4fr 1fr 1fr 1fr;\n  gap: 48px;\n}\n\n@media (max-width: 1023px) {\n  .mm-footer-main { padding: 40px 20px 32px; }\n  .mm-footer-grid {\n    grid-template-columns: 1fr 1fr;\n    gap: 36px 24px;\n  }\n}\n\n@media (max-width: 540px) {\n  .mm-footer-grid {\n    grid-template-columns: 1fr;\n    gap: 32px;\n  }\n}\n\n\n/* ---- Brand column ---- */\n.mm-footer-brand {\n  max-width: 360px;\n}\n\n.mm-footer-logo {\n  display: inline-block;\n  margin-bottom: 16px;\n  line-height: 0;\n}\n\n.mm-footer-logo img {\n  height: 48px;\n  width: auto;\n  display: block;\n  filter: brightness(0) invert(1);  /* white version of brand logo */\n  opacity: 0.95;\n}\n\n.mm-footer-tagline {\n  color: var(--f-fg-2);\n  font-size: 13px;\n  line-height: 1.6;\n  margin: 0 0 24px;\n  max-width: 320px;\n}\n\n.mm-footer-social {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n}\n\n.mm-footer-social a {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 44px;\n  height: 44px;\n  border: 1px solid var(--f-border);\n  border-radius: 9999px;\n  color: var(--f-fg);\n  transition: all 320ms cubic-bezier(0.16, 1, 0.3, 1);\n}\n\n.mm-footer-social a:hover {\n  background: var(--f-accent);\n  border-color: var(--f-accent);\n  color: var(--f-bg);\n  transform: translateY(-2px);\n}\n\n.mm-footer-social svg {\n  width: 16px;\n  height: 16px;\n  display: block;\n}\n\n\n/* ---- Section heading ---- */\n.mm-footer-h {\n  font-family: var(--f-serif);\n  font-size: 16px;\n  font-weight: 400;\n  color: var(--f-heading);\n  margin: 0 0 18px;\n  letter-spacing: -0.01em;\n}\n\n\n/* ---- Lists ---- */\n.mm-footer-list {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n\n.mm-footer-list li {\n  display: block;\n}\n\n.mm-footer-list a,\n.mm-footer-list > li > span {\n  font-size: 13px;\n  color: var(--f-fg-2);\n  display: inline-flex;\n  align-items: center;\n  gap: 10px;\n  line-height: 1.4;\n  min-height: 44px;\n  padding: 6px 0;\n  width: auto;\n  -webkit-tap-highlight-color: transparent;\n}\n\n.mm-footer-list a:hover {\n  color: var(--f-accent);\n}\n\n.mm-footer-list svg {\n  flex-shrink: 0;\n  width: 16px;\n  height: 16px;\n  color: var(--f-accent);\n}\n\n.mm-footer-meta {\n  color: var(--f-fg-3) !important;\n  font-size: 12px;\n  font-style: italic;\n  min-height: 0 !important;\n  padding-top: 4px !important;\n}\n\n\n/* ---- Trust strip ---- */\n.mm-footer-trust {\n  background: var(--f-bg-2);\n  border-top: 1px solid var(--f-border);\n  border-bottom: 1px solid var(--f-border);\n}\n\n.mm-footer-trust-inner {\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: 24px;\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  flex-wrap: wrap;\n  gap: 20px 32px;\n}\n\n.mm-footer-trust-item {\n  display: inline-flex;\n  align-items: center;\n  gap: 12px;\n  color: var(--f-fg);\n  font-size: 13px;\n  font-weight: 500;\n  white-space: nowrap;\n}\n\n.mm-footer-trust-item svg {\n  flex-shrink: 0;\n  width: 22px;\n  height: 22px;\n  color: var(--f-accent);\n}\n\n.mm-footer-trust-item strong {\n  display: block;\n  color: var(--f-heading);\n  font-weight: 600;\n  font-size: 13px;\n  line-height: 1.2;\n}\n\n.mm-footer-trust-item small {\n  display: block;\n  color: var(--f-fg-3);\n  font-size: 12px;\n  font-weight: 400;\n  margin-top: 2px;\n}\n\n.mm-footer-trust-text {\n  display: flex;\n  flex-direction: column;\n  line-height: 1.2;\n}\n\n@media (max-width: 1023px) {\n  .mm-footer-trust-inner {\n    padding: 20px;\n    gap: 14px 24px;\n  }\n}\n\n\n/* ---- Bottom strip ---- */\n.mm-footer-bottom {\n  background: var(--f-bg-3);\n}\n\n.mm-footer-bottom-inner {\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: 24px;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 24px;\n  flex-wrap: wrap;\n}\n\n.mm-footer-legal {\n  font-size: 12px;\n  color: var(--f-fg-3);\n  margin: 0;\n  line-height: 1.6;\n  font-weight: 400;\n}\n\n.mm-footer-legal strong {\n  color: var(--f-fg-2);\n  font-weight: 500;\n}\n\n.mm-footer-payments {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  flex-wrap: wrap;\n}\n\n.mm-footer-payments .mm-pay-chip {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 44px;\n  height: 30px;\n  padding: 4px 6px;\n  border-radius: 5px;\n  background: #FFFFFF;\n  border: 1px solid rgba(255, 255, 255, 0.12);\n  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);\n}\n\n.mm-footer-payments .mm-pay-chip img {\n  display: block;\n  max-width: 100%;\n  max-height: 22px;\n  width: auto;\n  height: auto;\n  object-fit: contain;\n}\n\n@media (max-width: 768px) {\n  .mm-footer-bottom-inner {\n    flex-direction: column;\n    align-items: flex-start;\n    padding: 24px 20px;\n    gap: 16px;\n  }\n  .mm-footer-legal { text-align: left; }\n}\n\n\n/* ---- Reduced motion ---- */\n@media (prefers-reduced-motion: reduce) {\n  #mm-footer *,\n  #mm-footer *::before,\n  #mm-footer *::after {\n    transition-duration: 0.01ms !important;\n  }\n}\n\n";document.head.appendChild(s)})();
 
   /* Inject CSS: produto.css */
   (function(){if(document.getElementById("mm-produto-css"))return;var s=document.createElement("style");s.id="mm-produto-css";s.textContent="/* =============================================\n   PRODUTO CSS - Madeira Mania (Mobile)\n   Redesign v2 — Validado por agentes UI/UX\n\n   Seletores validados via Playwright em 13/02/2026\n   Todos com !important + prefixo de alta especificidade\n\n   Paleta:\n   - Verde base: #4b664a\n   - Borda: #dbe1db\n   - Borda sutil: #e8ece8\n   - Texto: #1a1a1a\n   - Texto sec: #555\n   - Fundo seção: #f7f8f7\n   ============================================= */\n\n@media (max-width: 768px) {\n\n\n  /* ==========================================\n     0. CONTAINER — Corrigir overflow horizontal\n     ========================================== */\n\n  #produto-react-app {\n    overflow-x: hidden !important;\n  }\n\n\n  /* ==========================================\n     0b. ABSORVIDO DE CA-6 (Remove padding produto)\n     ========================================== */\n\n  .ra-produto {\n    padding-left: 0px !important;\n  }\n\n  /* ==========================================\n     0c. ABSORVIDO DE CA-9 (Arredonda img produto)\n     ========================================== */\n\n  .gallery-main img {\n    border-radius: 2rem !important;\n  }\n\n  .gallery-main .swiper-slide {\n    border-radius: 2rem !important;\n  }\n\n\n  /* ==========================================\n     1. GALERIA - Full-bleed edge-to-edge\n     ========================================== */\n\n  #produto-react-app #block-imagem {\n    margin-left: -8px !important;\n    margin-right: -8px !important;\n    width: calc(100% + 16px) !important;\n  }\n\n  #produto-react-app .gallery-container {\n    max-width: 100vw !important;\n    overflow: hidden !important;\n  }\n\n  #produto-react-app .gallery-main {\n    width: 100% !important;\n    max-width: 100% !important;\n    margin-left: 0 !important;\n    margin-right: 0 !important;\n  }\n\n  /* Esconder setas de navegação — swipe natural */\n  #produto-react-app .gallery-main > .button-prev,\n  #produto-react-app .gallery-main > .button-next {\n    display: none !important;\n  }\n\n  /* Esconder dots do swiper — substituído por counter textual #mm-gallery-counter */\n  #produto-react-app .swiper-pagination {\n    display: none !important;\n  }\n\n\n  /* ==========================================\n     2. BREADCRUMB\n     ========================================== */\n\n  #produto-react-app .breadcrumb a {\n    color: #888 !important;\n  }\n\n  #produto-react-app .breadcrumb .separator {\n    color: #ccc !important;\n  }\n\n  #produto-react-app .bread-produto .text-secondary-700 {\n    color: #555 !important;\n    font-weight: 500 !important;\n  }\n\n\n  /* ==========================================\n     3. TÍTULO\n     ========================================== */\n\n  #produto-react-app h1.text-xl {\n    font-size: 22px !important;\n    line-height: 1.3 !important;\n    color: #1a1a1a !important;\n    letter-spacing: -0.3px !important;\n  }\n\n  /* Estrelas — discretas quando vazio */\n  #produto-react-app .avaliacoes .star-back {\n    opacity: 0.4 !important;\n  }\n\n\n  /* ==========================================\n     4. PREÇO\n     ========================================== */\n\n  #produto-react-app .preco-principal {\n    max-width: 100% !important;\n  }\n\n  /* Badge desconto — verde sólido */\n  #produto-react-app .porcentagem-desconto,\n  #produto-react-app [class*=\"badge-desconto\"],\n  #produto-react-app [class*=\"desconto-badge\"] {\n    background: #2e7d32 !important;\n    color: #ffffff !important;\n    font-weight: 700 !important;\n    border-radius: 6px !important;\n    padding: 3px 8px !important;\n    font-size: 13px !important;\n  }\n\n  /* Preço antigo */\n  #produto-react-app .preco-de,\n  #produto-react-app [class*=\"preco-de\"] {\n    color: #999 !important;\n    font-size: 14px !important;\n  }\n\n  /* Parcelamento */\n  #produto-react-app .valor-parcelado {\n    font-size: 14px !important;\n    color: #555 !important;\n  }\n\n  /* Link \"Mais formas de pagamento\" */\n  #produto-react-app .form-pag-link {\n    border-color: #dbe1db !important;\n    color: #4b664a !important;\n    border-radius: 8px !important;\n    font-size: 13px !important;\n    font-weight: 500 !important;\n  }\n\n\n  /* ==========================================\n     5. VARIAÇÕES — Swatches + Pills\n     ========================================== */\n\n  /* Swatches de cor — arredondar apenas a imagem */\n  #produto-react-app .variation-color-swatch-image {\n    border-radius: 16px !important;\n  }\n\n  #produto-react-app .variation-pill-label-value {\n    font-weight: 600 !important;\n    color: #1a1a1a !important;\n  }\n\n  /* Pills — formato pill verdadeiro */\n  #produto-react-app .variation-pill {\n    border-radius: 9999px !important;\n    min-width: 80px !important;\n    min-height: 44px !important;\n    font-size: 14px !important;\n    font-weight: 500 !important;\n    display: inline-flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n    padding: 0 20px !important;\n    transition: all 0.2s ease !important;\n  }\n\n  /* Pill NÃO selecionado */\n  #produto-react-app .variation-pill[tabindex=\"-1\"] {\n    border: 1.5px solid #dbe1db !important;\n    background: #ffffff !important;\n    color: #333 !important;\n  }\n\n  /* Pill selecionado — manter pill + verde do Magazord */\n  #produto-react-app .variation-pill[tabindex=\"0\"] {\n    border-radius: 9999px !important;\n  }\n\n\n  /* ==========================================\n     6. SEÇÃO DE COMPRA — Layout compacto\n     ========================================== */\n\n  #produto-react-app .informacoes-compra-produto {\n    gap: 8px !important;\n    padding-top: 2px !important;\n    padding-bottom: 12px !important;\n    max-width: 100% !important;\n    box-sizing: border-box !important;\n    overflow-x: hidden !important;\n  }\n\n  /* Eliminar gap do grid wrapper entre galeria e info */\n  #produto-react-app > .grid {\n    gap: 0 !important;\n    padding-top: 0 !important;\n  }\n\n  /* Colapsar primeiro filho vazio do info (breadcrumb oculto no mobile) */\n  #produto-react-app .informacoes-compra-produto > .flex.flex-col.gap-space-16:first-child {\n    gap: 0 !important;\n    margin: 0 !important;\n    padding: 0 !important;\n    display: none !important;\n  }\n\n  /* Separador antes das derivações */\n  #produto-react-app .derivacoes-produto {\n    border-top: 1px solid #f0f0f0 !important;\n    padding-top: 10px !important;\n    padding-left: 0 !important;\n    padding-right: 0 !important;\n  }\n\n\n  /* ==========================================\n     7. QUANTIDADE\n     ========================================== */\n\n  #produto-react-app #area-comprar {\n    gap: 12px !important;\n  }\n\n  #produto-react-app .quantidade {\n    border-radius: 10px !important;\n    border-color: #dbe1db !important;\n    height: 44px !important;\n  }\n\n  #produto-react-app .quantidade button,\n  #produto-react-app .quantidade input {\n    min-width: 40px !important;\n    min-height: 42px !important;\n    font-size: 16px !important;\n  }\n\n\n  /* ==========================================\n     8. BOTÕES DE AÇÃO — Linha compacta\n     O JS cria um container #mm-action-row\n     com Favoritos (ícone) + WhatsApp + Share (ícone)\n     ========================================== */\n\n  /* Row criada pelo JS — estilos globais fora do @media */\n\n  /* Favoritos — ícone compacto */\n  #produto-react-app #mm-action-row .salvar-favoritos {\n    flex: 0 0 auto !important;\n    width: auto !important;\n  }\n\n  #produto-react-app #mm-action-row .salvar-favoritos button {\n    width: 46px !important;\n    min-width: 46px !important;\n    height: 42px !important;\n    padding: 0 !important;\n    border: 1.5px solid #dbe1db !important;\n    border-radius: 10px !important;\n    background: #ffffff !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n  }\n\n  #produto-react-app #mm-action-row .salvar-favoritos button svg {\n    width: 20px !important;\n    height: 20px !important;\n    color: #777 !important;\n    stroke: #777 !important;\n  }\n\n  /* Compartilhar — ícone compacto */\n  #produto-react-app #mm-action-row .compartilhar-produto {\n    flex: 0 0 auto !important;\n    width: auto !important;\n  }\n\n  #produto-react-app #mm-action-row .compartilhar-produto button {\n    width: 46px !important;\n    min-width: 46px !important;\n    height: 42px !important;\n    padding: 0 !important;\n    border: 1.5px solid #dbe1db !important;\n    border-radius: 10px !important;\n    background: #ffffff !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n  }\n\n  #produto-react-app #mm-action-row .compartilhar-produto button svg {\n    width: 18px !important;\n    height: 18px !important;\n    color: #777 !important;\n  }\n\n  /* Fallback: se JS não rodou, manter botões decentes */\n  #produto-react-app .salvar-favoritos button {\n    border: 1.5px solid #dbe1db !important;\n    border-radius: 10px !important;\n    color: #555 !important;\n    font-size: 14px !important;\n    font-weight: 500 !important;\n    padding: 10px 16px !important;\n    background: #ffffff !important;\n  }\n\n  #produto-react-app .informacoes-compra-produto > .flex.gap-space-4 {\n    width: 100% !important;\n  }\n\n  #produto-react-app .compartilhar-produto {\n    width: 100% !important;\n    flex: 1 !important;\n  }\n\n  #produto-react-app .compartilhar-produto button {\n    width: 100% !important;\n    border: 1.5px solid #dbe1db !important;\n    border-radius: 10px !important;\n    color: #555 !important;\n    font-size: 14px !important;\n    font-weight: 500 !important;\n    padding: 10px 16px !important;\n    background: #ffffff !important;\n    justify-content: center !important;\n  }\n\n\n  /* ==========================================\n     9. FRETE\n     ========================================== */\n\n  #produto-react-app .calculo-frete {\n    border-top: 1px solid #f0f0f0 !important;\n    padding-top: 14px !important;\n  }\n\n  #produto-react-app .label-frete span {\n    font-weight: 500 !important;\n    color: #1a1a1a !important;\n  }\n\n  #produto-react-app .calculo-frete input {\n    border-radius: 10px !important;\n    border-color: #dbe1db !important;\n    font-size: 15px !important;\n  }\n\n  #produto-react-app .calculo-frete a {\n    color: #4b664a !important;\n    font-size: 13px !important;\n  }\n\n  #produto-react-app .area-calculo button {\n    border-radius: 10px !important;\n    font-weight: 500 !important;\n  }\n\n\n  /* ==========================================\n     10. WHATSAPP FLUTUANTE\n     Mover acima da sticky bar + bottom nav\n     Sticky bar: bottom 60px, h=79px → topo em 139px\n     ========================================== */\n\n  #popup-msg-whats {\n    bottom: 152px !important;\n  }\n\n\n  /* ==========================================\n     11. STICKY BAR\n     ========================================== */\n\n  /* PDP Mobile: WA e back-to-top acima da sticky bar\n     Bottom nav: 60px + Sticky bar: 77px = 137px → WA a 152px, BTT a 214px */\n  #mm-floating-whatsapp {\n    bottom: 152px !important;\n  }\n\n  .back-to-top {\n    bottom: 214px !important;\n  }\n\n  #produto-react-app .comprar-fixo {\n    padding: 10px 16px !important;\n    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08) !important;\n    background: #ffffff !important;\n    border-top: 1px solid #f0f0f0 !important;\n    z-index: 99 !important;\n    gap: 12px !important;\n  }\n\n  #produto-react-app .comprar-fixo .price-fixed {\n    flex-shrink: 0 !important;\n  }\n\n  #produto-react-app .comprar-fixo > button {\n    border-radius: 12px !important;\n    font-size: 16px !important;\n    font-weight: 600 !important;\n    padding: 14px 24px !important;\n    flex: 1 !important;\n    max-width: 200px !important;\n  }\n\n  /* Preço riscado na sticky bar */\n  #produto-react-app .comprar-fixo #mm-sticky-old-price {\n    text-decoration: line-through !important;\n    color: #999 !important;\n    font-size: 11px !important;\n    line-height: 1.2 !important;\n    display: block !important;\n    margin-bottom: 1px !important;\n  }\n\n\n  /* ==========================================\n     12. DESCRIÇÃO — Tipografia\n     ========================================== */\n\n  #pagina-produto-react-app .descricao-produto.accordion {\n    border-top: 1px solid #f0f0f0 !important;\n  }\n\n  #pagina-produto-react-app .descricao-produto h2,\n  #pagina-produto-react-app .descricao-produto h3 {\n    font-size: 18px !important;\n    color: #1a1a1a !important;\n    margin-top: 20px !important;\n    margin-bottom: 10px !important;\n    line-height: 1.4 !important;\n  }\n\n  #pagina-produto-react-app .descricao-produto p {\n    font-size: 15px !important;\n    line-height: 1.7 !important;\n    color: #444 !important;\n  }\n\n  #pagina-produto-react-app .descricao-produto li {\n    font-size: 15px !important;\n    line-height: 1.7 !important;\n    color: #444 !important;\n  }\n\n\n  /* ==========================================\n     13. ACCORDIONS — Separadores\n     ========================================== */\n\n  #pagina-produto-react-app .recomendacao-ctn-0.accordion,\n  #pagina-produto-react-app .produtos-relacionados.accordion {\n    border-top: 1px solid #f0f0f0 !important;\n  }\n\n  /* Ocultar avaliações vazias (0) em cross-sell e relacionados */\n  .recomendacao-ctn-0 .average-rating[data-value=\"0.00\"],\n  .recomendacao-ctn-0 .average-rating[data-value=\"0.00\"] ~ .qtd-aval,\n  .produtos-relacionados .average-rating[data-value=\"0.00\"],\n  .produtos-relacionados .average-rating[data-value=\"0.00\"] ~ .qtd-aval {\n    display: none !important;\n  }\n\n\n  /* ==========================================\n     14. AVALIAÇÕES — Verde\n     ========================================== */\n\n  .container-avaliacoes button,\n  .container-avaliacoes a[class*=\"btn\"] {\n    background-color: #4b664a !important;\n    border-color: #4b664a !important;\n    border-radius: 12px !important;\n    font-weight: 500 !important;\n  }\n\n\n  /* ==========================================\n     15. TAGS + LINKS\n     ========================================== */\n\n  #pagina-produto-react-app [class*=\"tags\"] a {\n    color: #4b664a !important;\n  }\n\n}\n\n\n/* =============================================\n   REGRAS GLOBAIS (mobile + desktop)\n   Fora do @media para aplicar em todos os viewports\n   ============================================= */\n\n/* Ocultar botão WhatsApp original (substituído por #mm-whatsapp-cta) */\n#produto-react-app .exibe-botao-whatsapp {\n  display: none !important;\n}\n\n/* Ocultar badge de desconto da galeria (% inconsistente com preço PIX) */\n#produto-react-app .tag-1.tag-produto {\n  display: none !important;\n}\n\n/* Reviews reformatados — reset do estilo original */\n#produto-react-app .avaliacoes {\n  display: flex !important;\n  align-items: center !important;\n}\n\n/* WhatsApp CTA inline */\n#produto-react-app #mm-whatsapp-cta {\n  display: flex !important;\n  align-items: center !important;\n  justify-content: center !important;\n  gap: 8px !important;\n  width: 100% !important;\n  height: 44px !important;\n  padding: 0 16px !important;\n  background: #ffffff !important;\n  color: #4b664a !important;\n  border: 1.5px solid #4b664a !important;\n  border-radius: 10px !important;\n  text-decoration: none !important;\n  font-size: 14px !important;\n  font-weight: 500 !important;\n  font-family: inherit !important;\n  transition: all 0.15s ease !important;\n  cursor: pointer !important;\n  -webkit-tap-highlight-color: transparent !important;\n  box-sizing: border-box !important;\n}\n\n#produto-react-app #mm-whatsapp-cta:hover {\n  background: #f7f8f7 !important;\n}\n\n/* Action row — flex em todos os viewports */\n#produto-react-app #mm-action-row {\n  display: flex !important;\n  gap: 8px !important;\n  align-items: stretch !important;\n  width: 100% !important;\n}\n\n\n/* =============================================\n   DESKTOP OVERRIDES (min-width: 769px)\n   Ajustes para layout 2-colunas do desktop\n   ============================================= */\n\n@media (min-width: 769px) {\n\n  /* Limitar largura dos elementos injetados na coluna de info */\n  #produto-react-app #mm-trust-badges,\n  #produto-react-app #mm-action-row,\n  #produto-react-app #mm-whatsapp-cta,\n  #produto-react-app #mm-frete-progress,\n  #produto-react-app #mm-trust-block,\n  #produto-react-app #mm-inline-payments,\n  #produto-react-app #mm-mini-specs,\n  #produto-react-app #mm-envio-badge,\n  #produto-react-app #mm-stock-indicator,\n  #produto-react-app #mm-brand,\n  #produto-react-app .calculo-frete {\n    max-width: 36rem !important;\n  }\n\n  /* WhatsApp CTA — largura automática no desktop */\n  #produto-react-app #mm-whatsapp-cta {\n    width: fit-content !important;\n    padding: 0 24px !important;\n  }\n\n  /* Action row — layout e botões no desktop */\n  #produto-react-app #mm-action-row {\n    gap: 8px !important;\n  }\n\n  #produto-react-app #mm-action-row .salvar-favoritos,\n  #produto-react-app #mm-action-row .compartilhar-produto {\n    flex: 0 0 auto !important;\n    width: auto !important;\n  }\n\n  #produto-react-app #mm-action-row .salvar-favoritos button,\n  #produto-react-app #mm-action-row .compartilhar-produto button {\n    width: 44px !important;\n    min-width: 44px !important;\n    height: 42px !important;\n    padding: 0 !important;\n    border: 1.5px solid #dbe1db !important;\n    border-radius: 10px !important;\n    background: #ffffff !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n    cursor: pointer !important;\n    color: #777 !important;\n  }\n\n  #produto-react-app #mm-action-row .salvar-favoritos button:hover,\n  #produto-react-app #mm-action-row .compartilhar-produto button:hover {\n    background: #f7f8f7 !important;\n  }\n\n  /* Trust badges — alinhar à esquerda no desktop */\n  #produto-react-app #mm-trust-badges {\n    justify-content: flex-start !important;\n  }\n\n  /* Desktop sticky bar */\n  #mm-desktop-sticky button {\n    transition: background 0.15s ease !important;\n  }\n  #mm-desktop-sticky button:hover {\n    background: #3d5340 !important;\n  }\n\n}\n\n\n/* =============================================\n   DESKTOP PDP — Otimizações de conversão\n   Compactar a coluna de info para CTA no fold\n   ============================================= */\n\n@media (min-width: 769px) {\n\n  /* Reduzir gap da área de compra desktop (Magazord default gap-space-40 = 40px) */\n  #produto-react-app .informacoes-compra-produto,\n  #produto-react-app .informacoes-compra-produto.gap-space-40 {\n    gap: 12px !important;\n    row-gap: 12px !important;\n  }\n\n  /* Eliminar gap entre avaliações e próximo elemento */\n  #produto-react-app .informacoes-compra-produto > .flex.flex-col.gap-space-16:first-child {\n    gap: 4px !important;\n  }\n\n  /* Compactar derivações */\n  #produto-react-app .derivacoes-produto {\n    padding-top: 8px !important;\n    padding-bottom: 4px !important;\n  }\n\n  /* Mini specs mais compactos */\n  #produto-react-app #mm-mini-specs {\n    padding: 4px 0 !important;\n  }\n\n  /* Botão comprar — mais destacado */\n  #produto-react-app #area-comprar button[class*=\"bg-primary\"] {\n    font-size: 16px !important;\n    font-weight: 600 !important;\n    padding: 14px 32px !important;\n    border-radius: 12px !important;\n  }\n\n  /* Trust block full-width desktop */\n  #mm-trust-block {\n    max-width: 1200px !important;\n    margin-left: auto !important;\n    margin-right: auto !important;\n  }\n\n  /* Action row desktop — ícones pequenos, inline */\n  #produto-react-app #mm-action-row {\n    gap: 8px !important;\n  }\n\n  /* WhatsApp CTA desktop — menos destaque, ação secundária */\n  #produto-react-app #mm-whatsapp-cta {\n    height: 38px !important;\n    font-size: 13px !important;\n  }\n\n}\n";document.head.appendChild(s)})();
@@ -18,7 +18,7 @@
   (function(){if(document.getElementById("mm-cart-sheet-css"))return;var s=document.createElement("style");s.id="mm-cart-sheet-css";s.textContent="/* =============================================\n   CARRINHO MOBILE - Override Magazord v2\n   Referencia: Figma \"Cart List\" - Furniture eCommerce\n\n   COMO APLICAR NO MAGAZORD:\n   - Conteudo Adicional > Novo\n   - Posicao: Cabecalho Superior\n   - Filtro dispositivo: Mobile\n   - Aplicar em: TODAS AS PAGINAS (nao apenas Home)\n\n   SELETORES: baseados no DOM mobile real do Magazord\n   #cart-preview-area como raiz\n\n   APIs Magazord descobertas (referencia):\n   - Zord.checkout.adicionaQuantidade(dataId)\n   - Zord.checkout.removeQuantidade(dataId, true)\n   - Zord.checkout.deleteItem(dataId)\n   - Zord.checkout.atualizaPreview()\n   - Zord.checkout.atualizaContadorCarrinho()\n   - .cart-remove-item[data-id] = ID interno do item\n   ============================================= */\n\n@media (max-width: 768px) {\n\n  /* ==========================================\n     SITE HEADER - esconder quando carrinho aberto\n     ========================================== */\n\n  #cart-preview-area .shadow-overlay {\n    background: #f4f4f4 !important;\n  }\n\n  /* Esconder header APENAS quando overlay do CARRINHO abre\n     - Usa .content-cart como classe exclusiva do overlay do carrinho (descendente, não :has aninhado)\n     - Não afeta: Menu (z-20), Pesquisa (tem #frm-search), Favoritos (não tem .content-cart) */\n  header:has(.z-\\[9999\\].translate-x-\\[0\\] .content-cart) > .z-40 {\n    display: none !important;\n  }\n\n  header:has(.z-\\[9999\\].translate-x-\\[0\\] .content-cart) > .fixed.bottom-0 {\n    visibility: hidden !important;\n    height: 0 !important;\n    min-height: 0 !important;\n    overflow: hidden !important;\n    padding: 0 !important;\n  }\n\n  header:has(.z-\\[9999\\].translate-x-\\[0\\] .content-cart) > .fixed.bottom-0 #cart-preview-area,\n  header:has(.z-\\[9999\\].translate-x-\\[0\\] .content-cart) > .fixed.bottom-0 #cart-preview-area .h-dvh,\n  header:has(.z-\\[9999\\].translate-x-\\[0\\] .content-cart) > .fixed.bottom-0 #cart-preview-area .h-dvh > div {\n    visibility: visible !important;\n  }\n\n  /* ==========================================\n     HEADER - fundo cinza, titulo + fechar\n     ========================================== */\n  #cart-preview-area .border-b.border-solid {\n    background: #f4f4f4 !important;\n    border-bottom: none !important;\n    padding: 16px 20px !important;\n    min-height: 56px !important;\n  }\n\n  #cart-preview-area .border-b.border-solid > button {\n    font-size: 16px !important;\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n    background: transparent !important;\n    box-shadow: none !important;\n    padding: 0 !important;\n  }\n\n  #cart-preview-area .border-b.border-solid > button span {\n    font-size: 16px !important;\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n  }\n\n  #cart-preview-area .border-b.border-solid > button svg {\n    display: none !important;\n  }\n\n  /* Botao fechar - circulo branco com sombra */\n  #cart-preview-area .border-b.border-solid > div {\n    width: 40px !important;\n    height: 40px !important;\n    background: #ffffff !important;\n    border-radius: 50% !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;\n    cursor: pointer !important;\n    padding: 0 !important;\n    border: none !important;\n  }\n\n  #cart-preview-area .border-b.border-solid > div span {\n    display: none !important;\n  }\n\n  #cart-preview-area .border-b.border-solid > div svg {\n    width: 16px !important;\n    height: 16px !important;\n  }\n\n  /* ==========================================\n     AREA DE CONTEUDO (lista de itens)\n     ========================================== */\n  #cart-preview-area .content-cart {\n    background: #f4f4f4 !important;\n    padding: 8px 20px 16px !important;\n    gap: 14px !important;\n  }\n\n  /* ==========================================\n     CARD DO PRODUTO\n     ========================================== */\n  #cart-preview-area .cart-item {\n    background: #ffffff !important;\n    border-radius: 16px !important;\n    padding: 12px !important;\n    min-height: auto !important;\n    box-shadow: none !important;\n    border: none !important;\n    overflow: hidden !important;\n    position: relative !important;\n  }\n\n  #cart-preview-area .cart-item > div {\n    gap: 12px !important;\n    padding: 0 !important;\n    align-items: flex-start !important;\n    min-height: auto !important;\n  }\n\n  /* ==========================================\n     IMAGEM DO PRODUTO - quadrada com bordas arredondadas\n     ========================================== */\n  #cart-preview-area .cart-item .prod-img {\n    width: 90px !important;\n    height: 90px !important;\n    min-width: 90px !important;\n    min-height: 90px !important;\n    max-width: 90px !important;\n    max-height: 90px !important;\n    border-radius: 12px !important;\n    overflow: hidden !important;\n    background: #ffffff !important;\n    border: none !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n    margin-top: 0 !important;\n    flex-shrink: 0 !important;\n  }\n\n  #cart-preview-area .cart-item .prod-img figure {\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n    width: 100% !important;\n    height: 100% !important;\n    overflow: hidden !important;\n    margin: 0 !important;\n  }\n\n  #cart-preview-area .cart-item .prod-img img {\n    width: 100% !important;\n    height: 100% !important;\n    max-height: 100% !important;\n    object-fit: cover !important;\n    border-radius: 0 !important;\n    mix-blend-mode: normal !important;\n  }\n\n  /* ==========================================\n     INFO DO PRODUTO\n     ========================================== */\n\n  #cart-preview-area .cart-item .prod-nome {\n    font-size: 14px !important;\n    font-weight: 700 !important;\n    color: #222222 !important;\n    line-height: 1.3 !important;\n    display: -webkit-box !important;\n    -webkit-line-clamp: 2 !important;\n    -webkit-box-orient: vertical !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    margin-bottom: 2px !important;\n  }\n\n  #cart-preview-area .cart-item .derivacao {\n    display: none !important;\n  }\n\n  /* Container preco + quantidade */\n  #cart-preview-area .cart-item .flex.items-center.justify-between {\n    flex-direction: column-reverse !important;\n    align-items: flex-start !important;\n    gap: 6px !important;\n  }\n\n  /* Valor do produto */\n  #cart-preview-area .cart-item .valor {\n    font-size: 14px !important;\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n    min-width: auto !important;\n    flex: none !important;\n    justify-content: flex-start !important;\n  }\n\n  #cart-preview-area .cart-item .valor span {\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n    font-size: 14px !important;\n  }\n\n  /* ==========================================\n     QUANTIDADE - botoes reais injetados pelo JS\n     ========================================== */\n  #cart-preview-area .cart-item .qtd-value {\n    display: flex !important;\n    align-items: center !important;\n    gap: 0 !important;\n    font-size: 0 !important;\n    width: auto !important;\n  }\n\n  /* Esconder pseudo-elements decorativos antigos (specificity alta para sobrescrever Magazord CDN) */\n  body #cart-preview-area .cart-item .qtd-value.flex.justify-center::before,\n  body #cart-preview-area .cart-item .qtd-value.flex.justify-center::after,\n  #cart-preview-area .content-cart .cart-item .qtd-value::before,\n  #cart-preview-area .content-cart .cart-item .qtd-value::after {\n    display: none !important;\n    content: none !important;\n    width: 0 !important;\n    height: 0 !important;\n    visibility: hidden !important;\n  }\n\n  /* Esconder span original \"Qtde: N\" e seus pseudo-elements decorativos */\n  #cart-preview-area .cart-item .qtd-value > span:not(.qty-display):not(.cart-remove-item) {\n    display: none !important;\n  }\n\n  /* Botoes reais de quantidade (injetados pelo JS) */\n  #cart-preview-area .qty-btn-minus,\n  #cart-preview-area .qty-btn-plus {\n    width: 30px !important;\n    height: 30px !important;\n    border: none !important;\n    cursor: pointer !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n    font-size: 16px !important;\n    font-weight: 600 !important;\n    -webkit-tap-highlight-color: transparent !important;\n    outline: none !important;\n    padding: 0 !important;\n    line-height: 1 !important;\n  }\n\n  #cart-preview-area .qty-btn-minus {\n    background: transparent !important;\n    color: #1a1a1a !important;\n    font-size: 18px !important;\n  }\n\n  #cart-preview-area .qty-btn-plus {\n    background: #1b7a45 !important;\n    color: #ffffff !important;\n    border-radius: 8px !important;\n    font-size: 16px !important;\n  }\n\n  #cart-preview-area .qty-btn-plus:active {\n    background: #156335 !important;\n    transform: scale(0.95) !important;\n  }\n\n  #cart-preview-area .qty-display {\n    width: 28px !important;\n    text-align: center !important;\n    font-size: 15px !important;\n    font-weight: 600 !important;\n    color: #1a1a1a !important;\n  }\n\n  /* Trash icon - posicao absoluta no card */\n  #cart-preview-area .cart-item .cart-remove-item {\n    position: absolute !important;\n    top: 12px !important;\n    right: 12px !important;\n    opacity: 0.3 !important;\n    padding: 0 !important;\n    cursor: pointer !important;\n  }\n\n  #cart-preview-area .cart-item .cart-remove-item svg {\n    width: 14px !important;\n    height: 14px !important;\n  }\n\n  /* ==========================================\n     AREA INFERIOR - FINALIZAR COMPRA\n     ========================================== */\n  #cart-preview-area .border-t.border-solid {\n    background: #ffffff !important;\n    border-radius: 32px 32px 0 0 !important;\n    padding: 24px 24px 28px !important;\n    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.05) !important;\n    border-top: none !important;\n  }\n\n  #cart-preview-area .title.boleto {\n    font-size: 14px !important;\n    color: #999999 !important;\n    font-weight: 400 !important;\n  }\n\n  #cart-preview-area .forma-pix {\n    padding: 4px 0 0 !important;\n  }\n\n  #cart-preview-area .valor-pix {\n    font-size: 22px !important;\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n  }\n\n  #cart-preview-area .valor-pix span {\n    font-size: 22px !important;\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n  }\n\n  /* Texto de parcelamento no total (injetado pelo JS) */\n  #cart-preview-area .installment-total {\n    font-size: 13px !important;\n    font-weight: 400 !important;\n    color: #999999 !important;\n    margin-top: 2px !important;\n  }\n\n  /* ==========================================\n     BOTAO FINALIZAR COMPRA\n     ========================================== */\n  #cart-preview-area .finalizar-compra {\n    background: #1b7a45 !important;\n    color: #ffffff !important;\n    border-radius: 63px !important;\n    padding: 16px 24px !important;\n    font-size: 16px !important;\n    font-weight: 700 !important;\n    letter-spacing: 0 !important;\n    text-transform: none !important;\n    border: none !important;\n    width: 100% !important;\n    text-align: center !important;\n    margin-top: 8px !important;\n  }\n\n  #cart-preview-area .finalizar-compra:active {\n    background: #156335 !important;\n    transform: scale(0.98) !important;\n  }\n\n  #cart-preview-area .finalizar-compra span {\n    font-size: 16px !important;\n    font-weight: 700 !important;\n    color: #ffffff !important;\n  }\n\n  #cart-preview-area .finalizar-compra svg path {\n    fill: #ffffff !important;\n  }\n\n  /* ==========================================\n     DELETE CONFIRM MODAL\n     ========================================== */\n  .mm-confirm-overlay {\n    position: fixed !important;\n    inset: 0 !important;\n    z-index: 99999 !important;\n    background: rgba(0,0,0,0.4) !important;\n    display: flex !important;\n    align-items: flex-end !important;\n    justify-content: center !important;\n    animation: mmConfirmIn 0.2s ease !important;\n    -webkit-backdrop-filter: blur(4px) !important;\n    backdrop-filter: blur(4px) !important;\n  }\n\n  @keyframes mmConfirmIn {\n    from { opacity: 0; }\n    to { opacity: 1; }\n  }\n\n  @keyframes mmSlideUp {\n    from { transform: translateY(100%); }\n    to { transform: translateY(0); }\n  }\n\n  .mm-confirm-card {\n    background: #ffffff !important;\n    border-radius: 24px 24px 0 0 !important;\n    padding: 28px 24px !important;\n    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;\n    width: 100% !important;\n    max-width: 420px !important;\n    animation: mmSlideUp 0.25s ease !important;\n  }\n\n  .mm-confirm-title {\n    font-size: 17px !important;\n    font-weight: 700 !important;\n    color: #1a1a1a !important;\n    margin: 0 0 6px !important;\n  }\n\n  .mm-confirm-desc {\n    font-size: 14px !important;\n    color: #6b7280 !important;\n    margin: 0 0 20px !important;\n    line-height: 1.4 !important;\n  }\n\n  .mm-confirm-actions {\n    display: flex !important;\n    gap: 10px !important;\n  }\n\n  .mm-confirm-btn {\n    flex: 1 !important;\n    height: 48px !important;\n    border: none !important;\n    border-radius: 14px !important;\n    font-size: 15px !important;\n    font-weight: 600 !important;\n    cursor: pointer !important;\n    -webkit-tap-highlight-color: transparent !important;\n  }\n\n  .mm-confirm-btn:active {\n    transform: scale(0.97) !important;\n  }\n\n  .mm-confirm-btn-cancel {\n    background: #f3f4f6 !important;\n    color: #1a1a1a !important;\n  }\n\n  .mm-confirm-btn-delete {\n    background: #ef4444 !important;\n    color: #ffffff !important;\n  }\n\n}";document.head.appendChild(s)})();
 
   /* Inject CSS: checkout-cro.css */
-  (function(){if(document.getElementById("mm-checkout-cro-css"))return;var s=document.createElement("style");s.id="mm-checkout-cro-css";s.textContent="/* =============================================\n   CHECKOUT CRO - Madeira Mania\n   Melhorias de conversão no checkout\n\n   Design system:\n   - Paleta: herda do site (#4b664a verde, #2e7d32 trust)\n   - Font mínimo: 16px inputs, 14px body, 12px micro\n   - Touch targets: min 44px height\n   - Spacing: 8/12/16/24px (8dp grid)\n   - Border radius: 8px cards, herda botões\n   - Ícones: SVG stroke 2px (sem emojis)\n   - Regras: UI/UX Pro Max checklist\n\n   Aplica em: /checkout/* (todas as etapas)\n   Dispositivo: TODOS\n   ============================================= */\n\n\n/* ==========================================\n   TRUST STRIP — Inline minimalista (integrado)\n   Sem background, sem borda, sem card-in-card.\n   Flex row, items lado-a-lado, wrap gracioso se faltar espaço.\n   Usado em cart (near CTA), identify e onepage.\n   ========================================== */\n\n.mm-trust-strip {\n  display: flex !important;\n  flex-direction: row !important;\n  align-items: center !important;\n  justify-content: center !important;\n  flex-wrap: wrap !important;\n  gap: 6px 18px !important;\n  margin: 10px 0 !important;\n  padding: 0 !important;\n  background: transparent !important;\n  border: none !important;\n  border-radius: 0 !important;\n  font-family: inherit !important;\n  /* Reset grid da versão anterior (caso alguém ainda tenha cache) */\n  grid-template-columns: none !important;\n}\n\n.mm-trust-strip-item {\n  display: inline-flex !important;\n  align-items: center !important;\n  gap: 5px !important;\n  font-size: 11px !important;\n  font-weight: 500 !important;\n  color: #6b7f6b !important;\n  white-space: nowrap !important;\n  line-height: 1 !important;\n}\n\n/* Reset do nth-child da versão grid — todos items iguais agora */\n.mm-trust-strip-item:nth-child(3) {\n  grid-column: auto !important;\n  justify-content: flex-start !important;\n}\n\n.mm-trust-strip-item svg {\n  flex-shrink: 0 !important;\n  width: 13px !important;\n  height: 13px !important;\n  stroke: #2e7d32 !important;\n}\n\n.mm-trust-strip-item b {\n  font-weight: 500 !important;\n  color: #6b7f6b !important;\n}\n\n\n/* ==========================================\n   BARRA FRETE GRÁTIS — Minimalista, sem card\n   Inserida antes de #main-cart-area, full-width.\n   ========================================== */\n\n.mm-shipping-bar {\n  display: block !important;\n  padding: 0 !important;\n  margin: 0 0 16px !important;\n  background: transparent !important;\n  border: none !important;\n  border-radius: 0 !important;\n  font-family: inherit !important;\n  width: 100% !important;\n  max-width: 520px !important;\n}\n\n.mm-shipping-bar-text {\n  font-size: 13px !important;\n  color: #3d5a3d !important;\n  margin: 0 0 8px !important;\n  font-weight: 500 !important;\n  display: flex !important;\n  align-items: center !important;\n  gap: 8px !important;\n  line-height: 1.3 !important;\n}\n\n.mm-shipping-bar-text svg {\n  flex-shrink: 0 !important;\n  stroke: #2e7d32 !important;\n}\n\n.mm-shipping-bar-text strong {\n  color: #1a1a1a !important;\n  font-weight: 600 !important;\n}\n\n.mm-shipping-bar-text .mm-green {\n  color: #2e7d32 !important;\n  font-weight: 700 !important;\n  letter-spacing: 0.3px !important;\n}\n\n.mm-shipping-bar-track {\n  background: #e8ece8 !important;\n  border-radius: 999px !important;\n  height: 4px !important;\n  overflow: hidden !important;\n  width: 100% !important;\n}\n\n.mm-shipping-bar-fill {\n  background: linear-gradient(90deg, #4caf50 0%, #2e7d32 100%) !important;\n  height: 100% !important;\n  border-radius: 999px !important;\n  transition: width 0.3s ease !important;\n}\n\n\n/* ==========================================\n   INPUTS — Touch targets + iOS zoom prevention\n   ========================================== */\n\n.checkout-etapa-1 input,\n.checkout-etapa-2 input,\n.checkout-etapa-3 input {\n  min-height: 44px !important;\n  font-size: 16px !important; /* previne zoom iOS */\n}\n\n\n/* ==========================================\n   CTA FINALIZAR — Estilo consistente\n   Não sobrescreve cor — herda do Magazord\n   Apenas garante tamanho e toque adequado\n   ========================================== */\n\n#checkout-main-area .button-success,\n#checkout-main-area button.button-success {\n  min-height: 48px !important;\n  font-size: 16px !important;\n  font-weight: 600 !important;\n  border-radius: 8px !important;\n  width: 100% !important;\n}\n\n\n/* ==========================================\n   IDENTIFY — Ajustes mínimos\n   (nova estrutura email-first do Magazord)\n   ========================================== */\n\n/* \"Nunca postaremos\" — esconder */\n.checkout-etapa-2 p:last-of-type {\n  /* Seletor frágil — JS faz o trabalho pesado */\n}\n\n\n/* ==========================================\n   STICKY FOOTER MOBILE — Trust integrado acima do CTA\n   Usa :has() para só virar flex column quando o trust\n   realmente existir dentro do summary-fixed.\n   Herda o resto da base .mm-trust-strip (flex row minimalista).\n   ========================================== */\n\nbody .summary-fixed:has(.mm-trust-strip) {\n  flex-direction: column !important;\n  align-items: stretch !important;\n  gap: 8px !important;\n  padding-top: 10px !important;\n}\n\nbody .summary-fixed .mm-trust-strip {\n  margin: 0 !important;\n  padding: 0 0 8px !important;\n  width: 100% !important;\n  border-bottom: 1px solid #eef0ee !important;\n  gap: 4px 14px !important;\n}\n\nbody .summary-fixed .mm-trust-strip-item {\n  font-size: 10.5px !important;\n}\n\nbody .summary-fixed .mm-trust-strip-item svg {\n  width: 12px !important;\n  height: 12px !important;\n}\n\n\n/* ==========================================\n   MOBILE RESPONSIVE — 480px e menor\n   ========================================== */\n\n@media (max-width: 480px) {\n  .mm-shipping-bar {\n    margin: 8px 0 12px !important;\n  }\n}\n";document.head.appendChild(s)})();
+  (function(){if(document.getElementById("mm-checkout-cro-css"))return;var s=document.createElement("style");s.id="mm-checkout-cro-css";s.textContent="/* =============================================\n   CHECKOUT CRO - Madeira Mania (rebuild v2)\n   Rebuild limpo: \"shadow render\" strategy\n   - Esconde .cart-area + #resumo-compra .conteudo-resumo (source of truth)\n   - Renderiza #mm-layout com nossos próprios componentes\n   - Delega mutações pro Zord API (Zord.checkout.*)\n   - Re-renderiza em $(document).ajaxComplete\n   Design DNA: medusa storefront tokens adaptados ao brand real Madeira Mania\n   ============================================= */\n\n@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');\n\n\n/* ==========================================\n   ZONA 1 — Esconder Magazord (source of truth fica no DOM pra leitura)\n   ========================================== */\n\n/* Header checkout original Magazord (logo + Google + stepper) */\nbody.mm-checkout-rebuild .header-checkout,\nbody.mm-checkout-rebuild .header-template-checkout-03,\nbody.mm-checkout-rebuild .pagina-conteudo-adicional.conteudo-adicional-25 {\n  display: none !important;\n}\n\n/* Esconder distrações no checkout: ticker bar + popup whats flutuante */\nbody.mm-checkout-rebuild #tickerBar,\nbody.mm-checkout-rebuild .ticker-bar,\nbody.mm-checkout-rebuild #popup-msg-whats {\n  display: none !important;\n}\n\n/* Override do padding inflado do .checkout-main da Magazord */\nbody.mm-checkout-rebuild #checkout-main-area.checkout-main,\nbody.mm-checkout-rebuild #checkout-main-area,\nbody.mm-checkout-rebuild .checkout-main {\n  padding-top: 0 !important;\n  padding-bottom: 0 !important;\n  margin-top: 0 !important;\n}\n\n#checkout-main-area.mm-shadow-mode .title-cart-area,\n#checkout-main-area.mm-shadow-mode #cart-area,\n#checkout-main-area.mm-shadow-mode .cart-area,\n#checkout-main-area.mm-shadow-mode #resumo-compra,\n#checkout-main-area.mm-shadow-mode .proxima-etapa,\n#checkout-main-area.mm-shadow-mode > .container > *:not(#mm-layout) {\n  position: absolute !important;\n  left: -99999px !important;\n  top: -99999px !important;\n  width: 1px !important;\n  height: 1px !important;\n  overflow: hidden !important;\n  pointer-events: none !important;\n  opacity: 0 !important;\n}\n\n/* Libera o resumo-compra novamente SE ele for descendente do mm-layout (não é, mas paranoia) */\n#checkout-main-area.mm-shadow-mode #mm-layout,\n#checkout-main-area.mm-shadow-mode #mm-layout * {\n  position: static;\n  left: auto;\n  top: auto;\n  width: auto;\n  height: auto;\n  overflow: visible;\n  pointer-events: auto;\n  opacity: 1;\n}\n\n\n/* ==========================================\n   ZONA 2 — Design tokens (scoped em #mm-layout)\n   ========================================== */\n\n#mm-layout {\n  /* Brand — olive do ticker/header + forest da PDP CTA */\n  --mm-olive:        #4B664A;\n  --mm-olive-dark:   #3D4733;\n  --mm-olive-soft:   rgba(75, 102, 74, 0.08);\n  --mm-cta:          #1b7a45;\n  --mm-cta-dark:     #155a33;\n  --mm-cta-soft:     rgba(27, 122, 69, 0.08);\n\n  /* Neutros (medusa-inspired) */\n  --mm-bg:           #FAFAFA;\n  --mm-card:         #FFFFFF;\n  --mm-border:       #E7E7E7;\n  --mm-border-soft:  #F0F0F0;\n  --mm-divider:      #EFEFEF;\n\n  /* Texto (escala WCAG-safe — todos os tons garantem 4.5:1 em 11px+) */\n  --mm-fg:           #121212;  /* ratio 17.4 — primary  */\n  --mm-fg-soft:      #374151;  /* ratio 10.4 — secondary  */\n  --mm-fg-meta:      #4B5563;  /* ratio 7.14 — tertiary, body small  */\n  --mm-fg-subtle:    #6B7280;  /* ratio 4.86 — meta info readable    */\n  --mm-fg-muted:     #9CA3AF;  /* ratio 2.54 — DECORATIVE ONLY (icons, dividers)  */\n\n  /* Semantic */\n  --mm-danger:       #DC2626;\n  --mm-danger-soft:  rgba(220, 38, 38, 0.08);\n  --mm-success:      #1b7a45;\n\n  /* Typography */\n  --mm-sans:         'Poppins', system-ui, -apple-system, sans-serif;\n  --mm-serif:        'Libre Baskerville', Georgia, serif;\n\n  /* Spacing (4px base) */\n  --mm-s1: 4px;\n  --mm-s2: 8px;\n  --mm-s3: 12px;\n  --mm-s4: 16px;\n  --mm-s5: 20px;\n  --mm-s6: 24px;\n  --mm-s8: 32px;\n  --mm-s10: 40px;\n\n  /* Radius */\n  --mm-r-sm:   4px;\n  --mm-r:      8px;\n  --mm-r-lg:   16px;\n  --mm-r-full: 9999px;\n\n  /* Shadows (flat brand — uso minimal) */\n  --mm-shadow-sm:  0 1px 2px rgba(17, 24, 39, 0.04);\n  --mm-shadow:     0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);\n  --mm-shadow-lg:  0 8px 24px rgba(17, 24, 39, 0.08);\n\n  /* Transitions — 500ms é slow-intentional (\"premium feel\" medusa) */\n  --mm-tr-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);\n  --mm-tr:      320ms cubic-bezier(0.16, 1, 0.3, 1);\n  --mm-tr-slow: 500ms cubic-bezier(0.16, 1, 0.3, 1);\n\n  font-family: var(--mm-sans);\n  color: var(--mm-fg);\n  font-size: 14px;\n  line-height: 1.5;\n  -webkit-font-smoothing: antialiased;\n  -moz-osx-font-smoothing: grayscale;\n}\n\n\n/* ==========================================\n   ZONA 3 — Layout grid\n   ========================================== */\n\n#mm-layout {\n  display: block;\n  max-width: 1200px;\n  margin: 0 auto;\n  padding: var(--mm-s6) var(--mm-s4) var(--mm-s10);\n  box-sizing: border-box;\n  animation: mm-fade-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;\n}\n\n#mm-layout *,\n#mm-layout *::before,\n#mm-layout *::after {\n  box-sizing: border-box;\n}\n\n.mm-grid {\n  display: grid;\n  grid-template-columns: 1fr;\n  gap: var(--mm-s6);\n  align-items: start;\n}\n\n@media (min-width: 1024px) {\n  #mm-layout {\n    padding: var(--mm-s8) var(--mm-s6) var(--mm-s10);\n  }\n  .mm-grid {\n    grid-template-columns: 1fr 380px;\n    gap: var(--mm-s10);\n  }\n}\n\n\n/* ==========================================\n   ZONA 4 — Títulos + headings\n   ========================================== */\n\n.mm-h {\n  font-family: var(--mm-serif);\n  font-weight: 400;\n  font-size: clamp(28px, 4vw, 40px);\n  line-height: 1.15;\n  letter-spacing: -0.01em;\n  color: var(--mm-fg);\n  margin: 0 0 var(--mm-s5);\n  padding: 0;\n}\n\n.mm-eyebrow {\n  font-family: var(--mm-sans);\n  font-size: 11px;\n  font-weight: 600;\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  color: var(--mm-fg-muted);\n  margin: 0;\n}\n\n\n/* ==========================================\n   ZONA 5 — Custom checkout header (substitui o Magazord)\n   Single-row layout: logo left, stepper center, secure right\n   Vertical alignment perfect via grid 3-col + center align\n   ========================================== */\n\n.mm-checkout-header {\n  padding: var(--mm-s5) 0;\n  margin-bottom: var(--mm-s5);\n  border-bottom: 1px solid var(--mm-border-soft);\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);\n  align-items: center;\n  gap: var(--mm-s5);\n  min-height: 72px;\n  animation: mm-fade-down 380ms cubic-bezier(0.16, 1, 0.3, 1) both;\n}\n\n.mm-checkout-header-logo {\n  display: inline-flex;\n  align-items: center;\n  text-decoration: none;\n  color: var(--mm-fg);\n  justify-self: start;\n  line-height: 0;\n}\n\n.mm-checkout-header-logo img {\n  height: 44px;\n  width: auto;\n  max-width: 180px;\n  display: block;\n}\n\n/* Stepper centered in middle column */\n.mm-checkout-steps {\n  display: inline-flex;\n  align-items: center;\n  justify-self: center;\n}\n\n.mm-checkout-steps ol {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n  display: inline-flex;\n  align-items: center;\n  gap: var(--mm-s3);\n}\n\n.mm-checkout-step {\n  display: inline-flex;\n  align-items: center;\n  font-size: 13px;\n  font-weight: 500;\n  color: var(--mm-fg-subtle);\n  white-space: nowrap;\n  letter-spacing: 0.02em;\n  line-height: 1;\n}\n\n.mm-checkout-step.is-active {\n  color: var(--mm-fg);\n  font-weight: 700;\n  position: relative;\n}\n\n.mm-checkout-step.is-active::after {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: -8px;\n  height: 2px;\n  background: var(--mm-olive);\n  border-radius: 2px;\n}\n\n.mm-checkout-step-sep {\n  font-size: 14px;\n  color: var(--mm-fg-muted);\n  user-select: none;\n  line-height: 1;\n}\n\n/* Secure badge — right column */\n.mm-checkout-secure {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--mm-s2);\n  text-decoration: none;\n  color: var(--mm-fg);\n  justify-self: end;\n}\n\n.mm-checkout-secure svg {\n  color: var(--mm-olive);\n  flex-shrink: 0;\n  width: 18px;\n  height: 18px;\n}\n\n.mm-checkout-secure-text {\n  display: flex;\n  flex-direction: column;\n  line-height: 1.2;\n}\n\n.mm-checkout-secure-text strong {\n  font-size: 13px;\n  font-weight: 600;\n  color: var(--mm-fg);\n  letter-spacing: -0.01em;\n}\n\n.mm-checkout-secure-text small {\n  font-size: 12px;\n  color: var(--mm-fg-meta);\n  font-weight: 400;\n  margin-top: 1px;\n}\n\n/* Mobile: 2 rows — logo+secure on top, stepper on bottom */\n@media (max-width: 1023px) {\n  .mm-checkout-header {\n    grid-template-columns: auto auto;\n    grid-template-areas:\n      \"logo secure\"\n      \"steps steps\";\n    gap: var(--mm-s3) var(--mm-s4);\n    padding: var(--mm-s4) 0;\n    margin-bottom: var(--mm-s4);\n    min-height: 0;\n  }\n  .mm-checkout-header-logo {\n    grid-area: logo;\n  }\n  .mm-checkout-header-logo img {\n    height: 36px;\n  }\n  .mm-checkout-secure {\n    grid-area: secure;\n  }\n  .mm-checkout-secure svg {\n    width: 16px;\n    height: 16px;\n  }\n  .mm-checkout-secure-text strong { font-size: 12px; }\n  .mm-checkout-secure-text small { font-size: 11px; }\n  .mm-checkout-steps {\n    grid-area: steps;\n    justify-self: center;\n    padding-top: var(--mm-s2);\n  }\n  .mm-checkout-steps ol { gap: var(--mm-s2); }\n  .mm-checkout-step { font-size: 12px; }\n\n  /* Touch target compliance: bump qty buttons to 44 on mobile */\n  .mm-qty-btn {\n    width: 44px !important;\n    height: 44px !important;\n    min-width: 44px !important;\n    min-height: 44px !important;\n  }\n  .mm-qty-value {\n    min-width: 36px;\n    font-size: 15px;\n  }\n}\n\n@media (max-width: 540px) {\n  .mm-checkout-secure-text { display: none; }\n  .mm-checkout-header-logo img { height: 32px; }\n}\n\n\n/* ==========================================\n   ZONA 5b — Shipping nudge (goal-gradient)\n   Só renderiza ENQUANTO falta valor; some quando atinge.\n   ========================================== */\n\n.mm-nudge {\n  background: var(--mm-olive-soft);\n  border: 1px solid rgba(75, 102, 74, 0.15);\n  border-radius: var(--mm-r);\n  padding: var(--mm-s3) var(--mm-s4);\n  display: flex;\n  flex-direction: column;\n  gap: var(--mm-s2);\n  animation: mm-fade-in 320ms var(--mm-tr) both;\n}\n\n.mm-nudge-head {\n  display: flex;\n  align-items: center;\n  gap: var(--mm-s2);\n  font-size: 12px;\n  line-height: 1.4;\n  color: var(--mm-fg);\n  font-weight: 500;\n}\n\n.mm-nudge-head svg {\n  flex-shrink: 0;\n  color: var(--mm-olive);\n}\n\n.mm-nudge-head strong {\n  color: var(--mm-olive);\n  font-weight: 700;\n  font-variant-numeric: tabular-nums;\n}\n\n.mm-nudge-track {\n  background: rgba(75, 102, 74, 0.18);\n  border-radius: var(--mm-r-full);\n  height: 4px;\n  overflow: hidden;\n}\n\n.mm-nudge-fill {\n  background: var(--mm-olive);\n  height: 100%;\n  border-radius: var(--mm-r-full);\n  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);\n  will-change: width;\n}\n\n\n/* ==========================================\n   ZONA 6 — Cart items (single card with internal dividers)\n   ========================================== */\n\n.mm-items {\n  min-width: 0;\n}\n\n.mm-items-card {\n  background: var(--mm-card);\n  border: 1px solid var(--mm-border);\n  border-radius: var(--mm-r-lg);\n  padding: 0 var(--mm-s5);\n  animation: mm-fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;\n}\n\n.mm-items > .mm-h {\n  animation: mm-fade-down 380ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;\n}\n\n#mm-item-list {\n  display: flex;\n  flex-direction: column;\n}\n\n.mm-item {\n  padding: var(--mm-s5) 0;\n  display: grid;\n  grid-template-columns: 112px minmax(0, 1fr) auto;\n  gap: var(--mm-s4);\n  align-items: flex-start;\n  position: relative;\n  min-width: 0;\n  border-bottom: 1px solid var(--mm-border-soft);\n  transition: opacity var(--mm-tr);\n  animation: mm-fade-up 460ms cubic-bezier(0.16, 1, 0.3, 1) both;\n}\n\n/* Stagger entrada dos cart items (até 6) */\n.mm-item:nth-child(1) { animation-delay: 140ms; }\n.mm-item:nth-child(2) { animation-delay: 200ms; }\n.mm-item:nth-child(3) { animation-delay: 260ms; }\n.mm-item:nth-child(4) { animation-delay: 320ms; }\n.mm-item:nth-child(5) { animation-delay: 380ms; }\n.mm-item:nth-child(6) { animation-delay: 440ms; }\n\n.mm-item:last-child {\n  border-bottom: none;\n}\n\n.mm-item > * {\n  min-width: 0;\n}\n\n.mm-item.is-updating {\n  opacity: 0.55;\n  pointer-events: none;\n}\n\n.mm-item-thumb {\n  width: 112px;\n  height: 112px;\n  border-radius: var(--mm-r);\n  overflow: hidden;\n  background: var(--mm-bg);\n  flex-shrink: 0;\n  position: relative;\n}\n\n.mm-item-thumb img {\n  width: 100%;\n  height: 100%;\n  object-fit: cover;\n  display: block;\n}\n\n.mm-item-body {\n  display: flex;\n  flex-direction: column;\n  min-width: 0;\n  gap: var(--mm-s2);\n  padding-right: var(--mm-s6);\n}\n\n.mm-item-name {\n  font-family: var(--mm-sans);\n  font-size: 15px;\n  font-weight: 500;\n  line-height: 1.35;\n  color: var(--mm-fg);\n  margin: 0;\n  display: -webkit-box;\n  -webkit-line-clamp: 2;\n  -webkit-box-orient: vertical;\n  overflow: hidden;\n  text-decoration: none;\n}\n\n.mm-item-name:hover {\n  color: var(--mm-olive);\n}\n\n.mm-item-name:focus-visible {\n  outline: 2px solid var(--mm-olive);\n  outline-offset: 2px;\n  border-radius: 2px;\n}\n\n.mm-checkout-header-logo:focus-visible {\n  outline: 2px solid var(--mm-olive);\n  outline-offset: 4px;\n  border-radius: 4px;\n}\n\n.mm-item-variant {\n  font-size: 12px;\n  color: var(--mm-fg-subtle);\n  margin: 0;\n}\n\n.mm-item-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--mm-s1);\n  background: #EEF3EE;  /* olive 8% on white, solid pra contrast checkers */\n  color: var(--mm-olive);\n  font-size: 12px;\n  font-weight: 600;\n  padding: 5px 12px;\n  border-radius: var(--mm-r-full);\n  margin-top: var(--mm-s1);\n  align-self: flex-start;\n  line-height: 1.2;\n}\n\n.mm-item-badge svg {\n  flex-shrink: 0;\n}\n\n.mm-item-controls {\n  grid-column: 2;\n  display: flex;\n  align-items: center;\n  gap: var(--mm-s4);\n  margin-top: var(--mm-s3);\n}\n\n.mm-item-price {\n  grid-column: 3;\n  grid-row: 1;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end;\n  text-align: right;\n  gap: 2px;\n  white-space: nowrap;\n}\n\n.mm-item-price-value {\n  font-family: var(--mm-sans);\n  font-size: 17px;\n  font-weight: 600;\n  color: var(--mm-fg);\n  line-height: 1.1;\n  font-variant-numeric: tabular-nums;\n}\n\n.mm-item-price-sub {\n  font-size: 12px;\n  color: var(--mm-olive);\n  font-weight: 600;\n  line-height: 1;\n  letter-spacing: 0.02em;\n}\n\n.mm-item-price-unit {\n  font-size: 12px;\n  color: var(--mm-fg-subtle);\n  font-weight: 400;\n  line-height: 1;\n  margin-top: 2px;\n}\n\n\n/* ==========================================\n   ZONA 7 — Quantity selector (rounded-full pill)\n   ========================================== */\n\n.mm-qty {\n  display: inline-flex;\n  align-items: center;\n  border: 1px solid var(--mm-border);\n  border-radius: var(--mm-r-full);\n  padding: 4px;\n  background: var(--mm-card);\n  transition: border-color var(--mm-tr);\n}\n\n.mm-qty:hover {\n  border-color: #D1D5DB;\n}\n\n.mm-qty-btn {\n  width: 36px !important;\n  height: 36px !important;\n  min-width: 36px !important;\n  min-height: 36px !important;\n  border: none !important;\n  background: transparent !important;\n  border-radius: var(--mm-r-full) !important;\n  display: inline-flex !important;\n  align-items: center;\n  justify-content: center;\n  color: var(--mm-fg-soft);\n  cursor: pointer;\n  padding: 0 !important;\n  font-family: var(--mm-sans);\n  transition: background-color var(--mm-tr-slow), color var(--mm-tr-slow);\n  -webkit-tap-highlight-color: transparent;\n}\n\n.mm-qty-btn svg {\n  flex-shrink: 0;\n  display: block;\n  width: 16px;\n  height: 16px;\n}\n\n.mm-qty-btn:hover:not(:disabled) {\n  background: var(--mm-bg);\n  color: var(--mm-fg);\n}\n\n.mm-qty-btn:active:not(:disabled) {\n  transform: scale(0.92);\n}\n\n.mm-qty-btn:disabled {\n  opacity: 0.35;\n  cursor: not-allowed;\n}\n\n.mm-qty-btn:focus-visible {\n  outline: 2px solid var(--mm-olive);\n  outline-offset: 2px;\n}\n\n.mm-qty-value {\n  min-width: 32px;\n  text-align: center;\n  font-size: 14px;\n  font-weight: 600;\n  color: var(--mm-fg);\n  font-variant-numeric: tabular-nums;\n  user-select: none;\n  padding: 0 var(--mm-s2);\n}\n\n\n/* Remove button (icon-only, minimalist, 44pt hit area) */\n.mm-item-remove {\n  display: inline-flex !important;\n  align-items: center;\n  justify-content: center;\n  background: transparent !important;\n  border: none !important;\n  color: var(--mm-fg-subtle);\n  cursor: pointer;\n  padding: 0 !important;\n  width: 44px !important;\n  height: 44px !important;\n  min-width: 44px !important;\n  min-height: 44px !important;\n  border-radius: var(--mm-r-full) !important;\n  transition: color var(--mm-tr), background-color var(--mm-tr);\n  -webkit-tap-highlight-color: transparent;\n}\n\n.mm-item-remove:hover {\n  color: var(--mm-danger);\n  background: var(--mm-danger-soft) !important;\n}\n\n.mm-item-remove:focus-visible {\n  outline: 2px solid var(--mm-olive);\n  outline-offset: 2px;\n}\n\n.mm-item-remove svg {\n  flex-shrink: 0;\n  width: 18px;\n  height: 18px;\n  display: block;\n}\n\n\n/* ==========================================\n   ZONA 8 — Summary card\n   ========================================== */\n\n.mm-sum {\n  min-width: 0;\n  position: relative;\n}\n\n@media (min-width: 1024px) {\n  .mm-sum {\n    position: sticky;\n    top: var(--mm-s5);\n  }\n}\n\n.mm-sum-card {\n  background: var(--mm-card);\n  border: 1px solid var(--mm-border);\n  border-radius: var(--mm-r-lg);\n  padding: var(--mm-s5);\n  display: flex;\n  flex-direction: column;\n  gap: var(--mm-s4);\n  animation: mm-fade-up 540ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;\n}\n\n.mm-sum > .mm-h {\n  animation: mm-fade-down 380ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;\n}\n\n.mm-help {\n  animation: mm-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 480ms both;\n}\n\n.mm-trust {\n  animation: mm-fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 380ms both;\n}\n\n/* Sum stack: groups dynamic content (rows + coupon + total) with consistent gap */\n.mm-sum-stack {\n  display: flex;\n  flex-direction: column;\n  gap: var(--mm-s4);\n}\n\n\n/* ---- CEP input block ---- */\n.mm-cep {\n  display: flex;\n  flex-direction: column;\n  gap: var(--mm-s2);\n}\n\n.mm-cep-label {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--mm-s2);\n}\n\n.mm-cep-label-text {\n  font-size: 11px;\n  font-weight: 600;\n  letter-spacing: 0.06em;\n  text-transform: uppercase;\n  color: var(--mm-fg-subtle);\n}\n\n.mm-cep-label-link {\n  font-size: 11px;\n  font-weight: 500;\n  color: var(--mm-olive);\n  text-decoration: none;\n  border-bottom: 1px solid var(--mm-olive-soft);\n  padding-bottom: 1px;\n  transition: border-color var(--mm-tr);\n}\n\n.mm-cep-label-link:hover {\n  border-bottom-color: var(--mm-olive);\n}\n\n.mm-cep-label-link:focus-visible {\n  outline: 2px solid var(--mm-olive);\n  outline-offset: 2px;\n  border-radius: 2px;\n}\n\n.mm-cep-row {\n  display: flex;\n  align-items: stretch;\n  gap: var(--mm-s2);\n}\n\n.mm-input {\n  flex: 1;\n  height: 48px !important;\n  min-height: 48px !important;\n  padding: 0 var(--mm-s5) !important;\n  background: var(--mm-card) !important;\n  border: 1px solid var(--mm-border) !important;\n  border-radius: var(--mm-r-full) !important;\n  font-family: var(--mm-sans) !important;\n  font-size: 16px !important;  /* 16px previne zoom no iOS */\n  font-weight: 500 !important;\n  color: var(--mm-fg) !important;\n  outline: none !important;\n  transition: border-color var(--mm-tr-slow), box-shadow var(--mm-tr-slow);\n  min-width: 0;\n  box-sizing: border-box !important;\n  -webkit-appearance: none;\n  appearance: none;\n}\n\n.mm-input::placeholder {\n  color: var(--mm-fg-subtle);\n  font-weight: 400;\n}\n\n.mm-input:hover {\n  border-color: #D1D5DB !important;\n}\n\n.mm-input:focus,\n.mm-input:focus-visible {\n  border-color: var(--mm-olive) !important;\n  box-shadow: 0 0 0 3px var(--mm-olive-soft) !important;\n}\n\n.mm-btn-secondary {\n  flex-shrink: 0;\n  height: 48px !important;\n  min-height: 48px !important;\n  padding: 0 var(--mm-s5) !important;\n  background: var(--mm-fg) !important;\n  color: #FFF !important;\n  border: none !important;\n  border-radius: var(--mm-r-full) !important;\n  font-family: var(--mm-sans) !important;\n  font-size: 14px !important;\n  font-weight: 600 !important;\n  letter-spacing: 0.02em;\n  cursor: pointer;\n  transition: background-color var(--mm-tr-slow), transform 150ms;\n  display: inline-flex !important;\n  align-items: center;\n  justify-content: center;\n  gap: var(--mm-s1);\n  -webkit-tap-highlight-color: transparent;\n  box-sizing: border-box !important;\n}\n\n.mm-btn-secondary:hover {\n  background: var(--mm-olive-dark) !important;\n}\n\n.mm-btn-secondary:active {\n  transform: scale(0.97);\n}\n\n.mm-btn-secondary:disabled {\n  opacity: 0.5;\n  cursor: not-allowed;\n}\n\n.mm-btn-secondary:focus-visible {\n  outline: 3px solid var(--mm-olive);\n  outline-offset: 2px;\n}\n\n\n/* ---- Shipping result display ---- */\n.mm-shipping-result {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  padding: var(--mm-s3);\n  background: var(--mm-bg);\n  border-radius: var(--mm-r);\n  border: 1px solid var(--mm-border-soft);\n  animation: mm-fade-in 320ms var(--mm-tr) both;\n}\n\n.mm-shipping-result-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--mm-s2);\n  font-size: 12px;\n}\n\n.mm-shipping-result-label {\n  color: var(--mm-fg-soft);\n  font-weight: 500;\n}\n\n.mm-shipping-result-value {\n  color: var(--mm-fg);\n  font-weight: 600;\n  font-variant-numeric: tabular-nums;\n}\n\n.mm-shipping-result-value.is-free {\n  color: var(--mm-olive);\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  font-size: 11px;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.mm-shipping-result-deadline {\n  color: var(--mm-fg-muted);\n  font-size: 11px;\n}\n\n\n/* ---- Divider ---- */\n.mm-divider {\n  border: none;\n  border-top: 1px solid var(--mm-divider);\n  margin: 0;\n}\n\n\n/* ---- Summary rows (Subtotal / Frete / Desconto) ---- */\n.mm-rows {\n  display: flex;\n  flex-direction: column;\n  gap: var(--mm-s3);\n}\n\n.mm-row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--mm-s3);\n  font-size: 13px;\n}\n\n.mm-row-label {\n  color: var(--mm-fg-soft);\n  font-weight: 500;\n}\n\n.mm-row-sub {\n  color: var(--mm-fg-subtle);\n  font-weight: 400;\n  font-size: 12px;\n}\n\n.mm-row-value {\n  color: var(--mm-fg);\n  font-weight: 600;\n  font-variant-numeric: tabular-nums;\n}\n\n.mm-row-value.is-discount {\n  color: var(--mm-cta);\n}\n\n.mm-row-value.is-free {\n  color: var(--mm-olive);\n  font-size: 12px;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n}\n\n.mm-row-value.is-free svg {\n  flex-shrink: 0;\n  display: block;\n}\n\n\n/* ---- Total block ---- */\n.mm-total {\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n  padding-top: var(--mm-s3);\n  border-top: 1px solid var(--mm-divider);\n}\n\n.mm-total-label {\n  font-size: 11px;\n  font-weight: 600;\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n  color: var(--mm-fg-subtle);\n  margin-bottom: 2px;\n}\n\n.mm-total-value {\n  font-family: var(--mm-serif);\n  font-size: 34px;\n  font-weight: 700;\n  color: var(--mm-fg);\n  line-height: 1.05;\n  letter-spacing: -0.01em;\n  font-variant-numeric: tabular-nums;\n  animation: mm-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;\n}\n\n.mm-total-pix {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: var(--mm-s1) var(--mm-s2);\n  font-size: 12px;\n  font-weight: 600;\n  color: var(--mm-olive);\n  margin-top: var(--mm-s2);\n  font-variant-numeric: tabular-nums;\n}\n\n.mm-total-pix-save {\n  color: var(--mm-fg-muted);\n  font-weight: 500;\n  font-size: 11px;\n}\n\n.mm-total-parcela {\n  font-size: 12px;\n  color: var(--mm-fg-soft);\n  font-weight: 500;\n  margin-top: 2px;\n  font-variant-numeric: tabular-nums;\n}\n\n.mm-total-pending {\n  font-size: 12px;\n  color: var(--mm-fg-subtle);\n  font-weight: 500;\n  line-height: 1.4;\n  padding: var(--mm-s3) 0 0;\n}\n\n\n/* ---- Coupon (collapsible) ---- */\n.mm-coupon-toggle {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--mm-s2);\n  background: transparent;\n  border: 1px dashed var(--mm-border);\n  border-radius: var(--mm-r-full);\n  padding: var(--mm-s3) var(--mm-s4);\n  min-height: 44px;\n  font-family: var(--mm-sans);\n  font-size: 13px;\n  font-weight: 500;\n  color: var(--mm-fg-soft);\n  cursor: pointer;\n  align-self: flex-start;\n  transition: border-color var(--mm-tr), color var(--mm-tr);\n  -webkit-tap-highlight-color: transparent;\n}\n\n.mm-coupon-toggle:hover {\n  border-color: var(--mm-olive);\n  color: var(--mm-olive);\n}\n\n.mm-coupon-toggle:focus-visible {\n  outline: 2px solid var(--mm-olive);\n  outline-offset: 2px;\n}\n\n.mm-coupon-form {\n  display: none;\n  gap: var(--mm-s2);\n  align-items: stretch;\n}\n\n.mm-coupon.is-open .mm-coupon-toggle {\n  display: none;\n}\n\n.mm-coupon.is-open .mm-coupon-form {\n  display: flex;\n  animation: mm-fade-in 240ms var(--mm-tr) both;\n}\n\n.mm-coupon-applied {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: var(--mm-s2);\n  background: var(--mm-olive-soft);\n  border: 1px solid var(--mm-olive-soft);\n  border-radius: var(--mm-r-full);\n  padding: var(--mm-s2) var(--mm-s3) var(--mm-s2) var(--mm-s4);\n  font-size: 12px;\n  animation: mm-fade-in 240ms var(--mm-tr) both;\n}\n\n.mm-coupon-applied-left {\n  display: flex;\n  align-items: center;\n  gap: var(--mm-s2);\n  font-weight: 600;\n  color: var(--mm-olive);\n  letter-spacing: 0.04em;\n  text-transform: uppercase;\n}\n\n.mm-coupon-applied-left svg {\n  flex-shrink: 0;\n}\n\n.mm-coupon-applied button {\n  background: transparent;\n  border: none;\n  color: var(--mm-fg-muted);\n  cursor: pointer;\n  padding: 4px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  border-radius: var(--mm-r-full);\n  transition: color var(--mm-tr);\n}\n\n.mm-coupon-applied button:hover {\n  color: var(--mm-danger);\n}\n\n\n/* ---- Primary CTA ---- */\n.mm-cta {\n  background: var(--mm-cta) !important;\n  color: #FFFFFF !important;\n  border: none !important;\n  border-radius: var(--mm-r-full) !important;\n  padding: var(--mm-s4) var(--mm-s5) !important;\n  min-height: 56px !important;\n  font-family: var(--mm-sans) !important;\n  font-size: 15px !important;\n  font-weight: 600 !important;\n  letter-spacing: 0.01em;\n  cursor: pointer;\n  width: 100%;\n  display: inline-flex !important;\n  align-items: center;\n  justify-content: center;\n  gap: var(--mm-s2);\n  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22) !important;\n  transition: background-color var(--mm-tr-slow), box-shadow var(--mm-tr-slow), transform 150ms;\n  -webkit-tap-highlight-color: transparent;\n  outline: none !important;\n  box-sizing: border-box !important;\n}\n\n.mm-cta:hover {\n  background: var(--mm-cta-dark) !important;\n  box-shadow: 0 6px 20px rgba(27, 122, 69, 0.28) !important;\n}\n\n.mm-cta:active {\n  transform: translateY(1px);\n  box-shadow: 0 2px 6px rgba(27, 122, 69, 0.22) !important;\n}\n\n.mm-cta:focus-visible {\n  outline: 3px solid var(--mm-olive) !important;\n  outline-offset: 3px !important;\n}\n\n.mm-cta svg {\n  transition: transform var(--mm-tr-slow);\n}\n\n.mm-cta:hover svg {\n  transform: translateX(3px);\n}\n\n\n/* ---- Trust badges ---- */\n.mm-trust {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  flex-wrap: wrap;\n  gap: 6px 18px;\n  padding-top: var(--mm-s2);\n}\n\n.mm-trust-item {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--mm-s1);\n  font-size: 12px;\n  color: var(--mm-fg-subtle);\n  font-weight: 500;\n  white-space: nowrap;\n  line-height: 1;\n}\n\n.mm-trust-item svg {\n  flex-shrink: 0;\n  width: 13px;\n  height: 13px;\n  color: var(--mm-fg-muted);\n}\n\n\n/* ---- WhatsApp help block (objection breaker) ---- */\n.mm-help {\n  display: flex;\n  align-items: center;\n  gap: var(--mm-s3);\n  margin-top: var(--mm-s2);\n  padding: var(--mm-s3) var(--mm-s4);\n  background: #F4FCF7;  /* very subtle green-tint, solid for contrast checkers */\n  border: 1px solid #DDEFE3;\n  border-radius: var(--mm-r);\n  text-decoration: none;\n  color: var(--mm-fg);\n  font-size: 13px;\n  line-height: 1.4;\n  min-height: 56px;\n  transition: background-color var(--mm-tr-slow), border-color var(--mm-tr-slow);\n}\n\n.mm-help:hover {\n  background: #E9F8EE;\n  border-color: #BDDFC9;\n}\n\n.mm-help:focus-visible {\n  outline: 2px solid #25D366;\n  outline-offset: 2px;\n}\n\n.mm-help svg {\n  color: #25D366;\n  flex-shrink: 0;\n}\n\n.mm-help span {\n  flex: 1 1 auto;\n  min-width: 0;\n}\n\n.mm-help strong {\n  display: block;\n  font-weight: 600;\n  color: var(--mm-fg);\n  font-size: 12px;\n  margin-bottom: 1px;\n}\n\n\n/* ==========================================\n   ZONA 9 — Empty cart state\n   ========================================== */\n\n.mm-empty {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  text-align: center;\n  padding: var(--mm-s10) var(--mm-s4);\n  gap: var(--mm-s4);\n  background: var(--mm-card);\n  border: 1px solid var(--mm-border);\n  border-radius: var(--mm-r-lg);\n  animation: mm-fade-up 400ms var(--mm-tr) both;\n}\n\n.mm-empty-icon {\n  color: var(--mm-fg-muted);\n  margin-bottom: var(--mm-s2);\n}\n\n.mm-empty-title {\n  font-family: var(--mm-serif);\n  font-size: 24px;\n  font-weight: 400;\n  color: var(--mm-fg);\n  margin: 0;\n  letter-spacing: -0.01em;\n}\n\n.mm-empty-desc {\n  color: var(--mm-fg-soft);\n  font-size: 14px;\n  max-width: 380px;\n  margin: 0;\n}\n\n.mm-empty-cta {\n  display: inline-flex;\n  align-items: center;\n  gap: var(--mm-s2);\n  background: var(--mm-cta);\n  color: #FFF;\n  text-decoration: none;\n  padding: var(--mm-s3) var(--mm-s6);\n  border-radius: var(--mm-r-full);\n  font-size: 14px;\n  font-weight: 600;\n  margin-top: var(--mm-s2);\n  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22);\n  transition: background-color var(--mm-tr-slow);\n}\n\n.mm-empty-cta:hover {\n  background: var(--mm-cta-dark);\n}\n\n.mm-empty-perks {\n  font-size: 11px;\n  color: var(--mm-fg-muted);\n  margin-top: var(--mm-s2);\n}\n\n\n/* ==========================================\n   ZONA 10 — Skeleton (loading state)\n   ========================================== */\n\n.mm-skel {\n  background: linear-gradient(\n    90deg,\n    var(--mm-border-soft) 0%,\n    #F7F7F7 50%,\n    var(--mm-border-soft) 100%\n  );\n  background-size: 200% 100%;\n  animation: mm-shimmer 1400ms ease-in-out infinite;\n  border-radius: var(--mm-r-sm);\n}\n\n.mm-skel-item {\n  padding: var(--mm-s5) 0;\n  display: grid;\n  grid-template-columns: 112px 1fr auto;\n  gap: var(--mm-s4);\n  align-items: flex-start;\n  border-bottom: 1px solid var(--mm-border-soft);\n}\n\n.mm-skel-item:last-child {\n  border-bottom: none;\n}\n\n.mm-skel-thumb {\n  width: 112px;\n  height: 112px;\n  border-radius: var(--mm-r);\n}\n\n.mm-skel-lines {\n  display: flex;\n  flex-direction: column;\n  gap: var(--mm-s2);\n  padding-top: var(--mm-s1);\n}\n\n.mm-skel-line {\n  height: 12px;\n}\n\n.mm-skel-line.w-full { width: 100%; }\n.mm-skel-line.w-3-4  { width: 75%; }\n.mm-skel-line.w-1-2  { width: 50%; }\n.mm-skel-line.w-1-3  { width: 33%; }\n\n\n/* ==========================================\n   ZONA 11 — Mobile responsive (< 1024px)\n   ========================================== */\n\n@media (max-width: 1023px) {\n  .mm-items-card {\n    padding: 0 var(--mm-s4);\n  }\n\n  .mm-item {\n    grid-template-columns: 88px minmax(0, 1fr);\n    grid-template-areas:\n      \"thumb body\"\n      \"thumb price\"\n      \"controls controls\";\n    gap: var(--mm-s2) var(--mm-s3);\n    padding: var(--mm-s4) 0;\n  }\n\n  .mm-item-thumb {\n    grid-area: thumb;\n    width: 88px;\n    height: 88px;\n    align-self: start;\n  }\n\n  .mm-item-body {\n    grid-area: body;\n    padding-right: 0;\n  }\n\n  .mm-item-controls {\n    grid-area: controls;\n    margin-top: var(--mm-s2);\n    grid-column: auto;\n    justify-content: space-between;\n  }\n\n  .mm-item-price {\n    grid-area: price;\n    align-items: flex-start;\n    text-align: left;\n    grid-column: auto;\n    grid-row: auto;\n  }\n\n  .mm-item-name {\n    font-size: 14px;\n  }\n\n  .mm-item-price-value {\n    font-size: 15px;\n  }\n\n  /* Touch target compliance: bump qty buttons to 44 on mobile (after base rule) */\n  .mm-qty-btn {\n    width: 44px !important;\n    height: 44px !important;\n    min-width: 44px !important;\n    min-height: 44px !important;\n  }\n  .mm-qty-value {\n    min-width: 36px;\n    font-size: 15px;\n  }\n\n  .mm-skel-item {\n    grid-template-columns: 88px 1fr;\n  }\n\n  .mm-skel-thumb {\n    width: 88px;\n    height: 88px;\n  }\n\n  .mm-h {\n    font-size: 26px;\n    margin-bottom: var(--mm-s3);\n  }\n\n  .mm-sum-card {\n    padding: var(--mm-s4);\n  }\n\n  .mm-total-value {\n    font-size: 30px;\n  }\n\n  .mm-cep-row {\n    flex-direction: row;\n  }\n\n  .mm-btn-secondary {\n    padding: 0 var(--mm-s4);\n    font-size: 12px;\n  }\n}\n\n@media (max-width: 480px) {\n  #mm-layout {\n    padding: var(--mm-s4) var(--mm-s3) var(--mm-s10);\n  }\n  .mm-item-thumb {\n    width: 80px;\n    height: 80px;\n  }\n  .mm-item {\n    grid-template-columns: 80px minmax(0, 1fr);\n  }\n  .mm-item-name {\n    font-size: 13px;\n  }\n  .mm-item-price-value {\n    font-size: 14px;\n  }\n}\n\n\n/* ==========================================\n   ZONA 12 — Keyframes\n   ========================================== */\n\n@keyframes mm-fade-in {\n  from { opacity: 0; }\n  to   { opacity: 1; }\n}\n\n@keyframes mm-fade-up {\n  from {\n    opacity: 0;\n    transform: translateY(12px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n@keyframes mm-fade-down {\n  from {\n    opacity: 0;\n    transform: translateY(-8px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n@keyframes mm-pop {\n  0%   { opacity: 0; transform: scale(0.94); }\n  60%  { opacity: 1; transform: scale(1.02); }\n  100% { opacity: 1; transform: scale(1); }\n}\n\n@keyframes mm-shimmer {\n  0%   { background-position: 200% 0; }\n  100% { background-position: -200% 0; }\n}\n\n/* Respeitar prefers-reduced-motion */\n@media (prefers-reduced-motion: reduce) {\n  #mm-layout *,\n  #mm-layout *::before,\n  #mm-layout *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n    scroll-behavior: auto !important;\n  }\n}\n\n\n/* ==========================================\n   ZONA 13 — Identify / Onepage (outras etapas do checkout)\n   Mantém só o mínimo de CRO copy + tap targets\n   ========================================== */\n\n.checkout-etapa-2 input,\n.checkout-etapa-3 input {\n  min-height: 44px !important;\n  font-size: 16px !important; /* previne zoom iOS */\n}\n\n#checkout-main-area .button-success,\n#checkout-main-area button.button-success {\n  min-height: 48px !important;\n  font-size: 15px !important;\n  font-weight: 600 !important;\n  border-radius: 9999px !important;\n  width: 100% !important;\n}\n";document.head.appendChild(s)})();
 
   /* Inject CSS: ticker.css */
   (function(){if(document.getElementById("mm-ticker-css"))return;var s=document.createElement("style");s.id="mm-ticker-css";s.textContent=".ticker-bar {\n    background-color: #4b664a;\n    overflow: hidden;\n    white-space: nowrap;\n    position: relative;\n    width: 100%;\n    padding: 10px 0;\n    font-family: Arial, Helvetica, sans-serif;\n  }\n\n  .ticker-track {\n    display: inline-flex;\n    animation: ticker-scroll 65s linear infinite;\n  }\n\n  .ticker-track:hover {\n    animation-play-state: paused;\n  }\n\n  .ticker-item {\n    display: inline-flex;\n    align-items: center;\n    padding: 0 20px;\n    color: #f8f8f8;\n    font-size: 13px;\n    letter-spacing: 0.5px;\n    text-decoration: none;\n    white-space: nowrap;\n  }\n\n  .ticker-item a {\n    color: #f8f8f8;\n    text-decoration: none;\n  }\n\n  .ticker-item a:hover {\n    text-decoration: underline;\n  }\n\n  .ticker-separator {\n    display: inline-flex;\n    align-items: center;\n    color: #f8f8f8;\n    opacity: 0.5;\n    padding: 0 5px;\n    font-size: 10px;\n  }\n\n  .ticker-close {\n    position: absolute;\n    right: 8px;\n    top: 50%;\n    transform: translateY(-50%);\n    background: none;\n    border: none;\n    color: #000000;\n    font-size: 16px;\n    cursor: pointer;\n    opacity: 0.5;\n    padding: 2px 6px;\n    line-height: 1;\n    z-index: 2;\n    transition: opacity 0.2s;\n  }\n\n  .ticker-close:hover {\n    opacity: 1;\n  }\n\n  @keyframes ticker-scroll {\n    0% {\n      transform: translateX(0);\n    }\n    100% {\n      transform: translateX(-50%);\n    }\n  }";document.head.appendChild(s)})();
@@ -1639,6 +1639,148 @@
       icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b664a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
       icon.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:none !important;';
     }
+  })();
+  
+  
+  /* --- 3. Footer rebuild — hide Magazord footer + inject ours
+     Aplica em TODAS as páginas (inclusive checkout)
+     --- */
+  (function buildMmFooter() {
+    var MM_LOGO_URL = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
+    var WHATS = 'https://api.whatsapp.com/send?phone=5511915299488&text=' + encodeURIComponent('Olá! Vim pelo site e gostaria de ajuda.');
+  
+    var ICONS = {
+      phone: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+      whats: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488"/></svg>',
+      mail: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+      clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      pin: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+      lock: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+      shield: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+      truck: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+      card: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+      instagram: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+      facebook: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>',
+      tiktok: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.39a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.84-.42z"/></svg>'
+    };
+  
+    function buildFooterDom() {
+      if (document.getElementById('mm-footer')) return;
+      if (!document.body) return;
+  
+      document.body.classList.add('mm-footer-rebuild');
+  
+      var footer = document.createElement('footer');
+      footer.id = 'mm-footer';
+      footer.className = 'mm-footer';
+      footer.setAttribute('role', 'contentinfo');
+  
+      footer.innerHTML =
+        /* MAIN GRID */
+        '<div class="mm-footer-main">' +
+          '<div class="mm-footer-grid">' +
+            /* Brand */
+            '<div class="mm-footer-col mm-footer-brand">' +
+              '<a class="mm-footer-logo" href="/" aria-label="Madeira Mania - voltar à home">' +
+                '<img src="' + MM_LOGO_URL + '" alt="Madeira Mania" width="180" height="48">' +
+              '</a>' +
+              '<p class="mm-footer-tagline">Móveis com design moderno e qualidade superior pra transformar sua casa em um lar cheio de personalidade.</p>' +
+              '<div class="mm-footer-social">' +
+                '<a href="https://www.instagram.com/madeira.mania" target="_blank" rel="noopener" aria-label="Instagram da Madeira Mania">' + ICONS.instagram + '</a>' +
+                '<a href="https://web.facebook.com/profile.php?id=61578397120844" target="_blank" rel="noopener" aria-label="Facebook da Madeira Mania">' + ICONS.facebook + '</a>' +
+                '<a href="https://www.tiktok.com/@madeira.mania" target="_blank" rel="noopener" aria-label="TikTok da Madeira Mania">' + ICONS.tiktok + '</a>' +
+              '</div>' +
+            '</div>' +
+            /* Atendimento */
+            '<div class="mm-footer-col">' +
+              '<h4 class="mm-footer-h">Atendimento</h4>' +
+              '<ul class="mm-footer-list">' +
+                '<li><a href="tel:+5511915299488">' + ICONS.phone + '<span>(11) 91529-9488</span></a></li>' +
+                '<li><a href="' + WHATS + '" target="_blank" rel="noopener">' + ICONS.whats + '<span>WhatsApp</span></a></li>' +
+                '<li><a href="mailto:contato@madeiramania.com.br">' + ICONS.mail + '<span>contato@madeiramania.com.br</span></a></li>' +
+                '<li><span class="mm-footer-meta">' + ICONS.clock + '<span>Seg a Sex · 8h às 18h</span></span></li>' +
+              '</ul>' +
+            '</div>' +
+            /* Compra */
+            '<div class="mm-footer-col">' +
+              '<h4 class="mm-footer-h">Sua compra</h4>' +
+              '<ul class="mm-footer-list">' +
+                '<li><a href="/como-comprar">Como comprar</a></li>' +
+                '<li><a href="/politica-de-entrega">Frete e entrega</a></li>' +
+                '<li><a href="/politica-de-trocas-e-devolucoes">Trocas e devoluções</a></li>' +
+                '<li><a href="/compra-segura">Compra segura</a></li>' +
+                '<li><a href="/avaliacoes-de-clientes">Avaliações de clientes</a></li>' +
+              '</ul>' +
+            '</div>' +
+            /* Institucional */
+            '<div class="mm-footer-col">' +
+              '<h4 class="mm-footer-h">Madeira Mania</h4>' +
+              '<ul class="mm-footer-list">' +
+                '<li><a href="/quem-somos">Quem somos</a></li>' +
+                '<li><a href="/atendimento">Central de atendimento</a></li>' +
+                '<li><a href="/envio-imediato">Pronta entrega</a></li>' +
+                '<li><a href="/politica-de-privacidade">Política de privacidade</a></li>' +
+              '</ul>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+  
+        /* TRUST STRIP */
+        '<div class="mm-footer-trust">' +
+          '<div class="mm-footer-trust-inner">' +
+            '<div class="mm-footer-trust-item">' + ICONS.lock +
+              '<div class="mm-footer-trust-text"><strong>Compra 100% segura</strong><small>Site protegido por SSL</small></div>' +
+            '</div>' +
+            '<div class="mm-footer-trust-item">' + ICONS.shield +
+              '<div class="mm-footer-trust-text"><strong>7 dias para troca</strong><small>Direito de arrependimento</small></div>' +
+            '</div>' +
+            '<div class="mm-footer-trust-item">' + ICONS.truck +
+              '<div class="mm-footer-trust-text"><strong>Frete grátis</strong><small>Acima de R$ 2.000</small></div>' +
+            '</div>' +
+            '<div class="mm-footer-trust-item">' + ICONS.card +
+              '<div class="mm-footer-trust-text"><strong>12x sem juros</strong><small>Em todos os cartões</small></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+  
+        /* BOTTOM STRIP */
+        '<div class="mm-footer-bottom">' +
+          '<div class="mm-footer-bottom-inner">' +
+            '<p class="mm-footer-legal">' +
+              '© 2026 <strong>Madeira Mania</strong> · CNPJ 60.021.382/0001-61<br>' +
+              'Av. Paulista, 1636 · Bela Vista · São Paulo/SP · 01310-200' +
+            '</p>' +
+            '<div class="mm-footer-payments" aria-label="Formas de pagamento aceitas">' +
+              '<span class="mm-pay-chip" title="PIX"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/pix.svg" alt="PIX" loading="lazy"></span>' +
+              '<span class="mm-pay-chip" title="Visa"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/visa.svg" alt="Visa" loading="lazy"></span>' +
+              '<span class="mm-pay-chip" title="Mastercard"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/mastercard.svg" alt="Mastercard" loading="lazy"></span>' +
+              '<span class="mm-pay-chip" title="Elo"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/elo.svg" alt="Elo" loading="lazy"></span>' +
+              '<span class="mm-pay-chip" title="Hipercard"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/hipercard.svg" alt="Hipercard" loading="lazy"></span>' +
+              '<span class="mm-pay-chip" title="American Express"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/american2.svg" alt="American Express" loading="lazy"></span>' +
+              '<span class="mm-pay-chip" title="Boleto Bancário"><img src="https://public-resources.zordcdn.com.br/assets/global/footer/formas-pagamento/boleto.svg" alt="Boleto Bancário" loading="lazy"></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+  
+      document.body.appendChild(footer);
+      /* Remove anti-flicker loading class — nosso footer já renderizou */
+      document.documentElement.classList.remove('mm-footer-loading');
+    }
+  
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', buildFooterDom);
+    } else {
+      buildFooterDom();
+    }
+  
+    /* Re-aplicar guard se React re-renderizar e remover nosso footer */
+    setTimeout(buildFooterDom, 1000);
+    setTimeout(buildFooterDom, 3000);
+  
+    /* Failsafe: remove loading class após 6s mesmo se algo der errado, evita ficar sem footer pra sempre */
+    setTimeout(function() {
+      document.documentElement.classList.remove('mm-footer-loading');
+    }, 6000);
   })();
 
   /* === schema-organization.js === */
@@ -4601,237 +4743,886 @@
   })();
   /* === checkout-cro.js === */
   /* =============================================
-     CHECKOUT CRO - Madeira Mania
-     Melhorias de conversão no checkout mobile
+     CHECKOUT CRO - Madeira Mania (rebuild v2)
+     "Shadow render" strategy:
+     1. Esconde DOM original da Magazord (mantém em memória como source of truth)
+     2. Renderiza #mm-layout lendo .cart-item e #resumo-compra
+     3. Delega mutações pro Zord API (Zord.checkout.*)
+     4. Re-renderiza em $(document).ajaxComplete
+     5. Observa .cart-area via MutationObserver (safety net)
   
-     Features:
-     - Trust strip em cada etapa (cart, identify, onepage)
-     - Barra dinâmica de frete grátis (cart)
-     - Copy melhorada no identify
-     - Input types corretos
-     - Segurança no form de cartão (onepage)
-  
-     Design: UI/UX Pro Max validated
-     - SVG icons (stroke-width 2, round caps)
-     - Paleta herda do site (#4b664a, #2e7d32)
-     - Touch targets min 44px
-     - Font-size min 16px inputs
-  
-     Executa em: /checkout/*
+     CEP: sincroniza com localStorage.mm_cep (mesma chave do produto.js)
+     pra auto-calcular frete cross-page.
      ============================================= */
   
   (function initCheckoutCRO() {
     'use strict';
   
+    var CEP_KEY = 'mm_cep';
+    var FRETE_GRATIS_THRESHOLD = 2000;
+    var MM_LOGO_URL = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
+    var MM_WHATSAPP_URL = 'https://api.whatsapp.com/send?phone=5511915299488&text=' + encodeURIComponent('Olá! Estou no checkout e gostaria de tirar uma dúvida sobre meu pedido.');
+  
     var path = location.pathname;
     var isCart = path.indexOf('/checkout/cart') !== -1;
     var isIdentify = path.indexOf('/checkout/identify') !== -1;
-    var isOnepage = path.indexOf('/checkout/onepage') !== -1 || path.indexOf('/checkout/payment') !== -1;
+    var isOnepage =
+      path.indexOf('/checkout/onepage') !== -1 ||
+      path.indexOf('/checkout/payment') !== -1;
   
     if (!isCart && !isIdentify && !isOnepage) return;
   
-    /* Retry — esperar DOM do checkout */
+    /* Retry até Magazord montar o DOM do checkout */
     initCheckoutCRO._retries = (initCheckoutCRO._retries || 0) + 1;
     var mainArea = document.querySelector('#checkout-main-area');
     if (!mainArea) {
-      if (initCheckoutCRO._retries < 30) setTimeout(initCheckoutCRO, 500);
+      if (initCheckoutCRO._retries < 40) setTimeout(initCheckoutCRO, 400);
       return;
     }
   
-    if (document.getElementById('mm-checkout-cro-done')) return;
-    var marker = document.createElement('div');
-    marker.id = 'mm-checkout-cro-done';
-    marker.style.display = 'none';
-    document.body.appendChild(marker);
   
+    /* =============================================
+       HELPERS — parsing, formatting, icons
+       ============================================= */
   
-    /* === HELPER: Trust strip component === */
+    function formatBRL(n) {
+      if (isNaN(n) || n < 0) return 'R$ 0,00';
+      return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+,)/g, '$1.');
+    }
   
-    function createTrustStrip(id) {
-      var strip = document.createElement('div');
-      strip.className = 'mm-trust-strip';
-      if (id) strip.id = id;
+    function parseBRL(text) {
+      if (!text) return 0;
+      var m = String(text).match(/(-?[\d.]+,\d{2})/);
+      if (!m) return 0;
+      return parseFloat(m[1].replace(/\./g, '').replace(',', '.')) || 0;
+    }
   
-      /* Ícones: Lucide family, stroke 2, todos visual weight similar.
-         - Compra segura: lock
-         - Troca em 7 dias: rotate-ccw (1 arrow circular, leve)
-         - Garantia 12 meses: shield-check (escudo + check dentro) */
-      var items = [
-        { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>', label: 'Compra segura' },
-        { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>', label: 'Troca em 7 dias' },
-        { icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>', label: 'Garantia 12 meses' }
-      ];
-  
-      items.forEach(function(item) {
-        var span = document.createElement('span');
-        span.className = 'mm-trust-strip-item';
-        span.innerHTML = item.icon + '<b>' + item.label + '</b>';
-        strip.appendChild(span);
+    function escapeHTML(s) {
+      return String(s || '').replace(/[&<>"']/g, function(c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
-  
-      return strip;
     }
   
+    /* Lucide-style icons (stroke 2) */
+    var ICON = {
+      truck: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+      check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      checkCircle: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      bolt: '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      shield: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+      lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+      card: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+      rotate: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
+      minus: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+      plus: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+      trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+      close: '<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5l-7 7M3.5 3.5l7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+      arrow: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+      tag: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+      whats: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488"/></svg>',
+      box: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
+    };
   
-    /* === HELPER: Extrair total do carrinho === */
+    var STORAGE = {
+      get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
+      set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+    };
   
-    function extractCartTotal() {
-      /* 1. Tentar pegar de .value-content ou .totais-valor (total real do carrinho) */
-      var totalEls = mainArea.querySelectorAll('.value-content, .totais-valor');
-      for (var t = 0; t < totalEls.length; t++) {
-        var txt = totalEls[t].textContent.trim();
-        var match = txt.match(/R\$\s*([\d.]+,\d{2})/);
-        if (match) {
-          var val = parseFloat(match[1].replace(/\./g, '').replace(',', '.'));
-          if (val > 50 && val < 100000) return val;
-        }
+  
+    /* =============================================
+       READ — extrai estado da DOM Magazord
+       ============================================= */
+  
+    function readCart() {
+      var state = {
+        items: [],
+        subtotalPix: 0,      /* valor em PIX (já descontado) */
+        subtotalFull: 0,     /* soma de data-valor (preço cheio) */
+        discount: 0,         /* desconto do cupom */
+        shipping: null,      /* null = não calculado, 0 = grátis, > 0 = valor */
+        shippingRaw: '',     /* texto original do frete-calculado */
+        shippingDeadline: '',/* prazo em dias */
+        couponCode: '',      /* se aplicado */
+        cepValue: '',        /* valor atual do #cep */
+        canFinalize: false,  /* true se tem itens */
+        hasFinalizar: false  /* true se #finalizar-compra existe */
+      };
+  
+      /* Items */
+      var itemEls = mainArea.querySelectorAll('.cart-item');
+      for (var i = 0; i < itemEls.length; i++) {
+        var el = itemEls[i];
+        var qtyInput = el.querySelector('.qtd-item[id^="item_carrinho_"]');
+        var match = qtyInput && qtyInput.id.match(/item_carrinho_(\d+)/);
+        var dataId = match ? parseInt(match[1], 10) : null;
+        var img = el.querySelector('figure img') || el.querySelector('#product-img') || el.querySelector('img');
+        var link = el.querySelector('.nome-produto .link') || el.querySelector('figure a');
+        var valorEl = el.querySelector('.column-valor-produto .valor');
+        var valorDisplayText = valorEl ? valorEl.textContent.trim() : '';
+        var isPix = !!el.querySelector('.column-valor-produto .sub'); /* ".sub" = "no PIX" */
+  
+        state.items.push({
+          dataId: dataId,
+          sku: el.getAttribute('data-item-id') || '',
+          name: el.getAttribute('data-item-name') || el.getAttribute('data-name') || '',
+          variant: el.getAttribute('data-item-variant') || '',
+          brand: el.getAttribute('data-item-brand') || '',
+          category: el.getAttribute('data-item-category') || '',
+          priceUnit: parseFloat(el.getAttribute('data-item-price') || '0'),
+          lineTotal: parseFloat(el.getAttribute('data-valor') || '0'), /* preço cheio linha */
+          quantity: parseInt(el.getAttribute('data-item-quantity') || '1', 10),
+          deposito: el.getAttribute('data-item-deposito') === '1',
+          imgSrc: img ? (img.getAttribute('src') || img.currentSrc) : '',
+          href: link ? link.getAttribute('href') : '',
+          lineTotalPix: parseBRL(valorDisplayText),
+          isPix: isPix
+        });
+  
+        state.subtotalFull += parseFloat(el.getAttribute('data-valor') || '0');
       }
-      /* 2. Fallback: procurar o MAIOR valor R$ entre folhas (evita pegar preço de item) */
-      var maxVal = 0;
-      var candidates = mainArea.querySelectorAll('div, span');
-      for (var i = 0; i < candidates.length; i++) {
-        var el = candidates[i];
-        if (el.children.length > 0) continue;
-        var txt2 = el.textContent.trim();
-        var match2 = txt2.match(/^R\$\s*([\d.]+,\d{2})$/);
-        if (match2) {
-          var v = parseFloat(match2[1].replace(/\./g, '').replace(',', '.'));
-          if (v > maxVal && v < 100000) maxVal = v;
-        }
+  
+      /* Subtotal PIX — vem direto do Magazord no .resumo-valores .value (já descontado) */
+      var resumoValueEl = mainArea.querySelector('#resumo-compra .resumo-valores .value');
+      if (resumoValueEl) {
+        state.subtotalPix = parseBRL(resumoValueEl.textContent);
       }
-      return maxVal;
-    }
-  
-    /* === HELPER: Checar se frete já é grátis === */
-  
-    function isShippingAlreadyFree() {
-      var rows = mainArea.querySelectorAll('div, span');
-      for (var i = 0; i < rows.length; i++) {
-        if (rows[i].textContent.trim() === 'Grátis' || rows[i].textContent.trim() === 'Frete Grátis') {
-          /* Confirmar que está perto de "Entrega" */
-          var parent = rows[i].parentElement;
-          if (parent && parent.textContent.indexOf('Entrega') !== -1) return true;
-        }
+      if (state.subtotalPix <= 0) {
+        /* Fallback: soma os lineTotalPix dos items */
+        state.subtotalPix = state.items.reduce(function(acc, i) { return acc + (i.lineTotalPix || 0); }, 0);
       }
-      return false;
-    }
   
+      /* Discount */
+      var discountEl = mainArea.querySelector('#resumo-compra .discount-value');
+      if (discountEl) state.discount = parseBRL(discountEl.textContent);
   
-    /* === ETAPA: CART === */
+      var couponEl = mainArea.querySelector('#resumo-compra .txt-cupom, #resumo-compra .alert.alert-type-1');
+      if (couponEl) {
+        var m = couponEl.textContent.match(/([A-Z0-9]{3,})/);
+        if (m) state.couponCode = m[1];
+      }
   
-    if (isCart) {
-      /* 1. Barra frete grátis */
-      (function addShippingBar() {
-        if (document.getElementById('mm-shipping-bar')) return;
-  
-        var truckSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
-        var checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
-  
-        var bar = document.createElement('div');
-        bar.id = 'mm-shipping-bar';
-        bar.className = 'mm-shipping-bar';
-  
-        if (isShippingAlreadyFree()) {
-          /* Frete já é grátis — mensagem de reforço positivo */
-          bar.innerHTML = '<div class="mm-shipping-bar-text">'
-            + checkSvg
-            + '<span><strong class="mm-green">FRETE GR\u00c1TIS</strong> no seu pedido!</span>'
-            + '</div>';
+      /* Shipping */
+      var freteEl = mainArea.querySelector('#resumo-compra .frete-calculado');
+      if (freteEl && freteEl.textContent.trim()) {
+        state.shippingRaw = freteEl.textContent.trim();
+        if (/gr[aá]tis/i.test(state.shippingRaw)) {
+          state.shipping = 0;
         } else {
-          /* Calcular progresso */
-          var threshold = 2000;
-          var total = extractCartTotal();
-          if (total <= 0 || total >= threshold) return;
-  
-          var falta = threshold - total;
-          var progress = Math.min((total / threshold) * 100, 100);
-  
-          bar.innerHTML = '<div class="mm-shipping-bar-text">'
-            + truckSvg
-            + '<span>Faltam <strong>R$\u00a0' + falta.toFixed(2).replace('.', ',') + '</strong> para <strong class="mm-green">FRETE GR\u00c1TIS!</strong></span>'
-            + '</div>'
-            + '<div class="mm-shipping-bar-track">'
-            + '<div class="mm-shipping-bar-fill" style="width:' + progress + '%;"></div>'
-            + '</div>';
+          var parsed = parseBRL(state.shippingRaw);
+          if (parsed > 0) state.shipping = parsed;
         }
+        var deadlineMatch = state.shippingRaw.match(/(\d+)\s*dias?/i);
+        if (deadlineMatch) state.shippingDeadline = deadlineMatch[1] + ' dias úteis';
+      }
   
-        /* Inserir como sibling ANTES de #main-cart-area (full-width, fora do flex row).
-           #main-cart-area é display:flex space-between — se inserir DENTRO dele, a bar
-           vira um flex item squeezed de ~137px. Inserindo ANTES, fica full width do
-           container pai naturalmente. */
-        var mainCartArea = document.getElementById('main-cart-area');
-        if (mainCartArea && mainCartArea.parentElement) {
-          mainCartArea.parentElement.insertBefore(bar, mainCartArea);
+      /* CEP input */
+      var cepInput = mainArea.querySelector('#cep, .input-cep');
+      if (cepInput) state.cepValue = cepInput.value || '';
+  
+      /* Finalize state */
+      state.hasFinalizar = !!mainArea.querySelector('#finalizar-compra');
+      state.canFinalize = state.items.length > 0;
+  
+      return state;
+    }
+  
+  
+    /* =============================================
+       RENDER — componentes
+       ============================================= */
+  
+    /* Shipping nudge: SÓ aparece enquanto falta valor pra frete grátis.
+       Quando atingido, a linha "Frete: Grátis" no resumo já comunica. */
+    function renderShippingNudge(state) {
+      var subtotal = state.subtotalFull > 0 ? state.subtotalFull : state.subtotalPix;
+      if (subtotal <= 0) return '';
+      if (subtotal >= FRETE_GRATIS_THRESHOLD) return '';
+      if (state.shipping === 0) return '';
+  
+      var falta = Math.max(0, FRETE_GRATIS_THRESHOLD - subtotal);
+      var pct = Math.min((subtotal / FRETE_GRATIS_THRESHOLD) * 100, 100);
+      return (
+        '<div class="mm-nudge">' +
+          '<div class="mm-nudge-head">' +
+            ICON.truck +
+            '<span>Adicione mais <strong>' + formatBRL(falta) + '</strong> e ganhe frete grátis</span>' +
+          '</div>' +
+          '<div class="mm-nudge-track"><div class="mm-nudge-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>'
+      );
+    }
+  
+    /* Custom checkout header — substitui o header-checkout da Magazord
+       ui-ux-pro-max applied: visual hierarchy via size > color, premium spacing,
+       clear progress indicator, big readable trust signal */
+    function renderCheckoutHeader() {
+      var lockBig = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+  
+      return (
+        '<header class="mm-checkout-header">' +
+          '<a class="mm-checkout-header-logo" href="/" aria-label="Madeira Mania - voltar à home">' +
+            '<img src="' + MM_LOGO_URL + '" alt="Madeira Mania" width="180" height="44">' +
+          '</a>' +
+          '<nav class="mm-checkout-steps" aria-label="Etapas do checkout">' +
+            '<ol>' +
+              '<li class="mm-checkout-step is-active" aria-current="step">' +
+                '<span class="mm-checkout-step-label">Carrinho</span>' +
+              '</li>' +
+              '<li class="mm-checkout-step-sep" aria-hidden="true">›</li>' +
+              '<li class="mm-checkout-step">' +
+                '<span class="mm-checkout-step-label">Identificação</span>' +
+              '</li>' +
+              '<li class="mm-checkout-step-sep" aria-hidden="true">›</li>' +
+              '<li class="mm-checkout-step">' +
+                '<span class="mm-checkout-step-label">Pagamento</span>' +
+              '</li>' +
+            '</ol>' +
+          '</nav>' +
+          '<div class="mm-checkout-secure">' +
+            lockBig +
+            '<span class="mm-checkout-secure-text">' +
+              '<strong>Compra 100% segura</strong>' +
+              '<small>Site protegido por SSL</small>' +
+            '</span>' +
+          '</div>' +
+        '</header>'
+      );
+    }
+  
+    function renderItem(item) {
+      var imgHTML = item.imgSrc
+        ? '<img src="' + escapeHTML(item.imgSrc) + '" alt="' + escapeHTML(item.name) + '" loading="lazy">'
+        : '';
+      var nameHTML = item.href
+        ? '<a class="mm-item-name" href="' + escapeHTML(item.href) + '">' + escapeHTML(item.name) + '</a>'
+        : '<span class="mm-item-name">' + escapeHTML(item.name) + '</span>';
+      var variantHTML = item.variant
+        ? '<p class="mm-item-variant">' + escapeHTML(item.variant) + '</p>'
+        : '';
+      var badgeHTML = item.deposito
+        ? '<span class="mm-item-badge">' + ICON.bolt + '<span>Pronta entrega · Envio em 24h</span></span>'
+        : '';
+      var minDisabled = item.quantity <= 1 ? ' disabled aria-disabled="true"' : '';
+  
+      var priceBlock;
+      if (item.lineTotalPix > 0 && item.isPix) {
+        var priceSub = '<span class="mm-item-price-sub">no PIX</span>';
+        var unitStr = item.quantity > 1 ? formatBRL(item.lineTotalPix / item.quantity) + ' cada' : '';
+        priceBlock =
+          '<div class="mm-item-price">' +
+            '<span class="mm-item-price-value">' + formatBRL(item.lineTotalPix) + '</span>' +
+            priceSub +
+            (unitStr ? '<span class="mm-item-price-unit">' + unitStr + '</span>' : '') +
+          '</div>';
+      } else {
+        var unitStr2 = item.quantity > 1 ? formatBRL(item.priceUnit) + ' cada' : '';
+        priceBlock =
+          '<div class="mm-item-price">' +
+            '<span class="mm-item-price-value">' + formatBRL(item.lineTotal) + '</span>' +
+            (unitStr2 ? '<span class="mm-item-price-unit">' + unitStr2 + '</span>' : '') +
+          '</div>';
+      }
+  
+      return (
+        '<div class="mm-item" data-mm-id="' + item.dataId + '">' +
+          '<div class="mm-item-thumb">' + imgHTML + '</div>' +
+          '<div class="mm-item-body">' +
+            nameHTML +
+            variantHTML +
+            badgeHTML +
+          '</div>' +
+          priceBlock +
+          '<div class="mm-item-controls">' +
+            '<div class="mm-qty" role="group" aria-label="Quantidade">' +
+              '<button type="button" class="mm-qty-btn" data-mm-act="dec"' + minDisabled + ' aria-label="Diminuir quantidade">' + ICON.minus + '</button>' +
+              '<span class="mm-qty-value">' + item.quantity + '</span>' +
+              '<button type="button" class="mm-qty-btn" data-mm-act="inc" aria-label="Aumentar quantidade">' + ICON.plus + '</button>' +
+            '</div>' +
+            '<button type="button" class="mm-item-remove" data-mm-act="remove" aria-label="Remover item" title="Remover">' +
+              ICON.trash +
+            '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+  
+    function renderItemsList(state) {
+      if (!state.items.length) {
+        return (
+          '<div class="mm-empty">' +
+            '<div class="mm-empty-icon">' + ICON.box + '</div>' +
+            '<h3 class="mm-empty-title">Seu carrinho está vazio</h3>' +
+            '<p class="mm-empty-desc">Explore nossos móveis e encontre a peça certa para sua casa.</p>' +
+            '<a class="mm-empty-cta" href="/">Explorar produtos ' + ICON.arrow + '</a>' +
+            '<p class="mm-empty-perks">Frete grátis acima de R$ 2.000 · 12x sem juros · 7% off no PIX</p>' +
+          '</div>'
+        );
+      }
+      return state.items.map(renderItem).join('');
+    }
+  
+    function renderSkeletonItems(n) {
+      var out = '';
+      for (var i = 0; i < n; i++) {
+        out +=
+          '<div class="mm-skel-item">' +
+            '<div class="mm-skel mm-skel-thumb"></div>' +
+            '<div class="mm-skel-lines">' +
+              '<div class="mm-skel mm-skel-line w-3-4"></div>' +
+              '<div class="mm-skel mm-skel-line w-1-2"></div>' +
+              '<div class="mm-skel mm-skel-line w-1-3"></div>' +
+            '</div>' +
+            '<div class="mm-skel-lines">' +
+              '<div class="mm-skel mm-skel-line w-1-2"></div>' +
+            '</div>' +
+          '</div>';
+      }
+      return out;
+    }
+  
+    function renderSummaryDynamic(state) {
+      var subtotalFull = state.subtotalFull > 0 ? state.subtotalFull : state.subtotalPix;
+  
+      /* Rows: Subtotal, Frete (se calculado), Desconto */
+      var rows =
+        '<div class="mm-row">' +
+          '<span class="mm-row-label">Subtotal</span>' +
+          '<span class="mm-row-value">' + formatBRL(subtotalFull) + '</span>' +
+        '</div>';
+  
+      if (state.shipping !== null) {
+        var freteValue;
+        if (state.shipping === 0) {
+          freteValue = '<span class="mm-row-value is-free">' + ICON.check + ' Grátis</span>';
         } else {
-          var container = mainArea.querySelector('.container');
-          if (container) container.insertBefore(bar, container.firstChild);
+          freteValue = '<span class="mm-row-value">' + formatBRL(state.shipping) + '</span>';
         }
-      })();
+        rows +=
+          '<div class="mm-row">' +
+            '<span class="mm-row-label">Frete' +
+              (state.shippingDeadline ? ' <span class="mm-row-sub">· ' + escapeHTML(state.shippingDeadline) + '</span>' : '') +
+            '</span>' +
+            freteValue +
+          '</div>';
+      }
   
-      /* 2. Trust strip — colado no CTA Finalizar compra (desktop + mobile)
-         Desktop: insere antes do #finalizar-compra dentro de .proxima-etapa (sidebar direito).
-         Mobile: insere antes do #finalizar-compra dentro de .summary-fixed (sticky footer).
-         Ambos usam o mesmo DOM target — só o CSS diverge (ver checkout-cro.css). */
-      (function addCartTrust() {
-        if (document.getElementById('mm-cart-trust')) return;
+      if (state.discount > 0) {
+        rows +=
+          '<div class="mm-row">' +
+            '<span class="mm-row-label">Desconto</span>' +
+            '<span class="mm-row-value is-discount">− ' + formatBRL(state.discount) + '</span>' +
+          '</div>';
+      }
   
-        var finalizarBtn = document.getElementById('finalizar-compra');
-        if (finalizarBtn && finalizarBtn.parentElement) {
-          finalizarBtn.parentElement.insertBefore(
-            createTrustStrip('mm-cart-trust'),
-            finalizarBtn
-          );
+      /* Total block */
+      var totalBlock = '';
+      if (state.shipping !== null) {
+        var totalFull = Math.max(0, subtotalFull + state.shipping - state.discount);
+        var totalPix = Math.max(0, state.subtotalPix + state.shipping - state.discount);
+        var save = totalFull - totalPix;
+        var parcela = totalFull / 12;
+        totalBlock =
+          '<div class="mm-total">' +
+            '<div class="mm-total-label">Total</div>' +
+            '<div class="mm-total-value">' + formatBRL(totalFull) + '</div>' +
+            '<div class="mm-total-pix">' +
+              '<span>' + formatBRL(totalPix) + ' à vista no PIX</span>' +
+              (save > 0 ? '<span class="mm-total-pix-save">economia de ' + formatBRL(save) + '</span>' : '') +
+            '</div>' +
+            '<div class="mm-total-parcela">ou 12x de ' + formatBRL(parcela) + ' sem juros no cartão</div>' +
+          '</div>';
+      } else {
+        totalBlock =
+          '<div class="mm-total">' +
+            '<div class="mm-total-label">Subtotal</div>' +
+            '<div class="mm-total-value">' + formatBRL(state.subtotalPix) + '</div>' +
+            '<div class="mm-total-pix"><span>à vista no PIX</span></div>' +
+            '<div class="mm-total-pending">Informe seu CEP para ver o frete e o total final.</div>' +
+          '</div>';
+      }
+  
+      /* Coupon block */
+      var couponBlock;
+      if (state.couponCode) {
+        couponBlock =
+          '<div class="mm-coupon-applied">' +
+            '<span class="mm-coupon-applied-left">' + ICON.tag + '<span>' + escapeHTML(state.couponCode) + '</span></span>' +
+            '<button type="button" data-mm-act="coupon-remove" aria-label="Remover cupom">' + ICON.close + '</button>' +
+          '</div>';
+      } else {
+        couponBlock =
+          '<div class="mm-coupon">' +
+            '<button type="button" class="mm-coupon-toggle" data-mm-act="coupon-toggle">' +
+              ICON.tag + '<span>Tenho um cupom</span>' +
+            '</button>' +
+            '<form class="mm-coupon-form" data-mm-act="coupon-submit">' +
+              '<input type="text" class="mm-input" name="mm-coupon-code" placeholder="CUPOM" autocomplete="off" autocapitalize="characters" spellcheck="false" />' +
+              '<button type="submit" class="mm-btn-secondary">Aplicar</button>' +
+            '</form>' +
+          '</div>';
+      }
+  
+      return (
+        '<div class="mm-sum-stack">' +
+          '<div class="mm-rows">' + rows + '</div>' +
+          couponBlock +
+          totalBlock +
+        '</div>'
+      );
+    }
+  
+  
+    /* =============================================
+       LAYOUT — cria estrutura permanente do mm-layout
+       ============================================= */
+  
+    function buildLayout() {
+      if (document.getElementById('mm-layout')) return document.getElementById('mm-layout');
+  
+      var layout = document.createElement('div');
+      layout.id = 'mm-layout';
+  
+      /* Use o .container ou o próprio mainArea */
+      var container = mainArea.querySelector('.container') || mainArea;
+  
+      layout.innerHTML =
+        renderCheckoutHeader() +
+        '<div class="mm-grid">' +
+          '<section class="mm-items">' +
+            '<h2 class="mm-h">Carrinho</h2>' +
+            '<div class="mm-items-card">' +
+              '<div id="mm-item-list">' + renderSkeletonItems(2) + '</div>' +
+            '</div>' +
+          '</section>' +
+          '<aside class="mm-sum">' +
+            '<h2 class="mm-h">Resumo</h2>' +
+            '<div class="mm-sum-card">' +
+              /* Shipping nudge slot — só renderiza se faltar valor */
+              '<div id="mm-nudge-slot"></div>' +
+              /* CEP card */
+              '<div class="mm-cep">' +
+                '<div class="mm-cep-label">' +
+                  '<span class="mm-cep-label-text">Calcular frete</span>' +
+                  '<a class="mm-cep-label-link" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Não sei meu CEP</a>' +
+                '</div>' +
+                '<div class="mm-cep-row">' +
+                  '<input type="text" class="mm-input" id="mm-cep-input" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code" />' +
+                  '<button type="button" class="mm-btn-secondary" data-mm-act="calc-cep">Calcular</button>' +
+                '</div>' +
+              '</div>' +
+              /* Dynamic summary (rows + total + coupon) */
+              '<div id="mm-sum-dynamic"></div>' +
+              /* CTA */
+              '<button type="button" class="mm-cta" data-mm-act="finalizar">' +
+                'Finalizar compra' + ICON.arrow +
+              '</button>' +
+              /* Trust */
+              '<div class="mm-trust">' +
+                '<span class="mm-trust-item">' + ICON.lock + '<span>Pagamento seguro</span></span>' +
+                '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
+                '<span class="mm-trust-item">' + ICON.card + '<span>12x sem juros</span></span>' +
+              '</div>' +
+              /* Help (objection breaker) */
+              '<a class="mm-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener" data-mm-track="help-whats">' +
+                ICON.whats +
+                '<span><strong>Ficou com alguma dúvida?</strong> Fale com a gente no WhatsApp</span>' +
+              '</a>' +
+            '</div>' +
+          '</aside>' +
+        '</div>';
+  
+      container.insertBefore(layout, container.firstChild);
+      mainArea.classList.add('mm-shadow-mode');
+      document.body.classList.add('mm-checkout-rebuild');
+      /* Remove anti-flicker loading class — nosso layout já renderizou */
+      document.documentElement.classList.remove('mm-cart-loading');
+      return layout;
+    }
+  
+  
+    /* =============================================
+       HYDRATE — lê estado e injeta no layout
+       ============================================= */
+  
+    function hydrate() {
+      var state = readCart();
+      var itemList = document.getElementById('mm-item-list');
+      if (itemList) itemList.innerHTML = renderItemsList(state);
+  
+      var dyn = document.getElementById('mm-sum-dynamic');
+      if (dyn) dyn.innerHTML = renderSummaryDynamic(state);
+  
+      var nudgeSlot = document.getElementById('mm-nudge-slot');
+      if (nudgeSlot) nudgeSlot.innerHTML = renderShippingNudge(state);
+  
+      /* CTA disabled se vazio */
+      var cta = document.querySelector('.mm-cta');
+      if (cta) {
+        cta.disabled = !state.canFinalize;
+        cta.style.opacity = state.canFinalize ? '1' : '0.5';
+        cta.style.pointerEvents = state.canFinalize ? 'auto' : 'none';
+      }
+  
+      /* Sync CEP input da nossa UI com o valor atual */
+      var cepUIInput = document.getElementById('mm-cep-input');
+      if (cepUIInput && !cepUIInput.matches(':focus')) {
+        var saved = STORAGE.get(CEP_KEY);
+        var currentVal = state.cepValue || (saved || '');
+        if (currentVal) {
+          cepUIInput.value = formatCep(currentVal);
+        }
+      }
+  
+      /* Se a UI mostrar um cupom aplicado, sincroniza o cupom label */
+      return state;
+    }
+  
+  
+    /* =============================================
+       CEP helpers
+       ============================================= */
+  
+    function formatCep(raw) {
+      var digits = String(raw || '').replace(/\D/g, '').slice(0, 8);
+      if (digits.length <= 5) return digits;
+      return digits.slice(0, 5) + '-' + digits.slice(5);
+    }
+  
+    function saveCep(raw) {
+      var digits = String(raw || '').replace(/\D/g, '');
+      if (digits.length === 8) STORAGE.set(CEP_KEY, digits);
+    }
+  
+    /* Auto-preenche e dispara cálculo de frete se houver CEP salvo.
+       Retry pattern: o input #cep pode ser injetado pelo Magazord depois.
+       Também pula se o frete já está calculado (state.shipping !== null). */
+    function autoCalcCep(attempt) {
+      attempt = attempt || 0;
+      var saved = STORAGE.get(CEP_KEY);
+      if (!saved || saved.length !== 8) return;
+  
+      var hiddenCep = mainArea.querySelector('#cep, .input-cep');
+      if (!hiddenCep) {
+        if (attempt < 12) setTimeout(function() { autoCalcCep(attempt + 1); }, 350);
+        return;
+      }
+  
+      /* Se o frete já está calculado, atualiza UI sem disparar de novo */
+      var freteEl = mainArea.querySelector('#resumo-compra .frete-calculado');
+      if (freteEl && freteEl.textContent.trim()) {
+        var ourCepInput = document.getElementById('mm-cep-input');
+        if (ourCepInput && !ourCepInput.value) ourCepInput.value = formatCep(saved);
+        return;
+      }
+  
+      /* Sincroniza UI nossa primeiro */
+      var ourInput = document.getElementById('mm-cep-input');
+      if (ourInput && !ourInput.value) ourInput.value = formatCep(saved);
+  
+      hiddenCep.value = formatCep(saved);
+      triggerInputEvent(hiddenCep);
+  
+      /* Dispara o cálculo pela API Magazord */
+      setTimeout(function() {
+        triggerCepCalc();
+      }, 200);
+    }
+  
+    function triggerInputEvent(el) {
+      try {
+        var nativeSet = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nativeSet.call(el, el.value);
+      } catch(e) {}
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  
+    function triggerCepCalc() {
+      /* Prefer Zord.Cart.calculaFreteCarrinho, fallback pro botão OK nativo */
+      try {
+        if (window.Zord && window.Zord.Cart && typeof window.Zord.Cart.calculaFreteCarrinho === 'function') {
+          window.Zord.Cart.calculaFreteCarrinho();
           return;
         }
-  
-        /* Fallback: se a estrutura mudou e não achamos o botão, cai no #resumo-compra */
-        var resumo = document.getElementById('resumo-compra');
-        if (resumo) {
-          resumo.appendChild(createTrustStrip('mm-cart-trust'));
-        }
-      })();
+      } catch(e) {}
+      var okBtn = mainArea.querySelector('#resumo-compra .calcula-frete > button, .area-frete button');
+      if (okBtn) okBtn.click();
     }
   
   
-    /* === ETAPA: IDENTIFY === */
+    /* =============================================
+       EVENT DELEGATION
+       ============================================= */
   
-    if (isIdentify) {
-      /* 1. Melhorar título */
-      var h2 = mainArea.querySelector('h2');
-      if (h2 && h2.textContent.indexOf('Acesse') !== -1) {
-        h2.textContent = 'Quase l\u00e1! Identifique-se';
+    function bindEvents() {
+      var layout = document.getElementById('mm-layout');
+      if (!layout || layout._mmBound) return;
+      layout._mmBound = true;
+  
+      layout.addEventListener('click', function(e) {
+        var actEl = e.target.closest('[data-mm-act]');
+        if (!actEl) return;
+        var act = actEl.getAttribute('data-mm-act');
+        var itemEl = actEl.closest('.mm-item');
+        var dataId = itemEl ? parseInt(itemEl.getAttribute('data-mm-id'), 10) : null;
+  
+        switch (act) {
+          case 'inc':
+            handleQtyChange(dataId, itemEl, 'inc');
+            break;
+          case 'dec':
+            handleQtyChange(dataId, itemEl, 'dec');
+            break;
+          case 'remove':
+            handleRemove(dataId, itemEl);
+            break;
+          case 'calc-cep':
+            handleCalcCep();
+            break;
+          case 'coupon-toggle':
+            var wrap = actEl.closest('.mm-coupon');
+            if (wrap) {
+              wrap.classList.add('is-open');
+              var inp = wrap.querySelector('input');
+              if (inp) setTimeout(function() { inp.focus(); }, 100);
+            }
+            break;
+          case 'coupon-remove':
+            handleCouponRemove();
+            break;
+          case 'finalizar':
+            handleFinalizar();
+            break;
+        }
+      });
+  
+      /* Submit do formulário de cupom (Enter key) */
+      layout.addEventListener('submit', function(e) {
+        var form = e.target.closest('[data-mm-act="coupon-submit"]');
+        if (!form) return;
+        e.preventDefault();
+        var input = form.querySelector('input');
+        if (!input) return;
+        handleCouponApply(input.value.trim());
+      });
+  
+      /* Máscara + Enter no input CEP */
+      layout.addEventListener('input', function(e) {
+        if (e.target && e.target.id === 'mm-cep-input') {
+          e.target.value = formatCep(e.target.value);
+        }
+      });
+      layout.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target && e.target.id === 'mm-cep-input') {
+          e.preventDefault();
+          handleCalcCep();
+        }
+      });
+    }
+  
+  
+    /* =============================================
+       HANDLERS — chamam Zord API
+       ============================================= */
+  
+    function handleQtyChange(dataId, itemEl, direction) {
+      if (!dataId || !itemEl) return;
+      if (!window.Zord || !window.Zord.checkout) return;
+      itemEl.classList.add('is-updating');
+      try {
+        if (direction === 'inc') {
+          window.Zord.checkout.adicionaQuantidade(dataId);
+        } else {
+          window.Zord.checkout.removeQuantidade(dataId);
+        }
+      } catch (e) {
+        console.warn('[mm-cart] qty change failed', e);
+        itemEl.classList.remove('is-updating');
+      }
+    }
+  
+    function handleRemove(dataId, itemEl) {
+      if (!dataId || !itemEl) return;
+      if (!window.Zord || !window.Zord.checkout) return;
+      itemEl.classList.add('is-updating');
+      /* Fade out visual antes da AJAX responder */
+      itemEl.style.transition = 'opacity 200ms, transform 200ms';
+      itemEl.style.opacity = '0';
+      itemEl.style.transform = 'translateX(-12px)';
+      try {
+        /* removeQuantidade auto-deleta quando qty == 1 */
+        if (typeof window.Zord.checkout.deleteItem === 'function') {
+          window.Zord.checkout.deleteItem(dataId);
+        } else {
+          window.Zord.checkout.removeQuantidade(dataId);
+        }
+      } catch (e) {
+        console.warn('[mm-cart] remove failed', e);
+        itemEl.classList.remove('is-updating');
+        itemEl.style.opacity = '1';
+        itemEl.style.transform = '';
+      }
+    }
+  
+    function handleCalcCep() {
+      var input = document.getElementById('mm-cep-input');
+      if (!input) return;
+      var digits = (input.value || '').replace(/\D/g, '');
+      if (digits.length !== 8) {
+        input.focus();
+        input.classList.add('mm-input-error');
+        setTimeout(function() { input.classList.remove('mm-input-error'); }, 1200);
+        return;
+      }
+      saveCep(digits);
+      /* Aplica no input hidden Magazord */
+      var hidden = mainArea.querySelector('#cep, .input-cep');
+      if (hidden) {
+        hidden.value = formatCep(digits);
+        triggerInputEvent(hidden);
+      }
+      triggerCepCalc();
+    }
+  
+    function handleCouponApply(code) {
+      if (!code) return;
+      if (!window.Zord || !window.Zord.checkout) return;
+      var hidden = mainArea.querySelector('#cupom-desconto');
+      if (hidden) {
+        hidden.value = code.toUpperCase();
+        triggerInputEvent(hidden);
+      }
+      try {
+        window.Zord.checkout.addCupomDesconto();
+      } catch (e) {
+        console.warn('[mm-cart] coupon apply failed', e);
+      }
+    }
+  
+    function handleCouponRemove() {
+      if (!window.Zord || !window.Zord.checkout) return;
+      try {
+        window.Zord.checkout.removeCupomDesconto();
+      } catch (e) {
+        console.warn('[mm-cart] coupon remove failed', e);
+      }
+    }
+  
+    function handleFinalizar() {
+      var btn = document.getElementById('finalizar-compra');
+      if (btn) {
+        btn.click();
+        return;
+      }
+      /* Fallback: navegar direto */
+      location.href = '/checkout/identify';
+    }
+  
+  
+    /* =============================================
+       CART MAIN ENTRY
+       ============================================= */
+  
+    if (isCart) {
+      if (!document.getElementById('mm-checkout-cro-done')) {
+        var marker = document.createElement('div');
+        marker.id = 'mm-checkout-cro-done';
+        marker.style.display = 'none';
+        document.body.appendChild(marker);
       }
   
-      /* 2. Melhorar subtítulo (pode ser div ou span) */
+      /* Aguarda o DOM Magazord renderizar itens (ou empty) */
+      function waitForCartDom(attempt) {
+        attempt = attempt || 0;
+        if (attempt > 30) { mountCart(); return; }
+        var hasItems = mainArea.querySelectorAll('.cart-item').length > 0;
+        var hasResumo = mainArea.querySelector('#resumo-compra');
+        if (hasItems || hasResumo || attempt > 8) {
+          mountCart();
+        } else {
+          setTimeout(function() { waitForCartDom(attempt + 1); }, 250);
+        }
+      }
+  
+      function mountCart() {
+        buildLayout();
+        bindEvents();
+        hydrate();
+  
+        /* Auto-calcula frete se tiver CEP salvo */
+        autoCalcCep();
+  
+        /* Re-hydrate em cada AJAX do cart */
+        if (typeof jQuery !== 'undefined') {
+          jQuery(document).ajaxComplete(function(e, xhr, settings) {
+            if (!settings || !settings.url) return;
+            var url = settings.url;
+            if (
+              url.indexOf('checkout/cart') !== -1 ||
+              url.indexOf('atualiza') !== -1 ||
+              url.indexOf('cupom') !== -1 ||
+              url.indexOf('frete') !== -1 ||
+              url.indexOf('removeItem') !== -1 ||
+              url.indexOf('adicionaItem') !== -1
+            ) {
+              /* Pequeno delay pro Magazord terminar de mexer no DOM */
+              setTimeout(hydrate, 120);
+              setTimeout(function() {
+                var s = readCart();
+                /* Salva CEP automaticamente quando o frete é calculado com sucesso */
+                if (s.shipping !== null && s.cepValue) {
+                  saveCep(s.cepValue);
+                }
+              }, 200);
+            }
+          });
+        }
+  
+        /* MutationObserver safety net — re-render se Magazord mexer no cart-area */
+        try {
+          var observer = new MutationObserver(function(muts) {
+            /* Debounce */
+            if (mountCart._mutTimer) clearTimeout(mountCart._mutTimer);
+            mountCart._mutTimer = setTimeout(hydrate, 200);
+          });
+          var watchNodes = [
+            mainArea.querySelector('#cart-area'),
+            mainArea.querySelector('.cart-area'),
+            mainArea.querySelector('#resumo-compra')
+          ].filter(Boolean);
+          watchNodes.forEach(function(n) {
+            observer.observe(n, { childList: true, subtree: true, characterData: true });
+          });
+        } catch (e) {}
+      }
+  
+      waitForCartDom();
+    }
+  
+  
+    /* =============================================
+       IDENTIFY — minimal CRO copy
+       ============================================= */
+  
+    if (isIdentify) {
+      var h2 = mainArea.querySelector('h2');
+      if (h2 && h2.textContent.indexOf('Acesse') !== -1) {
+        h2.textContent = 'Quase lá! Identifique-se';
+      }
       var subtitleEls = mainArea.querySelectorAll('div, span, p');
       for (var d = 0; d < subtitleEls.length; d++) {
         var txt = subtitleEls[d].textContent.trim();
         if (txt === 'Informe seu e-mail ou CPF/CNPJ para continuar.' && subtitleEls[d].children.length === 0) {
-          subtitleEls[d].textContent = 'Informe seu e-mail para finalizar a compra de forma r\u00e1pida e segura.';
+          subtitleEls[d].textContent = 'Informe seu e-mail para finalizar a compra de forma rápida e segura.';
           break;
         }
       }
-  
-      /* 3. Esconder "Nunca postaremos" */
       var allP = mainArea.querySelectorAll('p');
       for (var p = 0; p < allP.length; p++) {
         if (allP[p].textContent.indexOf('Nunca postaremos') !== -1) {
           allP[p].style.display = 'none';
         }
       }
-  
-      /* 4. Trust strip após o botão Continuar */
-      var continueBtn = Array.from(mainArea.querySelectorAll('button')).find(function(b) {
-        return b.textContent.trim() === 'Continuar';
-      });
-      if (continueBtn && !document.getElementById('mm-identify-trust')) {
-        continueBtn.parentNode.insertBefore(
-          createTrustStrip('mm-identify-trust'),
-          continueBtn.nextSibling
-        );
-      }
-  
-      /* 5. Input type email */
       var emailInput = mainArea.querySelector('input[type="text"]');
       if (emailInput && emailInput.placeholder && emailInput.placeholder.indexOf('e-mail') !== -1) {
         emailInput.type = 'email';
@@ -4839,43 +5630,13 @@
     }
   
   
-    /* === ETAPA: ONEPAGE === */
+    /* =============================================
+       ONEPAGE / PAYMENT — input modes + security label
+       ============================================= */
   
     if (isOnepage) {
-      /* 1. Trust strip após "Próxima etapa" (botão visível de submit) */
-      var proximaBtn = Array.from(mainArea.querySelectorAll('button')).find(function(b) {
-        return b.textContent.trim() === 'Pr\u00f3xima etapa';
-      });
-      if (proximaBtn && !document.getElementById('mm-onepage-trust-0')) {
-        proximaBtn.parentNode.insertBefore(createTrustStrip('mm-onepage-trust-0'), proximaBtn.nextSibling);
-      }
-      /* Trust strip também no botão final de pagamento (se existir) */
-      var payBtn = Array.from(mainArea.querySelectorAll('button')).find(function(b) {
-        var t = b.textContent.trim().toLowerCase();
-        return t.indexOf('finalizar') !== -1 || t.indexOf('pagar') !== -1 || t.indexOf('confirmar') !== -1;
-      });
-      if (payBtn && !document.getElementById('mm-onepage-trust-pay')) {
-        payBtn.parentNode.insertBefore(createTrustStrip('mm-onepage-trust-pay'), payBtn);
-      }
-  
-      /* 2. Segurança no form de cartão */
-      var cardInputs = mainArea.querySelectorAll('input[placeholder*="cart" i], input[placeholder*="numero" i]');
-      if (cardInputs.length > 0) {
-        var cardForm = cardInputs[0].closest('form') || cardInputs[0].closest('fieldset') || cardInputs[0].parentElement.parentElement;
-        if (cardForm && !cardForm.querySelector('#mm-card-security')) {
-          var lockSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
-          var msg = document.createElement('div');
-          msg.id = 'mm-card-security';
-          msg.className = 'mm-trust-strip';
-          msg.style.justifyContent = 'flex-start';
-          msg.innerHTML = '<span class="mm-trust-strip-item">' + lockSvg + '<b>Dados criptografados e protegidos via SSL</b></span>';
-          cardForm.insertBefore(msg, cardForm.firstChild);
-        }
-      }
-  
-      /* 3. Input modes corretos */
-      var cepInput = mainArea.querySelector('#cep, input[placeholder*="00000" i]');
-      if (cepInput) cepInput.inputMode = 'numeric';
+      var cepInput2 = mainArea.querySelector('#cep, input[placeholder*="00000" i]');
+      if (cepInput2) cepInput2.inputMode = 'numeric';
   
       var cardNumInput = mainArea.querySelector('input[placeholder*="numero do cart" i]');
       if (cardNumInput) cardNumInput.inputMode = 'numeric';

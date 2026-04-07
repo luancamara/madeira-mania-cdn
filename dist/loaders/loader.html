@@ -8,10 +8,21 @@
 .mm-ready #produto-react-app .exibe-botao-whatsapp { visibility: visible; }
 /* Esconder WhatsApp original (substituído pelo nosso) */
 #popup-msg-whats { display: none !important; }
+/* Anti-flicker checkout: esconde Magazord checkout enquanto bundle não carrega */
+html.mm-cart-loading #checkout-main-area>*:not(#mm-layout){visibility:hidden!important;opacity:0!important}
+html.mm-cart-loading .header-checkout,html.mm-cart-loading .footer-checkout-info,html.mm-cart-loading .horario-atendimento,html.mm-cart-loading #tickerBar,html.mm-cart-loading #footer-react-app,html.mm-cart-loading .ra-footer{display:none!important}
+html.mm-cart-loading #checkout-main-area{position:relative;min-height:480px;background:#F2F2F2}
+html.mm-cart-loading #checkout-main-area::before{content:"";position:absolute;top:50%;left:50%;width:32px;height:32px;margin:-16px 0 0 -16px;border:3px solid #E5E7EB;border-top-color:#4B664A;border-radius:50%;animation:mm-load-spin 800ms linear infinite}
+@keyframes mm-load-spin{to{transform:rotate(360deg)}}
+/* Anti-flicker footer global: esconde Magazord footer enquanto bundle injeta o nosso */
+html.mm-footer-loading #footer-react-app,html.mm-footer-loading .ra-footer,html.mm-footer-loading .footer-04,html.mm-footer-loading .footer-top,html.mm-footer-loading .footer-middle,html.mm-footer-loading .footer-about,html.mm-footer-loading .footer-bottom,html.mm-footer-loading .footer-checkout-info,html.mm-footer-loading .magazord-logo-container{display:none!important}
 /* DEV mode indicator — só ativa quando localStorage.mm_dev_url está setado */
 html.mm-dev-mode::before{content:"\26a1 DEV MODE \2014 localhost";position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;font:bold 11px/20px monospace;text-align:center;z-index:999999;padding:2px 8px}
 html.mm-dev-mode body{margin-top:20px !important}
 </style>
+<script>
+(function(){var p=location.pathname;if(/\/checkout\/cart/.test(p)){document.documentElement.classList.add("mm-cart-loading")}document.documentElement.classList.add("mm-footer-loading")})();
+</script>
 
 <script type="application/ld+json">
 {
