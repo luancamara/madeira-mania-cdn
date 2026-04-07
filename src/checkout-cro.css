@@ -2007,6 +2007,18 @@ body.mm-checkout-rebuild .checkout-main {
   color: var(--mm-fg-subtle);
 }
 
+/* Erro inline do guest form */
+#mm-layout .mm-id-guest-error {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 8px;
+  color: #B91C1C;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 /* Qty inline prefix no nome (não mais badge sobre a imagem) */
 #mm-layout .mm-id-thumb-name .mm-id-thumb-qty,
 #mm-layout strong.mm-id-thumb-qty {

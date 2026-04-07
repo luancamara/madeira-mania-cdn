@@ -1214,38 +1214,56 @@
     return false;
   }
 
-  function submitMagazordGuestForm(data) {
-    /* Mapeia nossos values pros inputs Magazord */
-    var map = [
-      ['#nome-completo_3', data.nome],
-      ['#email_3', data.email],
-      ['#cpf_3', data.cpf],
-      ['#telefone_3', data.telefone]
-    ];
-    map.forEach(function(pair) {
-      var el = mainArea.querySelector(pair[0]);
-      if (el) {
-        el.value = pair[1];
-        triggerInputEvent(el);
-      }
-    });
-    var ofertas = mainArea.querySelector('#receber-ofertas_3');
-    if (ofertas) {
-      ofertas.checked = !!data.ofertas;
-      ofertas.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    /* Submit: clica no btn .next.action-button.button-success do form etapa-01 */
-    var form = mainArea.querySelector('#full-anonymous-buy-form-etapa-01');
-    var btn = form ? form.querySelector('button.next.action-button, button.button-success, button[type="submit"]') : null;
-    if (btn) {
-      btn.click();
+  /* Submit guest checkout via fetch direto pro endpoint Magazord:
+     POST /checkout/payment?operation=compraSemCadadastroEtapa01
+     Body: tipo + email + nome-completo + cpf + telefone
+     Response: "1" = sucesso → navega pra /checkout/onepage (etapa endereço)
+
+     Não usa form.submit() porque o form Magazord original espera estar
+     visible + inserido na sessão guest, e o response é AJAX (sem redirect).
+     Fazendo fetch manual replicamos o que o JS Magazord faria após sucesso. */
+  function submitMagazordGuestForm(data, callbacks) {
+    callbacks = callbacks || {};
+    var body = new URLSearchParams();
+    body.append('tipo', '1');
+    body.append('email', data.email);
+    body.append('nome-completo', data.nome);
+    body.append('cpf', data.cpf);
+    body.append('telefone', data.telefone);
+    if (data.ofertas) body.append('receber-ofertas', 'on');
+
+    try {
+      fetch('/checkout/payment?operation=compraSemCadadastroEtapa01', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': '*/*'
+        },
+        body: body.toString()
+      })
+        .then(function(r) { return r.text(); })
+        .then(function(txt) {
+          var trimmed = (txt || '').trim();
+          if (trimmed === '1' || /^\s*1\s*$/.test(trimmed)) {
+            /* Sucesso — navega pra etapa de endereço */
+            location.href = '/checkout/onepage';
+          } else {
+            /* Backend retornou erro/mensagem */
+            console.warn('[mm-id] guest submit non-success:', trimmed.substring(0, 200));
+            if (callbacks.error) callbacks.error(trimmed);
+          }
+        })
+        .catch(function(err) {
+          console.warn('[mm-id] guest submit fetch failed', err);
+          if (callbacks.error) callbacks.error(err && err.message);
+        });
       return true;
+    } catch (e) {
+      console.warn('[mm-id] guest submit threw', e);
+      return false;
     }
-    if (form) {
-      form.submit();
-      return true;
-    }
-    return false;
   }
 
   /* ----- bind eventos do identify ----- */
@@ -1304,17 +1322,32 @@
           return;
         }
 
-        var ok2 = submitMagazordGuestForm({
+        var gbtn = guestForm.querySelector('.mm-cta');
+        if (gbtn) gbtn.classList.add('is-loading');
+
+        submitMagazordGuestForm({
           nome: nome.trim(),
           email: email.trim(),
           cpf: cpf,
           telefone: tel,
           ofertas: ofertas
+        }, {
+          error: function(msg) {
+            if (gbtn) gbtn.classList.remove('is-loading');
+            /* Mostra erro abaixo do form */
+            var errorSlot = guestForm.querySelector('.mm-id-guest-error');
+            if (!errorSlot) {
+              errorSlot = document.createElement('div');
+              errorSlot.className = 'mm-id-guest-error';
+              guestForm.appendChild(errorSlot);
+            }
+            var displayMsg = (typeof msg === 'string' && msg.length < 200 && msg.length > 0)
+              ? msg
+              : 'Não foi possível continuar. Verifique os dados e tente novamente.';
+            errorSlot.textContent = displayMsg;
+            errorSlot.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
         });
-        if (ok2) {
-          var gbtn = guestForm.querySelector('.mm-cta');
-          if (gbtn) gbtn.classList.add('is-loading');
-        }
       }
     });
 
