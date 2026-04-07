@@ -1806,11 +1806,41 @@
     });
   }
 
-  /* Submit final: copia values pros inputs Magazord + clica botão next */
+  /* Submit final: estratégia híbrida.
+     1. Preenche TODOS os fields Magazord (anonymous _3 + PF _2 + endereço)
+     2. Mostra overlay fullscreen "Processando..."
+     3. Remove shadow-mode + hide #mm-layout (Magazord original visible offscreen)
+     4. Clica no button visible "Próxima etapa" do Magazord
+     5. Magazord JS faz toda a chain interna (POSTs + cliques + navegação)
+     6. Overlay persiste até /payment carregar
+
+     Por que essa abordagem: o Magazord JS interno tem callbacks complexos
+     (animações fade, validação, fingerprint, sessão state) que são frágeis
+     pra replicar via fetch direto. Deixar o Magazord rodar nativo é robusto. */
+  function showSubmitOverlay(message) {
+    if (document.getElementById('mm-op-overlay')) return;
+    var overlay = document.createElement('div');
+    overlay.id = 'mm-op-overlay';
+    overlay.innerHTML =
+      '<div class="mm-op-overlay-card">' +
+        '<div class="mm-op-overlay-spinner"></div>' +
+        '<p class="mm-op-overlay-text">' + escapeHTML(message || 'Processando...') + '</p>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+
   function submitOnepageToMagazord(data) {
-    /* O Magazord onepage tem múltiplos forms (PF, PJ, anonymous, endereço).
-       Os forms anonymous (id _3) e endereço são os que importam pro guest flow.
-       Forms PF (id _2) também podem ser usados como fallback. */
+    var nomeT = data.nome.trim();
+    var emailT = data.email.trim();
+    var ruaT = data.rua.trim();
+    var bairroT = data.bairro.trim();
+    var cidadeT = data.cidade.trim();
+    var ufT = data.uf.trim();
+    var cepF = formatCep(data.cep.replace(/\D/g, ''));
+
+    /* Persiste pra próximas telas */
+    STORAGE.set('mm_user_email', emailT);
+
     var setVal = function(sel, value) {
       var el = mainArea.querySelector(sel);
       if (!el) return false;
@@ -1824,47 +1854,108 @@
       return true;
     };
 
-    /* Dados pessoais — tenta tanto _2 (PF) quanto _3 (anonymous) */
-    setVal('#nome-completo_2', data.nome.trim()) || setVal('#nome-completo_3', data.nome.trim());
-    setVal('#cpf_2', data.cpf) || setVal('#cpf_3', data.cpf);
-    setVal('#email_3', data.email.trim()) || setVal('#email-pessoa-fisica', data.email.trim());
-    setVal('#telefone_2', data.tel) || setVal('#telefone_3', data.tel);
+    /* IDs do form anonymous (Compra sem cadastro) — anonymous flow tem
+       sufixos mistos: nome/cpf/tel = _2, email = _3 */
+    setVal('#nome-completo_2', nomeT);
+    setVal('#cpf_2', data.cpf);
+    setVal('#email_3', emailT);
+    setVal('#telefone_2', data.tel);
 
-    /* Endereço */
-    setVal('#cep', data.cep);
-    setVal('#logradouro', data.rua.trim());
+    /* Form de endereço — todos sem sufixo, plus #destinatario que é
+       específico do form endereço (mesmo valor que nome) */
+    setVal('#cep', cepF);
+    setVal('#destinatario', nomeT);
+    setVal('#logradouro', ruaT);
     setVal('#numero', data.num);
     setVal('#complemento', data.comp);
-    setVal('#bairro', data.bairro.trim());
-    setVal('#cidade', data.cidade.trim());
-    setVal('#estado', data.uf.trim());
+    setVal('#bairro', bairroT);
+    setVal('#cidade', cidadeT);
+    setVal('#estado', ufT);
 
-    /* Tenta clicar nos botões de "Próxima etapa" do Magazord pra avançar
-       (eles fazem POST + navegam pra payment) */
+    /* Show overlay loading fullscreen */
+    showSubmitOverlay('Indo para o pagamento...');
+
+    /* Hide nosso layout + remove shadow-mode pra Magazord ficar no flow
+       normal (overlay esconde visualmente). Magazord JS roda a chain
+       interna nativa (form transitions + POSTs + navegação). */
     setTimeout(function() {
-      /* Botão de endereço — finaliza onepage e vai pra payment */
-      var nextBtns = mainArea.querySelectorAll('button.button-next, button.button-endereco, button[type="submit"]');
-      var clicked = false;
-      for (var i = 0; i < nextBtns.length; i++) {
-        var b = nextBtns[i];
-        var t = (b.textContent || '').toLowerCase();
-        if (t.indexOf('próxima') !== -1 || t.indexOf('proxima') !== -1 || t.indexOf('finalizar') !== -1) {
-          if (b.offsetParent !== null || b.offsetWidth > 0) {
-            b.click();
-            clicked = true;
-            break;
-          }
+      var layout = document.getElementById('mm-layout');
+      if (layout) layout.style.display = 'none';
+      mainArea.classList.remove('mm-shadow-mode');
+
+      /* Helper: encontra form ATUALMENTE visible que contém um input
+         específico (ID conhecido por ser sempre presente naquele step) */
+      function findFormByInputId(id) {
+        var input = mainArea.querySelector('#' + id);
+        if (!input) return null;
+        return input.closest('form');
+      }
+
+      /* STEP 1 — submit form anonymous (dados pessoais).
+         requestSubmit() é mais robusto que btn.click() porque dispara o
+         submit handler nativo do form, que o Magazord JS escuta. */
+      function submitStep1() {
+        var f1 = findFormByInputId('nome-completo_2');
+        if (f1 && typeof f1.requestSubmit === 'function') {
+          f1.requestSubmit();
+          return true;
         }
+        if (f1) { f1.submit(); return true; }
+        return false;
       }
-      /* Fallback: navega direto pra /checkout/payment */
-      if (!clicked) {
+
+      /* STEP 2/3 — submit form de endereço. O CEP pode estar num form
+         intermediário (button-cep "Continuar") ou no form completo de
+         endereço (button-endereco "Cadastrar endereço"). Tentamos
+         requestSubmit em qualquer form que contenha #cep. */
+      function submitEnderecoForm() {
+        var f = findFormByInputId('cep');
+        if (f && typeof f.requestSubmit === 'function') {
+          f.requestSubmit();
+          return true;
+        }
+        if (f) { f.submit(); return true; }
+        return false;
+      }
+
+      setTimeout(function() {
+        submitStep1();
+
+        /* Aguarda ~1.5s pro POST etapa 1 + DOM transition pra etapa 2 */
         setTimeout(function() {
-          if (location.pathname.indexOf('/checkout/onepage') !== -1) {
-            location.href = '/checkout/payment';
+          submitEnderecoForm();
+
+          /* Aguarda Magazord chegar no step 3 (pagamento — forma-pagto-pix
+             aparece). NÃO navegamos pra /checkout/payment porque o flow
+             Magazord onepage tem dados + endereço + pagamento INLINE
+             na mesma URL — /checkout/payment é só a tela de processing/done.
+
+             Quando detectamos os radios de pagamento, removemos o overlay
+             e o user vê o Magazord original pra escolher forma + finalizar.
+             Fase 4 (futura) vai rebuildar essa parte visualmente. */
+          var paymentDetectAttempts = 0;
+          function pollForPaymentStep() {
+            paymentDetectAttempts++;
+            var paymentRadio = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
+            if (paymentRadio && paymentRadio.offsetParent !== null) {
+              /* Magazord chegou no step 3 — remove overlay, user vê pagamento */
+              var ov = document.getElementById('mm-op-overlay');
+              if (ov) ov.remove();
+              return;
+            }
+            if (paymentDetectAttempts < 30) {
+              setTimeout(pollForPaymentStep, 250);
+            } else {
+              /* Timeout — algo deu errado, remove overlay mesmo assim
+                 pra user não ficar travado na tela de loading */
+              var ov2 = document.getElementById('mm-op-overlay');
+              if (ov2) ov2.remove();
+            }
           }
-        }, 800);
-      }
-    }, 300);
+          setTimeout(pollForPaymentStep, 800);
+        }, 1500);
+      }, 150);
+    }, 100);
   }
 
   /* ----- mount entry ----- */
