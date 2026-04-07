@@ -967,15 +967,18 @@
       var img = it.imgSrc
         ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
         : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
-      var qtyBadge = it.quantity > 1
-        ? '<span class="mm-id-thumb-qty">' + it.quantity + '</span>'
+      /* Qty inline prefix (não badge sobre a imagem):
+         padrão Apple/Stripe/Mercado Livre, mais discoverable + acessível.
+         Só renderiza quando qty > 1 — qty 1 não precisa de "1×" noise. */
+      var qtyPrefix = it.quantity > 1
+        ? '<strong class="mm-id-thumb-qty">' + it.quantity + '×</strong> '
         : '';
       var price = it.lineTotalPix > 0 ? it.lineTotalPix : it.lineTotal;
       return (
         '<div class="mm-id-thumb">' +
-          '<div class="mm-id-thumb-img">' + img + qtyBadge + '</div>' +
+          '<div class="mm-id-thumb-img">' + img + '</div>' +
           '<div class="mm-id-thumb-body">' +
-            '<p class="mm-id-thumb-name">' + escapeHTML(it.name) + '</p>' +
+            '<p class="mm-id-thumb-name">' + qtyPrefix + escapeHTML(it.name) + '</p>' +
             (it.variant ? '<p class="mm-id-thumb-variant">' + escapeHTML(it.variant) + '</p>' : '') +
           '</div>' +
           '<div class="mm-id-thumb-price">' + formatBRL(price) + '</div>' +
