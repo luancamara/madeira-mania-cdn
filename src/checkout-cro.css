@@ -1596,31 +1596,44 @@ body.mm-checkout-rebuild .checkout-main {
    .mm-input-error, .mm-cta.is-loading, e estilos identify-only
    ========================================== */
 
-/* ----- input com ícone (padrão novo, reutilizável) ----- */
-#mm-layout .mm-input-wrap {
-  position: relative;
-  display: block;
-  width: 100%;
+/* ----- input com ícone (padrão novo, reutilizável) -----
+   !important defensivo: Magazord aplica display:flex column em
+   .checkout-main label e .holder-input que quebra o layout. */
+#mm-layout .mm-input-wrap,
+#mm-layout div.mm-input-wrap {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-direction: row !important;
 }
 
 #mm-layout .mm-input-wrap .mm-input-icon {
-  position: absolute;
-  top: 50%;
-  left: 18px;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute !important;
+  top: 50% !important;
+  left: 18px !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   color: var(--mm-fg-meta);
   pointer-events: none;
   transition: color 180ms ease;
+  z-index: 1;
 }
 
 #mm-layout .mm-input-wrap .mm-input {
-  padding-left: 48px;
+  padding-left: 48px !important;
+  width: 100% !important;
+  display: block !important;
+  box-sizing: border-box !important;
 }
 
-#mm-layout .mm-input-wrap .mm-input:focus + .mm-input-icon,
 #mm-layout .mm-input-wrap:focus-within .mm-input-icon {
   color: var(--mm-olive);
 }
@@ -1807,41 +1820,63 @@ body.mm-checkout-rebuild .checkout-main {
   margin: 0 auto !important;
 }
 
-/* guest CTA toggle */
+/* guest CTA toggle — !important defensivo pra Magazord button overrides */
+#mm-layout button.mm-id-guest-toggle,
 #mm-layout .mm-id-guest-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  background: transparent;
-  border: 1.5px dashed var(--mm-border);
-  border-radius: 9999px;
-  padding: 14px 20px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--mm-olive);
-  cursor: pointer;
-  transition: all 180ms ease;
-  margin-top: 4px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: 1.5px dashed var(--mm-border) !important;
+  border-radius: 9999px !important;
+  padding: 14px 20px !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  color: var(--mm-olive) !important;
+  cursor: pointer !important;
+  transition: all 180ms ease !important;
+  margin-top: 4px !important;
+  text-align: center !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  min-height: 48px !important;
+  box-shadow: none !important;
 }
 #mm-layout .mm-id-guest-toggle:hover {
-  border-color: var(--mm-olive);
-  background: var(--mm-olive-soft);
+  border-color: var(--mm-olive) !important;
+  background: var(--mm-olive-soft) !important;
 }
 #mm-layout .mm-id-guest-toggle:focus-visible {
-  outline: none;
-  border-color: var(--mm-olive);
-  box-shadow: 0 0 0 3px var(--mm-olive-soft);
+  outline: none !important;
+  border-color: var(--mm-olive) !important;
+  box-shadow: 0 0 0 3px var(--mm-olive-soft) !important;
 }
 #mm-layout .mm-id-guest-toggle.is-open {
-  background: var(--mm-olive-soft);
-  border-style: solid;
-  border-color: var(--mm-olive);
+  background: var(--mm-olive-soft) !important;
+  border-style: solid !important;
+  border-color: var(--mm-olive) !important;
 }
-#mm-layout .mm-id-guest-toggle svg {
-  flex-shrink: 0;
+#mm-layout .mm-id-guest-toggle .mm-id-guest-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+#mm-layout .mm-id-guest-toggle .mm-id-guest-icon svg {
+  display: block !important;
+}
+#mm-layout .mm-id-guest-toggle .mm-id-guest-label {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font: inherit !important;
+  color: inherit !important;
 }
 
 /* guest panel — collapsed by default */

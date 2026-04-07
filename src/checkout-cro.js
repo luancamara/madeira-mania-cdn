@@ -818,6 +818,15 @@
   }
 
   function handleFinalizar() {
+    /* Salva snapshot SYNC antes de navegar — garante que identify
+       sempre tem dados frescos do cart, mesmo se hydrate async não rolou */
+    try {
+      var s = readCart();
+      if (s.items && s.items.length > 0) {
+        saveCartSnapshot(s);
+      }
+    } catch (e) {}
+
     var btn = document.getElementById('finalizar-compra');
     if (btn) {
       btn.click();
@@ -1067,13 +1076,14 @@
         '<h2 class="mm-id-h2">Quase lá! Identifique-se</h2>' +
         '<p class="mm-id-sub">Informe seu e-mail para finalizar a compra de forma rápida e segura.</p>' +
 
-        /* form principal email */
+        /* form principal email — uso DIV (não label) pra evitar conflito com
+           Magazord CSS que força display:flex column em labels do checkout */
         '<form class="mm-id-form" data-mm-act="identify-submit" novalidate>' +
-          '<label class="mm-input-wrap">' +
-            '<span class="mm-input-icon">' + mailIcon + '</span>' +
+          '<div class="mm-input-wrap">' +
+            '<span class="mm-input-icon" aria-hidden="true">' + mailIcon + '</span>' +
             '<input type="email" id="mm-id-email" name="mm-email" class="mm-input" ' +
               'placeholder="seu@email.com" autocomplete="email" inputmode="email" required>' +
-          '</label>' +
+          '</div>' +
           '<p class="mm-id-microcopy">' + ICON.lock + '<span>Seu e-mail é seguro · Não compartilhamos com terceiros</span></p>' +
           '<button type="submit" class="mm-cta">Continuar' + ICON.arrow + '</button>' +
         '</form>' +
@@ -1084,34 +1094,35 @@
         /* google login slot — .social-login-area é movido pra cá via JS */
         '<div class="mm-id-google-slot"></div>' +
 
-        /* guest CTA */
+        /* guest CTA — ícone e texto como filhos diretos do button (flex+gap) */
         '<button type="button" class="mm-id-guest-toggle" data-mm-act="guest-toggle" aria-expanded="false" aria-controls="mm-id-guest-panel">' +
-          '<span>' + userIcon + ' Não quero criar conta — comprar como visitante</span>' +
+          '<span class="mm-id-guest-icon" aria-hidden="true">' + userIcon + '</span>' +
+          '<span class="mm-id-guest-label">Não quero criar conta — comprar como visitante</span>' +
         '</button>' +
 
         /* guest form (collapsed by default) */
         '<div class="mm-id-guest-panel" id="mm-id-guest-panel" hidden>' +
           '<form class="mm-id-form" data-mm-act="guest-submit" novalidate>' +
-            '<label class="mm-input-wrap">' +
-              '<span class="mm-input-icon">' + userIcon + '</span>' +
+            '<div class="mm-input-wrap">' +
+              '<span class="mm-input-icon" aria-hidden="true">' + userIcon + '</span>' +
               '<input type="text" id="mm-id-guest-nome" name="mm-guest-nome" class="mm-input" ' +
                 'placeholder="Nome completo" autocomplete="name" required>' +
-            '</label>' +
-            '<label class="mm-input-wrap">' +
-              '<span class="mm-input-icon">' + mailIcon + '</span>' +
+            '</div>' +
+            '<div class="mm-input-wrap">' +
+              '<span class="mm-input-icon" aria-hidden="true">' + mailIcon + '</span>' +
               '<input type="email" id="mm-id-guest-email" name="mm-guest-email" class="mm-input" ' +
                 'placeholder="seu@email.com" autocomplete="email" inputmode="email" required>' +
-            '</label>' +
-            '<label class="mm-input-wrap">' +
-              '<span class="mm-input-icon">' + docIcon + '</span>' +
+            '</div>' +
+            '<div class="mm-input-wrap">' +
+              '<span class="mm-input-icon" aria-hidden="true">' + docIcon + '</span>' +
               '<input type="tel" id="mm-id-guest-cpf" name="mm-guest-cpf" class="mm-input" ' +
                 'placeholder="CPF" inputmode="numeric" autocomplete="off" maxlength="14" required>' +
-            '</label>' +
-            '<label class="mm-input-wrap">' +
-              '<span class="mm-input-icon">' + phoneIcon + '</span>' +
+            '</div>' +
+            '<div class="mm-input-wrap">' +
+              '<span class="mm-input-icon" aria-hidden="true">' + phoneIcon + '</span>' +
               '<input type="tel" id="mm-id-guest-tel" name="mm-guest-tel" class="mm-input" ' +
                 'placeholder="(11) 91234-5678" inputmode="tel" autocomplete="tel" maxlength="15" required>' +
-            '</label>' +
+            '</div>' +
             '<label class="mm-id-checkbox">' +
               '<input type="checkbox" id="mm-id-guest-ofertas" name="mm-guest-ofertas">' +
               '<span>Quero receber ofertas e novidades por e-mail</span>' +
@@ -1342,6 +1353,106 @@
     });
   }
 
+  /* ----- fetch fallback: se snapshot está null, busca /checkout/cart
+     em background, parseia e hidrata o summary -----
+     Cobre cenários: snapshot expirou, user pulou direto pro identify
+     via URL, primeira sessão sem cart visit prévio, etc. */
+  function parseCartHtml(html) {
+    try {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var area = doc.querySelector('#checkout-main-area');
+      if (!area) return null;
+      var items = [];
+      var itemEls = area.querySelectorAll('.cart-item');
+      var subtotalFull = 0;
+      for (var i = 0; i < itemEls.length; i++) {
+        var el = itemEls[i];
+        var img = el.querySelector('figure img') || el.querySelector('#product-img') || el.querySelector('img');
+        var valorEl = el.querySelector('.column-valor-produto .valor');
+        var lineFull = parseFloat(el.getAttribute('data-valor') || '0');
+        var linePix = valorEl ? parseBRL(valorEl.textContent) : 0;
+        items.push({
+          name: el.getAttribute('data-item-name') || el.getAttribute('data-name') || '',
+          variant: el.getAttribute('data-item-variant') || '',
+          imgSrc: img ? (img.getAttribute('src') || '') : '',
+          quantity: parseInt(el.getAttribute('data-item-quantity') || '1', 10),
+          lineTotal: lineFull,
+          lineTotalPix: linePix,
+          isPix: !!el.querySelector('.column-valor-produto .sub'),
+          deposito: el.getAttribute('data-item-deposito') === '1'
+        });
+        subtotalFull += lineFull;
+      }
+      if (items.length === 0) return null;
+      var resumoValueEl = area.querySelector('#resumo-compra .resumo-valores .value');
+      var subtotalPix = resumoValueEl ? parseBRL(resumoValueEl.textContent) : 0;
+      if (subtotalPix <= 0) {
+        subtotalPix = items.reduce(function(a, i) { return a + (i.lineTotalPix || 0); }, 0);
+      }
+      var discountEl = area.querySelector('#resumo-compra .discount-value');
+      var discount = discountEl ? parseBRL(discountEl.textContent) : 0;
+      var couponEl = area.querySelector('#resumo-compra .txt-cupom, #resumo-compra .alert.alert-type-1');
+      var couponCode = '';
+      if (couponEl) {
+        var m = couponEl.textContent.match(/([A-Z0-9]{3,})/);
+        if (m) couponCode = m[1];
+      }
+      var freteEl = area.querySelector('#resumo-compra .frete-calculado');
+      var shipping = null, shippingDeadline = '';
+      if (freteEl && freteEl.textContent.trim()) {
+        var raw = freteEl.textContent.trim();
+        if (/gr[aá]tis/i.test(raw)) shipping = 0;
+        else {
+          var p = parseBRL(raw);
+          if (p > 0) shipping = p;
+        }
+        var dm = raw.match(/(\d+)\s*dias?/i);
+        if (dm) shippingDeadline = dm[1] + ' dias úteis';
+      }
+      return {
+        ts: Date.now(),
+        items: items,
+        subtotalPix: subtotalPix,
+        subtotalFull: subtotalFull,
+        discount: discount,
+        couponCode: couponCode,
+        shipping: shipping,
+        shippingDeadline: shippingDeadline,
+        cepValue: ''
+      };
+    } catch (e) { return null; }
+  }
+
+  function fetchCartSnapshotFallback(callback) {
+    try {
+      fetch('/checkout/cart', {
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          var snap = parseCartHtml(html);
+          if (snap) {
+            STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
+          }
+          callback(snap);
+        })
+        .catch(function() { callback(null); });
+    } catch (e) { callback(null); }
+  }
+
+  /* Re-renderiza apenas a coluna do summary com snapshot novo */
+  function rehydrateIdentifySummary(snap) {
+    var existing = document.querySelector('#mm-layout .mm-id-sum');
+    if (!existing) return;
+    var grid = existing.parentNode;
+    if (!grid) return;
+    var temp = document.createElement('div');
+    temp.innerHTML = renderIdentifySummary(snap);
+    var fresh = temp.firstChild;
+    if (fresh) grid.replaceChild(fresh, existing);
+  }
+
   /* ----- mount entry ----- */
   if (isIdentify) {
     function waitForIdentifyDom(attempt) {
@@ -1365,6 +1476,16 @@
          tenha sido injetada async pelo Google script */
       setTimeout(reparentGoogleLogin, 600);
       setTimeout(reparentGoogleLogin, 1500);
+
+      /* Fallback: se snapshot está null/empty, fetch /checkout/cart e
+         re-renderiza a coluna do summary quando chegar */
+      if (!snap || !snap.items || snap.items.length === 0) {
+        fetchCartSnapshotFallback(function(freshSnap) {
+          if (freshSnap && freshSnap.items && freshSnap.items.length > 0) {
+            rehydrateIdentifySummary(freshSnap);
+          }
+        });
+      }
 
       /* Auto-focus no input email após mount */
       setTimeout(function() {
