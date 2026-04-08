@@ -2249,33 +2249,45 @@
         '<img src="https://public-resources.zordcdn.com.br/assets/global/payment-vector/cartao-hipercard.svg" alt="Hipercard" width="32" height="20">' +
       '</div>';
 
+    /* Required asterisk helper — sinaliza campos obrigatórios sem poluir */
+    var req = '<span class="mm-op-req" aria-hidden="true">*</span>';
+    /* Error slot template — pra cada campo, um <span> aria-live com msg específica on blur */
+    function errSlot(id) {
+      return '<span class="mm-op-field-err" id="' + id + '-err" role="alert" aria-live="polite"></span>';
+    }
+
     var cartaoForm =
       '<div class="mm-op-card-form">' +
         '<div class="mm-op-card-field mm-op-card-field-full">' +
-          '<label for="mm-pay-card-num">Número do cartão</label>' +
+          '<label for="mm-pay-card-num">Número do cartão' + req + '</label>' +
           '<div class="mm-input-wrap mm-input-wrap-card">' +
             ICON.card +
-            '<input id="mm-pay-card-num" type="tel" class="mm-input" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="23">' +
+            '<input id="mm-pay-card-num" type="tel" class="mm-input" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="23" aria-describedby="mm-pay-card-num-err" aria-required="true">' +
             '<span class="mm-op-card-brand-detected" aria-live="polite"></span>' +
           '</div>' +
+          errSlot('mm-pay-card-num') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-full">' +
-          '<label for="mm-pay-card-name">Nome impresso no cartão</label>' +
-          '<input id="mm-pay-card-name" type="text" class="mm-input mm-input-noicon" autocomplete="cc-name" placeholder="Como aparece no cartão" maxlength="100">' +
+          '<label for="mm-pay-card-name">Nome impresso no cartão' + req + '</label>' +
+          '<input id="mm-pay-card-name" type="text" class="mm-input mm-input-noicon" autocomplete="cc-name" placeholder="Como aparece no cartão" maxlength="100" aria-describedby="mm-pay-card-name-err" aria-required="true">' +
+          errSlot('mm-pay-card-name') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-half">' +
-          '<label for="mm-pay-card-exp">Validade</label>' +
-          '<input id="mm-pay-card-exp" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5">' +
+          '<label for="mm-pay-card-exp">Validade' + req + '</label>' +
+          '<input id="mm-pay-card-exp" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" aria-describedby="mm-pay-card-exp-err" aria-required="true">' +
+          errSlot('mm-pay-card-exp') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-half">' +
-          '<label for="mm-pay-card-cvv">CVV</label>' +
-          '<input id="mm-pay-card-cvv" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-csc" placeholder="000" maxlength="4">' +
+          '<label for="mm-pay-card-cvv">CVV' + req + '</label>' +
+          '<input id="mm-pay-card-cvv" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-csc" placeholder="000" maxlength="4" aria-describedby="mm-pay-card-cvv-err" aria-required="true">' +
+          errSlot('mm-pay-card-cvv') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-full">' +
-          '<label for="mm-pay-card-installments">Condições de pagamento</label>' +
-          '<select id="mm-pay-card-installments" class="mm-input mm-input-noicon mm-op-card-installments">' +
+          '<label for="mm-pay-card-installments">Condições de pagamento' + req + '</label>' +
+          '<select id="mm-pay-card-installments" class="mm-input mm-input-noicon mm-op-card-installments" aria-describedby="mm-pay-card-installments-err" aria-required="true">' +
             '<option value="">Digite o cartão pra ver as condições</option>' +
           '</select>' +
+          errSlot('mm-pay-card-installments') +
         '</div>' +
       '</div>';
 
@@ -2539,9 +2551,117 @@
           };
           /* Sync pro select nativo Magazord */
           syncMagazordInstallments(opt.value);
+          clearFieldError('mm-pay-card-installments');
         }
       }
     });
+
+    /* ---- Blur: inline validation (form-cro: validate on blur, não keystroke) ---- */
+    layout.addEventListener('blur', function(e) {
+      var t = e.target;
+      if (!t || !t.id) return;
+      var cardFieldIds = ['mm-pay-card-num', 'mm-pay-card-name', 'mm-pay-card-exp', 'mm-pay-card-cvv'];
+      if (cardFieldIds.indexOf(t.id) === -1) return;
+      validateField(t.id);
+    }, true); /* true = captura (blur não bubbles) */
+
+    /* ---- Focus: limpa erro do campo ao re-focar ---- */
+    layout.addEventListener('focus', function(e) {
+      var t = e.target;
+      if (!t || !t.id) return;
+      if (/^mm-pay-card-/.test(t.id)) clearFieldError(t.id);
+    }, true);
+
+    /* ---- Field validators + error display ---- */
+    function showFieldError(id, msg) {
+      var input = document.getElementById(id);
+      var slot = document.getElementById(id + '-err');
+      if (input) {
+        input.classList.add('mm-input-error');
+        input.setAttribute('aria-invalid', 'true');
+      }
+      if (slot) {
+        slot.textContent = msg;
+        slot.classList.add('is-visible');
+      }
+    }
+    function clearFieldError(id) {
+      var input = document.getElementById(id);
+      var slot = document.getElementById(id + '-err');
+      if (input) {
+        input.classList.remove('mm-input-error');
+        input.removeAttribute('aria-invalid');
+      }
+      if (slot) {
+        slot.textContent = '';
+        slot.classList.remove('is-visible');
+      }
+    }
+
+    /* Valida 1 campo. Retorna true se válido, false+mostra erro se inválido.
+       Mensagens específicas por campo (form-cro: error clarity). */
+    function validateField(id) {
+      var el = document.getElementById(id);
+      if (!el) return true;
+      var v = (el.value || '').trim();
+
+      if (id === 'mm-pay-card-num') {
+        var digits = v.replace(/\D/g, '');
+        if (!digits) { showFieldError(id, 'Informe o número do cartão'); return false; }
+        if (digits.length < 13) { showFieldError(id, 'Número do cartão incompleto'); return false; }
+        if (!luhnCheck(digits)) { showFieldError(id, 'Número do cartão inválido — confira os dígitos'); return false; }
+        clearFieldError(id);
+        return true;
+      }
+      if (id === 'mm-pay-card-name') {
+        if (!v) { showFieldError(id, 'Informe o nome impresso no cartão'); return false; }
+        if (v.split(/\s+/).length < 2) { showFieldError(id, 'Use o nome completo como aparece no cartão'); return false; }
+        clearFieldError(id);
+        return true;
+      }
+      if (id === 'mm-pay-card-exp') {
+        var expDigits = v.replace(/\D/g, '');
+        if (expDigits.length !== 4) { showFieldError(id, 'Informe a validade no formato MM/AA'); return false; }
+        var mm = parseInt(expDigits.slice(0, 2), 10);
+        var aa = parseInt(expDigits.slice(2), 10);
+        if (mm < 1 || mm > 12) { showFieldError(id, 'Mês inválido (01 a 12)'); return false; }
+        /* Ano atual 20XX → compara. Se aa < (ano atual % 100) OR (aa == ano atual AND mm < mes atual) → expirado */
+        var now = new Date();
+        var curYear = now.getFullYear() % 100;
+        var curMonth = now.getMonth() + 1;
+        if (aa < curYear || (aa === curYear && mm < curMonth)) {
+          showFieldError(id, 'Cartão expirado');
+          return false;
+        }
+        clearFieldError(id);
+        return true;
+      }
+      if (id === 'mm-pay-card-cvv') {
+        var cvvDigits = v.replace(/\D/g, '');
+        if (cvvDigits.length < 3) { showFieldError(id, 'CVV deve ter 3 ou 4 dígitos'); return false; }
+        clearFieldError(id);
+        return true;
+      }
+      if (id === 'mm-pay-card-installments') {
+        if (!v) { showFieldError(id, 'Selecione o número de parcelas'); return false; }
+        clearFieldError(id);
+        return true;
+      }
+      return true;
+    }
+
+    /* Luhn check pra validar número de cartão (mod 10) */
+    function luhnCheck(num) {
+      var sum = 0;
+      var alt = false;
+      for (var i = num.length - 1; i >= 0; i--) {
+        var d = parseInt(num.charAt(i), 10);
+        if (alt) { d *= 2; if (d > 9) d -= 9; }
+        sum += d;
+        alt = !alt;
+      }
+      return sum % 10 === 0;
+    }
 
     /* ---- Funções ---- */
     function setActiveForma(forma) {
@@ -2722,29 +2842,12 @@
       var btn = layout.querySelector('.mm-op-finalizar');
       if (!btn) return;
 
-      /* Validação básica por forma */
+      /* Validação por forma — usa validateField (com textos específicos) */
       if (forma === 'cartao') {
-        var num = document.getElementById('mm-pay-card-num');
-        var name = document.getElementById('mm-pay-card-name');
-        var exp = document.getElementById('mm-pay-card-exp');
-        var cvv = document.getElementById('mm-pay-card-cvv');
-        var inst = document.getElementById('mm-pay-card-installments');
-
-        var errors = [];
-        if (!num || (num.value || '').replace(/\D/g, '').length < 13) errors.push('mm-pay-card-num');
-        if (!name || (name.value || '').trim().split(/\s+/).length < 2) errors.push('mm-pay-card-name');
-        if (!exp || (exp.value || '').replace(/\D/g, '').length !== 4) errors.push('mm-pay-card-exp');
-        if (!cvv || (cvv.value || '').replace(/\D/g, '').length < 3) errors.push('mm-pay-card-cvv');
-        if (!inst || !inst.value) errors.push('mm-pay-card-installments');
+        var fields = ['mm-pay-card-num', 'mm-pay-card-name', 'mm-pay-card-exp', 'mm-pay-card-cvv', 'mm-pay-card-installments'];
+        var errors = fields.filter(function(id) { return !validateField(id); });
 
         if (errors.length) {
-          errors.forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) {
-              el.classList.add('mm-input-error');
-              setTimeout(function() { el.classList.remove('mm-input-error'); }, 1800);
-            }
-          });
           var first = document.getElementById(errors[0]);
           if (first) {
             first.focus();
@@ -2752,6 +2855,9 @@
           }
           return;
         }
+
+        var name = document.getElementById('mm-pay-card-name');
+        var cvv = document.getElementById('mm-pay-card-cvv');
 
         /* Sync titular + CPF do titular (usa CPF do buyer como default) */
         var titularNative = document.getElementById('pag-cartao-titular');

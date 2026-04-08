@@ -2707,8 +2707,12 @@ body.mm-checkout-rebuild .checkout-main {
   font-weight: 700;
   color: var(--mm-fg);
   letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   white-space: nowrap;
+}
+#mm-layout .mm-op-step3-sum .mm-total-value,
+#mm-layout .mm-op-step3-sum .mm-row-value {
+  font-variant-numeric: tabular-nums lining-nums;
 }
 #mm-layout .mm-op-pay-radio.is-active .mm-op-pay-amount {
   color: var(--mm-cta);
@@ -2881,6 +2885,37 @@ body.mm-checkout-rebuild .checkout-main {
   cursor: pointer;
 }
 
+/* Required indicator (*) — sutil, não poluidor (form-cro) */
+#mm-layout .mm-op-req {
+  color: #DC2626;
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+/* Inline error message slot — aparece só quando .is-visible (form-cro: error clarity) */
+#mm-layout .mm-op-field-err {
+  display: block;
+  min-height: 0;
+  max-height: 0;
+  overflow: hidden;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 11.5px;
+  color: #DC2626;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  margin: 0;
+  opacity: 0;
+  transition: max-height 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 180ms ease,
+              margin 200ms ease;
+}
+#mm-layout .mm-op-field-err.is-visible {
+  max-height: 40px;
+  margin-top: 4px;
+  opacity: 1;
+}
+
 @media (max-width: 520px) {
   #mm-layout .mm-op-card-form {
     grid-template-columns: 1fr;
@@ -2997,7 +3032,7 @@ body.mm-checkout-rebuild .checkout-main {
   }
 }
 
-/* Mobile: reorder + spacing tight */
+/* Mobile: reorder + spacing tight + sticky CTA (form-cro: always-visible CTA) */
 @media (max-width: 760px) {
   #mm-layout .mm-op-pay-head {
     padding: 16px 18px;
@@ -3011,16 +3046,31 @@ body.mm-checkout-rebuild .checkout-main {
     font-size: 16px;
   }
   #mm-layout .mm-op-pay-detail {
-    padding: 0 18px;
+    padding: 0 18px !important;
   }
   #mm-layout .mm-op-pay-radio.is-active .mm-op-pay-detail {
-    padding: 4px 18px 18px;
+    padding: 4px 18px 18px !important;
   }
   #mm-layout .mm-op-trust-payment {
     padding: 16px 14px;
   }
   #mm-layout .mm-op-trust-payment-row {
     gap: 12px 18px;
+  }
+
+  /* Mobile sticky CTA wrapper — fica visível mesmo com scroll longo.
+     Padding-bottom no layout pra compensar o sticky overlap. */
+  #mm-layout.mm-op-step3-layout {
+    padding-bottom: 96px;
+  }
+  #mm-layout .mm-op-step3-card {
+    position: relative;
+  }
+  #mm-layout .mm-op-finalizar {
+    position: sticky;
+    bottom: 12px;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(27, 122, 69, 0.25), 0 2px 6px rgba(0, 0, 0, 0.08);
   }
 }
 
