@@ -230,7 +230,8 @@
       '      <label for="mm-h-search-input" class="mm-h-search-label">O que você procura?</label>',
       '      <input type="search" name="q" id="mm-h-search-input" placeholder="O que você procura?" autocomplete="off" />',
       '    </form>',
-      '    <div class="mm-h-search-suggestions">',
+      '    <div class="mm-h-search-results" id="mm-h-search-results" hidden></div>',
+      '    <div class="mm-h-search-suggestions" id="mm-h-search-suggestions">',
       '      <span class="mm-h-search-sug-label">Sugestões populares</span>',
       '      <a href="/busca?q=mesa+de+jantar">Mesa de jantar</a>',
       '      <a href="/busca?q=rack">Rack</a>',
@@ -344,6 +345,143 @@
         } else if (!e.shiftKey && document.activeElement === last) {
           e.preventDefault(); first.focus();
         }
+      });
+    }
+
+    // Search autocomplete — debounced filter + "Buscar por" CTA + recent searches
+    // NOTE: Magazord has no JSON autocomplete endpoint (probed 2026-04-09) and /busca
+    // renders products client-side via React, so raw fetch() can't scrape results.
+    // Strategy: instant "Buscar por '<q>'" CTA + filtered popular terms + recent
+    // searches from localStorage. Honest, zero-latency, no broken promises.
+    var searchResults = document.getElementById('mm-h-search-results');
+    var searchSuggestions = document.getElementById('mm-h-search-suggestions');
+    var POPULAR_TERMS = [
+      { label: 'Mesa de jantar', q: 'mesa de jantar' },
+      { label: 'Mesa de centro', q: 'mesa de centro' },
+      { label: 'Rack para TV', q: 'rack' },
+      { label: 'Guarda-roupas', q: 'guarda-roupas' },
+      { label: 'Cristaleira', q: 'cristaleira' },
+      { label: 'Aparador', q: 'aparador' },
+      { label: 'Buffet', q: 'buffet' },
+      { label: 'Painel para TV', q: 'painel' },
+      { label: 'Cabeceira', q: 'cabeceira' },
+      { label: 'Cômoda', q: 'comoda' },
+      { label: 'Estante', q: 'estante' },
+      { label: 'Home theater', q: 'home theater' }
+    ];
+    var RECENT_KEY = 'mm_recent_searches';
+    function getRecentSearches() {
+      try {
+        var raw = localStorage.getItem(RECENT_KEY);
+        if (!raw) return [];
+        var arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr.slice(0, 5) : [];
+      } catch (e) { return []; }
+    }
+    function pushRecentSearch(q) {
+      if (!q) return;
+      try {
+        var list = getRecentSearches().filter(function (x) { return x && x.toLowerCase() !== q.toLowerCase(); });
+        list.unshift(q);
+        localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 5)));
+      } catch (e) { /* localStorage blocked */ }
+    }
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    var searchIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+    var clockIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+
+    function renderEmptyState() {
+      if (!searchResults) return;
+      var recents = getRecentSearches();
+      if (!recents.length) {
+        // Show only the popular-terms cloud (original behavior)
+        searchResults.hidden = true;
+        searchResults.innerHTML = '';
+        if (searchSuggestions) searchSuggestions.hidden = false;
+        return;
+      }
+      // Show recent searches list + popular terms cloud
+      var html = '<div class="mm-h-search-section">';
+      html += '<span class="mm-h-search-sug-label">Buscas recentes</span>';
+      html += '<ul class="mm-h-search-list">';
+      for (var i = 0; i < recents.length; i++) {
+        var r = recents[i];
+        html += '<li><a class="mm-h-search-result" href="/busca?q=' + encodeURIComponent(r) + '">' +
+          '<span class="mm-h-search-result-icon">' + clockIconSvg + '</span>' +
+          '<span class="mm-h-search-result-label">' + escHtml(r) + '</span>' +
+          '</a></li>';
+      }
+      html += '</ul></div>';
+      searchResults.innerHTML = html;
+      searchResults.hidden = false;
+      if (searchSuggestions) searchSuggestions.hidden = false;
+    }
+
+    function renderQueryResults(q) {
+      if (!searchResults) return;
+      if (searchSuggestions) searchSuggestions.hidden = true;
+      var qTrim = q.trim();
+      if (qTrim.length < 2) { renderEmptyState(); return; }
+      var qLower = qTrim.toLowerCase();
+      // Filter popular terms that match
+      var matches = POPULAR_TERMS.filter(function (t) {
+        return t.label.toLowerCase().indexOf(qLower) !== -1 || t.q.toLowerCase().indexOf(qLower) !== -1;
+      }).slice(0, 5);
+      var html = '<ul class="mm-h-search-list">';
+      // Primary "Buscar por" CTA (always first)
+      html += '<li><a class="mm-h-search-result mm-h-search-result-primary" href="/busca?q=' + encodeURIComponent(qTrim) + '" data-recent="1">' +
+        '<span class="mm-h-search-result-icon">' + searchIconSvg + '</span>' +
+        '<span class="mm-h-search-result-label">Buscar por <strong>&ldquo;' + escHtml(qTrim) + '&rdquo;</strong></span>' +
+        '<span class="mm-h-search-result-arrow" aria-hidden="true">&rarr;</span>' +
+        '</a></li>';
+      // Filtered popular matches
+      for (var i = 0; i < matches.length; i++) {
+        var m = matches[i];
+        html += '<li><a class="mm-h-search-result" href="/busca?q=' + encodeURIComponent(m.q) + '" data-recent="1">' +
+          '<span class="mm-h-search-result-icon">' + searchIconSvg + '</span>' +
+          '<span class="mm-h-search-result-label">' + escHtml(m.label) + '</span>' +
+          '</a></li>';
+      }
+      html += '</ul>';
+      searchResults.innerHTML = html;
+      searchResults.hidden = false;
+    }
+
+    var searchDebounce = null;
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(searchDebounce);
+        var val = searchInput.value;
+        searchDebounce = setTimeout(function () {
+          if (!val || val.trim().length < 2) renderEmptyState();
+          else renderQueryResults(val);
+        }, 180);
+      });
+      // Wire up recent-search persistence on result click and form submit
+      if (searchResults) {
+        searchResults.addEventListener('click', function (e) {
+          var a = e.target.closest && e.target.closest('a[data-recent]');
+          if (a) {
+            var q = a.getAttribute('href').split('q=')[1];
+            if (q) pushRecentSearch(decodeURIComponent(q.replace(/\+/g, ' ')));
+          }
+        });
+      }
+      var searchForm = overlay && overlay.querySelector('.mm-h-search-form');
+      if (searchForm) {
+        searchForm.addEventListener('submit', function () {
+          pushRecentSearch((searchInput.value || '').trim());
+        });
+      }
+    }
+    // On overlay open, render the empty state so recent searches appear immediately
+    if (openBtn) {
+      openBtn.addEventListener('click', function () {
+        renderEmptyState();
       });
     }
 
