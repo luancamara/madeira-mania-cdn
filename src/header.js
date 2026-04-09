@@ -92,6 +92,52 @@
         console.log('mm-header: drawer pending Phase 6');
       });
     }
+
+    // Hover-intent for mega-menus (150ms delay to prevent accidental triggers)
+    var navItems = header.querySelectorAll('.mm-h-nav-item[data-menu]');
+    var intentTimer = null;
+    var leaveTimer = null;
+    navItems.forEach(function (item) {
+      item.addEventListener('mouseenter', function () {
+        clearTimeout(leaveTimer);
+        clearTimeout(intentTimer);
+        intentTimer = setTimeout(function () {
+          navItems.forEach(function (i) {
+            i.classList.remove('is-open');
+            var link = i.querySelector('.mm-h-nav-link');
+            if (link) link.setAttribute('aria-expanded', 'false');
+          });
+          item.classList.add('is-open');
+          var link = item.querySelector('.mm-h-nav-link');
+          if (link) link.setAttribute('aria-expanded', 'true');
+        }, 150);
+      });
+      item.addEventListener('mouseleave', function () {
+        clearTimeout(intentTimer);
+        leaveTimer = setTimeout(function () {
+          item.classList.remove('is-open');
+          var link = item.querySelector('.mm-h-nav-link');
+          if (link) link.setAttribute('aria-expanded', 'false');
+        }, 200);
+      });
+    });
+
+    // Escape key closes mega-menus
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        navItems.forEach(function (i) {
+          i.classList.remove('is-open');
+          var link = i.querySelector('.mm-h-nav-link');
+          if (link) link.setAttribute('aria-expanded', 'false');
+        });
+      }
+    });
+
+    // Prevent the Ambientes link with href="#" from jumping the page
+    var ambientesLink = header.querySelector('.mm-h-nav-item[data-menu="ambientes"] > .mm-h-nav-link');
+    if (ambientesLink) {
+      ambientesLink.addEventListener('click', function (e) { e.preventDefault(); });
+    }
   }
 
   if (document.readyState === 'loading') {
