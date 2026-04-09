@@ -2,6 +2,15 @@
     'use strict';
 
     // ============================================
+    // PAGE GUARD — script é específico pra PDP (páginas de produto).
+    // Checkout/cart/home/etc não precisam e rodar aqui causa
+    // loops de "Aguardando dataProduct..." poluindo o console.
+    // ============================================
+    var _mmPath = location.pathname;
+    var _isProductPage = /\/produto\//i.test(_mmPath) || /\/p\//i.test(_mmPath);
+    if (!_isProductPage) return;
+
+    // ============================================
     // PROTEÇÃO CONTRA MÚLTIPLAS EXECUÇÕES
     // ============================================
     const VERSAO = '3.0.0';

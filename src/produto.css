@@ -383,11 +383,13 @@
 
   /* ==========================================
      10. WHATSAPP FLUTUANTE
-     Mover acima da sticky bar + bottom nav
+     Mover acima da sticky bar + bottom nav — SÓ NA PDP
      Sticky bar: bottom 60px, h=79px → topo em 139px
+     Escopo via body:has(#produto-react-app) pra NÃO afetar outras páginas
+     mobile (home, categoria, etc.) onde não há sticky bar.
      ========================================== */
 
-  #popup-msg-whats {
+  body:has(#produto-react-app) #popup-msg-whats {
     bottom: 152px !important;
   }
 
@@ -397,12 +399,14 @@
      ========================================== */
 
   /* PDP Mobile: WA e back-to-top acima da sticky bar
-     Bottom nav: 60px + Sticky bar: 77px = 137px → WA a 152px, BTT a 214px */
-  #mm-floating-whatsapp {
+     Bottom nav: 60px + Sticky bar: 77px = 137px → WA a 152px, BTT a 214px
+     Escopo via body:has(#produto-react-app) — fora da PDP usa o default
+     de global.css (bottom: 75px) acima só do bottom nav. */
+  body:has(#produto-react-app) #mm-floating-whatsapp {
     bottom: 152px !important;
   }
 
-  .back-to-top {
+  body:has(#produto-react-app) .back-to-top {
     bottom: 214px !important;
   }
 
