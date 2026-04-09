@@ -21,7 +21,7 @@ html.mm-dev-mode::before{content:"\26a1 DEV MODE \2014 localhost";position:fixed
 html.mm-dev-mode body{margin-top:20px !important}
 </style>
 <script>
-(function(){var p=location.pathname;if(/\/checkout\/(cart|identify|onepage)/.test(p)){document.documentElement.classList.add("mm-cart-loading")}document.documentElement.classList.add("mm-footer-loading")})();
+(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading")}document.documentElement.classList.add("mm-footer-loading")})();
 </script>
 
 <script type="application/ld+json">

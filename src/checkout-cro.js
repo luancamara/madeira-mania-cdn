@@ -3500,11 +3500,28 @@
      ============================================= */
 
   if (isPayment) {
+    /* Fallback legado: /checkout/payment ainda existe no Magazord mas o fluxo novo
+       não navega pra lá (step 3 payment ficou inline em /onepage). Se o usuário
+       cair aqui por back button / link externo, deixamos a tela nativa do Magazord
+       aparecer — mas precisamos remover mm-cart-loading pra não deixar o spinner
+       travado (o anti-flicker roda pra qualquer /checkout/* exceto /done). */
+    document.documentElement.classList.remove('mm-cart-loading');
+
     var cardNumInput = mainArea.querySelector('input[placeholder*="numero do cart" i]');
     if (cardNumInput) cardNumInput.inputMode = 'numeric';
 
     var cvvInput = mainArea.querySelector('input[placeholder*="000" i]');
     if (cvvInput && (!cvvInput.maxLength || cvvInput.maxLength <= 4)) cvvInput.inputMode = 'numeric';
   }
+
+  /* Safety net: failsafe global — se chegamos até o final da IIFE e a classe
+     ainda está presente (ex: algum handler acima teve early-return), remove
+     depois de 2s pro spinner não ficar eterno em caso de edge case. */
+  setTimeout(function(){
+    if (document.documentElement.classList.contains('mm-cart-loading')) {
+      console.warn('[mm-cart] failsafe: removing mm-cart-loading after 2s timeout');
+      document.documentElement.classList.remove('mm-cart-loading');
+    }
+  }, 2000);
 
 })();
