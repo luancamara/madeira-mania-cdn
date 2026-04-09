@@ -1,0 +1,66 @@
+name: Purge jsDelivr cache on release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract major version
+        id: ver
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          # Extract major (v2.1.3 -> 2)
+          MAJOR="${TAG#v}"
+          MAJOR="${MAJOR%%.*}"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "Tag: $TAG | Major: $MAJOR"
+
+      - name: Purge jsDelivr cache (exact tag + range + main)
+        run: |
+          BASE="https://purge.jsdelivr.net/gh/luancamara/madeira-mania-cdn"
+          FILES=(
+            "dist/js/madeira-mania.js"
+            "dist/loaders/loader.html"
+            "dist/loaders/schema-organization.html"
+          )
+          REFS=(
+            "@${{ steps.ver.outputs.tag }}"
+            "@^${{ steps.ver.outputs.major }}"
+            "@${{ steps.ver.outputs.major }}"
+            "@main"
+            "@latest"
+          )
+          FAILED=0
+          for ref in "${REFS[@]}"; do
+            for file in "${FILES[@]}"; do
+              URL="${BASE}${ref}/${file}"
+              echo ">> Purging $URL"
+              RESP=$(curl -fsS -w "\nHTTP %{http_code}" "$URL" || echo "HTTP FAIL")
+              echo "$RESP"
+              if [[ "$RESP" == *"FAIL"* ]] || [[ "$RESP" == *"HTTP 4"* ]] || [[ "$RESP" == *"HTTP 5"* ]]; then
+                echo "  !! purge request failed for $URL (may be benign if file does not exist at that ref)"
+                FAILED=$((FAILED+1))
+              fi
+              sleep 0.2
+            done
+          done
+          echo ""
+          echo "Purge attempts done. Failed (non-fatal): $FAILED"
+
+      - name: Verify new bundle resolves via @^major range
+        run: |
+          RANGE_URL="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@^${{ steps.ver.outputs.major }}/dist/js/madeira-mania.js"
+          echo ">> HEAD $RANGE_URL"
+          curl -fsSLI "$RANGE_URL" | head -20
+          SIZE=$(curl -fsSL "$RANGE_URL" | wc -c)
+          echo ""
+          echo "Bundle size served via @^${{ steps.ver.outputs.major }}: $SIZE bytes"
+          if [ "$SIZE" -lt 10000 ]; then
+            echo "::error::Bundle too small, purge or tag may not have propagated"
+            exit 1
+          fi
