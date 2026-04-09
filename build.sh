@@ -19,7 +19,8 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # Semver range: @^2 resolve pra última v2.x.y publicada automaticamente.
 # Major bump (v3.0.0+) requer atualizar aqui E re-colar loader.html no Magazord.
 CDN_VERSION="^2"
-CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@${CDN_VERSION}/dist/js"
+CDN_REPO="gh/luancamara/madeira-mania-cdn"
+CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 
 echo "=== Build Madeira Mania CDN ==="
 echo ""
@@ -184,11 +185,18 @@ echo "Gerando loader..."
   echo ''
   cat "$DIST/loaders/schema-organization.html"
   echo ''
-  # Switchable loader: usa bundle local (localStorage.mm_dev_url) se setado, senão jsDelivr
+  # Switchable loader: usa bundle local (localStorage.mm_dev_url) se setado, senão jsDelivr.
+  # VERSION fica isolado no topo pra facilitar edit manual se precisar sem rebuild.
   cat <<LOADER_EOF
 <script>
 (function(){
-  var PROD = '$CDN_BASE/madeira-mania.js';
+  // ===== Madeira Mania CDN loader =====
+  // Pra trocar a versão servida sem rebuild, edita só a linha abaixo.
+  // Aceita semver range (@^2), tag exata (@v2.1.3), ou branch (@main).
+  var VERSION = '$CDN_VERSION';
+  var REPO    = '$CDN_REPO';
+
+  var PROD = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
   var devUrl;
   try { devUrl = localStorage.getItem('mm_dev_url'); } catch(e) {}
   var s = document.createElement('script');
