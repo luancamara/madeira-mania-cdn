@@ -22,6 +22,42 @@ var MM_CONFIG = {
    apenas despachamos eventos para window.gtag e window.fbq */
 
 /* =============================================
+   TEST MODE — opt-out global de tracking
+   ============================================= */
+/* Ativa via: localStorage.setItem('mm_no_tracking','1')
+   Ou via URL ?mm_no_tracking=1 (persistente, seta o localStorage)
+   Desativa: localStorage.removeItem('mm_no_tracking')
+   Quando ativo: bloqueia TODOS os eventos (PostHog, GA4, Meta Pixel,
+   Clarity, FingerprintJS, Contentsquare, Meta Purchase) + sinaliza
+   no DOM pra debug (classe mm-no-tracking no <html>). */
+(function initNoTrackingOptOut() {
+  try {
+    var params = new URLSearchParams(location.search);
+    if (params.get('mm_no_tracking') === '1') {
+      localStorage.setItem('mm_no_tracking', '1');
+    } else if (params.get('mm_no_tracking') === '0') {
+      localStorage.removeItem('mm_no_tracking');
+    }
+  } catch(e) {}
+})();
+function mmIsTrackingDisabled() {
+  try {
+    return localStorage.getItem('mm_no_tracking') === '1';
+  } catch(e) { return false; }
+}
+if (mmIsTrackingDisabled()) {
+  document.documentElement.classList.add('mm-no-tracking');
+  /* Bloqueia gtag/fbq antes mesmo do Magazord inicializar eles.
+     Usa stubs que ignoram chamadas. */
+  window.gtag = function() {};
+  window.fbq = function() {};
+  window.dataLayer = window.dataLayer || [];
+  var _push = window.dataLayer.push;
+  window.dataLayer.push = function() { return 0; };
+  console.info('[MM] tracking disabled via mm_no_tracking flag');
+}
+
+/* =============================================
    SECAO 2: UTILIDADES
    ============================================= */
 
@@ -227,6 +263,11 @@ function mmMapToFBEvent(name, props) {
 }
 
 function mmTrackEvent(name, props) {
+  /* Opt-out: test mode bloqueia todos os eventos */
+  if (mmIsTrackingDisabled()) {
+    if (MM_CONFIG.debug) console.log('[MM Track SKIP]', name, props);
+    return;
+  }
   props = props || {};
   var ctx = window.__MM.ctx;
   var merged = {};
@@ -1416,10 +1457,13 @@ function mmInitPurchaseTracker() {
     console.log('[MM] Context:', window.__MM.ctx);
   }
 
-  /* Init SDKs — apenas os NOVOS (GA4 + Meta Pixel ja estao no site) */
-  mmInitPostHog();
-  setTimeout(function() { mmInitClarity(); }, 2000);
-  setTimeout(function() { mmInitFingerprintJS(); }, 3000);
+  /* Init SDKs — apenas os NOVOS (GA4 + Meta Pixel ja estao no site).
+     Pula tudo se mm_no_tracking estiver ativo (modo teste). */
+  if (!mmIsTrackingDisabled()) {
+    mmInitPostHog();
+    setTimeout(function() { mmInitClarity(); }, 2000);
+    setTimeout(function() { mmInitFingerprintJS(); }, 3000);
+  }
 
   /* Mark ready + flush queue after short delay for SDKs to load */
   setTimeout(function() {

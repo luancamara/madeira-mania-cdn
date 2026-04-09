@@ -3,6 +3,8 @@
    Suporta PIX (aguarda QR code sumir) e Cartão/Boleto (direto). */
 (function() {
   try {
+    /* Opt-out: modo teste bloqueia o Purchase event */
+    try { if (localStorage.getItem('mm_no_tracking') === '1') return; } catch(e) {}
     if (typeof fbq === 'undefined') return;
     var dl = window.dataLayer;
     if (!dl || !dl[0] || dl[0].pageType !== 'transaction') return;
