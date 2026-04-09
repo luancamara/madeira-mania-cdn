@@ -75,6 +75,8 @@ echo "Gerando bundle único..."
   echo ""
   css_to_js "$SRC/ticker.css" "mm-ticker-css" | sed 's/^/  /'
   echo ""
+  css_to_js "$SRC/header.css" "mm-header-css" | sed 's/^/  /'
+  echo ""
 
   # --- 2. HTML injections (ticker bar) ---
   echo "  /* ============================================="
@@ -103,6 +105,9 @@ echo "Gerando bundle único..."
   echo ""
   echo "  /* === global.js === */"
   sed 's/^/  /' "$SRC/global.js"
+  echo ""
+  echo "  /* === header.js === */"
+  sed 's/^/  /' "$SRC/header.js"
   echo ""
   echo "  /* === schema-organization.js === */"
   sed 's/^/  /' "$SRC/schema-organization.js"
