@@ -506,7 +506,8 @@ header.ra-header {
 }
 
 body {
-  padding-top: var(--mm-header-total, 168px);
+  /* 120 = 32 topbar + 88 main; will become 168 (+48 nav) when Phase 2 ships */
+  padding-top: var(--mm-header-total, 120px);
 }
 @media (max-width: 767px) {
   body {
