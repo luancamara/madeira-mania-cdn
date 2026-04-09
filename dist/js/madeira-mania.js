@@ -2059,6 +2059,71 @@
           openSearch(); // temporary until Phase 6 drawer
         });
       }
+  
+      // Cart drawer integration — reuse Magazord native .carrinho-rapido-ctn
+      // (The drawer lives inside .header-middle which we hide via display:none.
+      //  We lift it out on first open, then toggle transform to slide in/out.)
+      var cartLink = document.getElementById('mm-h-cart');
+      var liftedDrawer = null;
+      var cartScrim = null;
+  
+      function findDrawer() {
+        // Drawer may not exist yet on first page load — Magazord renders it client-side
+        return document.querySelector('.carrinho-rapido-ctn');
+      }
+      function liftDrawer(drawer) {
+        if (drawer && !drawer.dataset.mmLifted) {
+          // Move out of hidden parent and make it a body-level fixed element
+          document.body.appendChild(drawer);
+          drawer.dataset.mmLifted = '1';
+          // Remove display:none inheritance from parent chain
+          drawer.style.display = 'block';
+        }
+      }
+      function openCartDrawer() {
+        var drawer = findDrawer();
+        if (!drawer) { window.location.href = '/checkout/cart'; return; }
+        liftDrawer(drawer);
+        // Force transform via inline style (bypasses Tailwind class system)
+        drawer.style.transform = 'translateX(0)';
+        drawer.style.transition = 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)';
+        // Scrim
+        if (!cartScrim) {
+          cartScrim = document.createElement('div');
+          cartScrim.id = 'mm-h-cart-scrim';
+          cartScrim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:15;opacity:0;transition:opacity 320ms;';
+          cartScrim.addEventListener('click', closeCartDrawer);
+          document.body.appendChild(cartScrim);
+          // Trigger transition
+          requestAnimationFrame(function () { cartScrim.style.opacity = '1'; });
+        }
+        document.body.style.overflow = 'hidden';
+      }
+      function closeCartDrawer() {
+        var drawer = findDrawer();
+        if (drawer) drawer.style.transform = 'translateX(110%)';
+        if (cartScrim) {
+          cartScrim.style.opacity = '0';
+          var s = cartScrim;
+          setTimeout(function () { if (s && s.parentNode) s.parentNode.removeChild(s); }, 320);
+          cartScrim = null;
+        }
+        document.body.style.overflow = '';
+      }
+  
+      if (cartLink) {
+        cartLink.addEventListener('click', function (e) {
+          // Mobile: let default navigate to /checkout/cart (drawer comes Phase 6 via different path)
+          if (window.matchMedia('(max-width: 767px)').matches) return;
+          e.preventDefault();
+          openCartDrawer();
+        });
+      }
+  
+      // Esc closes cart drawer (separate listener, doesn't conflict with search/mega-menu)
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && cartScrim) closeCartDrawer();
+      });
     }
   
     if (document.readyState === 'loading') {
