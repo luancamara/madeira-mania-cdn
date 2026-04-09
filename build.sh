@@ -175,9 +175,15 @@ echo "Gerando loader..."
   echo '@keyframes mm-load-spin{to{transform:rotate(360deg)}}'
   echo '/* Anti-flicker footer global: esconde Magazord footer enquanto bundle injeta o nosso */'
   echo 'html.mm-footer-loading #footer-react-app,html.mm-footer-loading .ra-footer,html.mm-footer-loading .footer-04,html.mm-footer-loading .footer-top,html.mm-footer-loading .footer-middle,html.mm-footer-loading .footer-about,html.mm-footer-loading .footer-bottom,html.mm-footer-loading .footer-checkout-info,html.mm-footer-loading .magazord-logo-container{display:none!important}'
-  echo '/* DEV mode indicator — só ativa quando localStorage.mm_dev_url está setado */'
-  echo 'html.mm-dev-mode::before{content:"\26a1 DEV MODE \2014 localhost";position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;font:bold 11px/20px monospace;text-align:center;z-index:999999;padding:2px 8px}'
-  echo 'html.mm-dev-mode body{margin-top:20px !important}'
+  echo '/* DEV mode indicators — 3 estados possíveis:'
+  echo '   .mm-dev-pending  = localStorage setado, ainda carregando (cinza)'
+  echo '   .mm-dev-mode     = bundle local carregou OK (verde — dev real)'
+  echo '   .mm-dev-fallback = bundle local falhou, carregou PROD (laranja — atenção) */'
+  echo 'html.mm-dev-pending::before{content:"\231B DEV MODE \2014 carregando localhost\2026";background:#6b7280}'
+  echo 'html.mm-dev-mode::before{content:"\26a1 DEV MODE \2014 localhost OK";background:#10b981}'
+  echo 'html.mm-dev-fallback::before{content:"\26a0 DEV FALLBACK \2014 localhost offline, usando PROD";background:#f59e0b}'
+  echo 'html.mm-dev-pending::before,html.mm-dev-mode::before,html.mm-dev-fallback::before{position:fixed;top:0;left:0;right:0;color:#fff;font:bold 11px/20px monospace;text-align:center;z-index:999999;padding:2px 8px}'
+  echo 'html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-top:20px !important}'
   echo '</style>'
   echo '<script>'
   # Cobre qualquer /checkout/* exceto /done (que é a única etapa que não reescrevemos).
@@ -202,18 +208,33 @@ echo "Gerando loader..."
   var PROD = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
   var devUrl;
   try { devUrl = localStorage.getItem('mm_dev_url'); } catch(e) {}
+  var doc = document.documentElement;
   var s = document.createElement('script');
   s.src = devUrl || PROD;
   s.async = true;
+
   if (devUrl) {
-    document.documentElement.classList.add('mm-dev-mode');
+    // Estado 1: tentativa inicial — pending (cinza) até sabermos se deu certo
+    doc.classList.add('mm-dev-pending');
+
+    s.onload = function(){
+      // Estado 2: bundle local carregou OK — dev real (verde)
+      doc.classList.remove('mm-dev-pending');
+      doc.classList.add('mm-dev-mode');
+      console.info('[mm-dev] bundle local OK:', devUrl);
+    };
+
     s.onerror = function(){
-      console.warn('[mm-dev] falhou ao carregar dev bundle, fallback prod');
+      // Estado 3: bundle local falhou — fallback PROD (laranja)
+      doc.classList.remove('mm-dev-pending');
+      doc.classList.add('mm-dev-fallback');
+      console.warn('[mm-dev] localhost offline, usando PROD:', PROD);
       var f = document.createElement('script');
       f.src = PROD; f.async = true;
       document.head.appendChild(f);
     };
   }
+
   document.head.appendChild(s);
 })();
 </script>
