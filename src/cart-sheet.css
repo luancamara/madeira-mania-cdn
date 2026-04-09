@@ -278,52 +278,154 @@
 }
 
 /* ==========================================================================
-   QTD BUTTONS: injetados pelo JS — estilo minimalista circular
+   QTD CONTROLS + TRASH — mesma identidade visual do /checkout/cart
+   (.mm-qty / .mm-qty-btn / .mm-qty-value / .mm-item-remove em checkout-cro.css)
+
+   O JS cart-sheet.js injeta esta estrutura dentro de .qtd-value:
+     .mm-qty-wrap
+       └─ button.qty-btn-minus (SVG)
+       └─ span.qty-display
+       └─ button.qty-btn-plus (SVG)
+
+   O trash (.cart-remove-item) continua onde o Magazord renderiza nativamente:
+     - Mobile: dentro do .qtd-value (sibling dos botões)
+     - Desktop: em .prod-remove (sibling do main row)
    ========================================================================== */
+
+/* Esconde os elementos nativos do Magazord que o nosso JS vai substituir */
+.content-cart .cart-item .qtd-value > .quantidade,
+.content-cart .cart-item .qtd-value > span:not(.qty-display):not(.cart-remove-item):not(.valor):not(.mm-qty-wrap) {
+  display: none !important;
+}
+
+/* Container .qtd-value — reset pra colocar o wrap + valor em linha */
 .content-cart .cart-item .qtd-value {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  width: 100% !important;
 }
-.content-cart .cart-item .qtd-value > span:not(.qty-display):not(.cart-remove-item) {
-  display: none !important;
+
+/* Pill wrap com border (replica .mm-qty do /checkout/cart) */
+.content-cart .cart-item .mm-qty-wrap {
+  display: inline-flex !important;
+  align-items: center !important;
+  border: 1px solid #E7E7E7 !important;
+  border-radius: 9999px !important;
+  padding: 4px !important;
+  background: #FFFFFF !important;
+  transition: border-color 320ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+.content-cart .cart-item .mm-qty-wrap:hover {
+  border-color: #D1D5DB !important;
+}
+
+/* Botões minus/plus (replica .mm-qty-btn) */
 .content-cart .qty-btn-minus,
 .content-cart .qty-btn-plus {
-  width: 30px !important;
-  height: 30px !important;
-  border: 1px solid #E7E7E7 !important;
-  background: #FFFFFF !important;
-  border-radius: 50% !important;
-  cursor: pointer !important;
-  display: flex !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  color: #121212 !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
+  color: #374151 !important;
+  cursor: pointer !important;
   padding: 0 !important;
-  line-height: 1 !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  transition: background-color 420ms cubic-bezier(0.16, 1, 0.3, 1),
+              color 420ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  flex: none !important;
 }
+.content-cart .qty-btn-minus svg,
+.content-cart .qty-btn-plus svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+.content-cart .qty-btn-minus:hover:not(:disabled),
+.content-cart .qty-btn-plus:hover:not(:disabled) {
+  background: #F2F2F2 !important;
+  color: #121212 !important;
+}
+.content-cart .qty-btn-minus:active:not(:disabled),
+.content-cart .qty-btn-plus:active:not(:disabled) {
+  transform: scale(0.92) !important;
+}
+.content-cart .qty-btn-minus:disabled,
+.content-cart .qty-btn-plus:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+.content-cart .qty-btn-minus:focus-visible,
+.content-cart .qty-btn-plus:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
+}
+
+/* Display numérico (replica .mm-qty-value) */
 .content-cart .qty-display {
-  min-width: 24px !important;
+  min-width: 28px !important;
   text-align: center !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   color: #121212 !important;
+  font-variant-numeric: tabular-nums !important;
+  user-select: none !important;
+  padding: 0 6px !important;
 }
 
-/* Trash icon no card */
-.content-cart .cart-item .cart-remove-item {
-  position: absolute !important;
-  top: 10px !important;
-  right: 10px !important;
-  opacity: 0.35 !important;
+/* Trash icon — replica .mm-item-remove (44pt hit area, minimalist, red on hover) */
+.content-cart .cart-item .cart-remove-item,
+.content-cart .cart-item .prod-remove .cart-remove-item {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #6B7280 !important;
   cursor: pointer !important;
+  padding: 0 !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  border-radius: 9999px !important;
+  transition: color 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 320ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+  opacity: 1 !important;
+  top: auto !important;
+  right: auto !important;
+  flex: none !important;
+}
+.content-cart .cart-item .cart-remove-item:hover {
+  color: #DC2626 !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+}
+.content-cart .cart-item .cart-remove-item:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
 }
 .content-cart .cart-item .cart-remove-item svg {
-  width: 14px !important;
-  height: 14px !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+.content-cart .cart-item .cart-remove-item svg path,
+.content-cart .cart-item .cart-remove-item svg polyline {
+  stroke: currentColor !important;
+  fill: none !important;
 }
 
 /* Empty state */
@@ -497,11 +599,9 @@
     text-decoration: none !important;
   }
 
-  .carrinho-rapido-ctn .content-cart .cart-item .derivacao {
-    display: flex !important;
-    color: #6B7280 !important;
-    font-size: 11px !important;
-  }
+  /* Derivacao escondida globalmente (.content-cart .cart-item .derivacao no
+     bloco base) — Madeira Mania não usa sistema de variantes nativo, então
+     "Único: Único" é ruído visual. */
 
   .carrinho-rapido-ctn .content-cart .cart-item .valor {
     font-family: 'Poppins', system-ui, sans-serif !important;

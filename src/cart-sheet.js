@@ -58,29 +58,44 @@
     }
   }
 
+  // SVG icons matching /checkout/cart (.mm-qty-btn / .mm-item-remove)
+  var SVG_MINUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
+  var SVG_PLUS  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  var SVG_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>';
+
   function criarControlesQtd() {
     injetarParcelamentoTotal();
-    var items = document.querySelectorAll('#cart-preview-area .qtd-value');
-    items.forEach(function(qtdDiv) {
-      // Evitar duplicar botoes
-      if (qtdDiv.querySelector('.qty-btn-minus')) return;
 
-      var spanQtd = qtdDiv.querySelector('span:first-child');
-      if (!spanQtd) return;
+    // Itera por .cart-item (scope correto pra funcionar em mobile E desktop —
+    // no desktop o .cart-remove-item fica fora do .qtd-value, em .prod-remove sibling).
+    var cartItems = document.querySelectorAll('#cart-preview-area .cart-item, .content-cart .cart-item');
+    cartItems.forEach(function(cartItem) {
+      // Evita re-injeção
+      if (cartItem.querySelector('.qty-btn-minus')) return;
 
-      var match = spanQtd.textContent.match(/(\d+)/);
-      var qty = match ? parseInt(match[1]) : 1;
+      var qtdDiv = cartItem.querySelector('.qtd-value');
+      if (!qtdDiv) return;
 
-      // Pegar data-id do botao remover (ID interno do Magazord)
-      var removeBtn = qtdDiv.querySelector('.cart-remove-item');
+      // Trash button pode estar dentro de .qtd-value (mobile) ou em .prod-remove sibling (desktop)
+      var removeBtn = cartItem.querySelector('.cart-remove-item');
       var dataId = removeBtn ? removeBtn.getAttribute('data-id') : null;
       if (!dataId) return;
 
-      // Criar botao minus
+      // Quantidade vem de data-attribute no .cart-item (disponível em ambos viewports);
+      // fallback pra parse do texto do qtdDiv.
+      var qty = parseInt(cartItem.getAttribute('data-item-quantity'));
+      if (!qty || isNaN(qty)) {
+        var m = qtdDiv.textContent.match(/(\d+)/);
+        qty = m ? parseInt(m[1]) : 1;
+      }
+
+      // Criar botão minus — SVG icon matching /checkout/cart
       var btnMinus = document.createElement('button');
       btnMinus.className = 'qty-btn-minus';
-      btnMinus.textContent = '\u2212';
       btnMinus.type = 'button';
+      btnMinus.setAttribute('aria-label', 'Diminuir quantidade');
+      btnMinus.innerHTML = SVG_MINUS;
+      if (qty <= 1) btnMinus.disabled = true;
       btnMinus.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -89,16 +104,17 @@
         }
       });
 
-      // Criar display do numero
+      // Display numérico
       var numDisplay = document.createElement('span');
       numDisplay.className = 'qty-display';
       numDisplay.textContent = qty;
 
-      // Criar botao plus
+      // Botão plus
       var btnPlus = document.createElement('button');
       btnPlus.className = 'qty-btn-plus';
-      btnPlus.textContent = '+';
       btnPlus.type = 'button';
+      btnPlus.setAttribute('aria-label', 'Aumentar quantidade');
+      btnPlus.innerHTML = SVG_PLUS;
       btnPlus.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -107,10 +123,22 @@
         }
       });
 
-      // Inserir botoes no inicio do qtdDiv (antes dos spans existentes)
-      qtdDiv.insertBefore(btnPlus, qtdDiv.firstChild);
-      qtdDiv.insertBefore(numDisplay, qtdDiv.firstChild);
-      qtdDiv.insertBefore(btnMinus, qtdDiv.firstChild);
+      // Wrap minus + display + plus num container .mm-qty-wrap (pill border igual /checkout/cart)
+      var qtyWrap = document.createElement('div');
+      qtyWrap.className = 'mm-qty-wrap';
+      qtyWrap.appendChild(btnMinus);
+      qtyWrap.appendChild(numDisplay);
+      qtyWrap.appendChild(btnPlus);
+
+      // Inserir wrap no início do qtdDiv
+      qtdDiv.insertBefore(qtyWrap, qtdDiv.firstChild);
+
+      // Substituir o conteúdo visual do trash nativo pelo nosso ícone SVG limpo
+      // (mantém o element pra preservar handlers/data-id do Magazord)
+      if (removeBtn) {
+        removeBtn.innerHTML = SVG_TRASH;
+        removeBtn.setAttribute('aria-label', 'Remover produto');
+      }
     });
   }
 
