@@ -60,7 +60,7 @@
       '      <div class="mm-h-mega" role="menu" aria-label="Ambientes">',
       '        <div class="mm-h-mega-inner">',
       '          <div class="mm-h-mega-col">',
-      '            <a href="/sala-de-estar-9677307902" class="mm-h-mega-heading mm-h-mega-heading-link">Sala de Estar</a>',
+      '            <a href="/sala-de-estar-9677307902" class="mm-h-mega-heading mm-h-mega-heading-link" data-hero="sala-de-estar">Sala de Estar</a>',
       '            <ul>',
       '              <li><a href="/sala-de-estar/mesas">Mesas</a></li>',
       '              <li><a href="/sala-de-estar/racks">Racks para TV</a></li>',
@@ -75,7 +75,7 @@
       '            </ul>',
       '          </div>',
       '          <div class="mm-h-mega-col">',
-      '            <a href="/sala-de-jantar-1916970475" class="mm-h-mega-heading mm-h-mega-heading-link">Sala de Jantar</a>',
+      '            <a href="/sala-de-jantar-1916970475" class="mm-h-mega-heading mm-h-mega-heading-link" data-hero="sala-de-jantar">Sala de Jantar</a>',
       '            <ul>',
       '              <li><a href="/sala-de-jantar/mesas">Mesas</a></li>',
       '              <li><a href="/sala-de-jantar/cadeiras">Cadeiras</a></li>',
@@ -88,21 +88,21 @@
       '            </ul>',
       '          </div>',
       '          <div class="mm-h-mega-col">',
-      '            <a href="/cozinha-6327619447" class="mm-h-mega-heading mm-h-mega-heading-link">Cozinha</a>',
+      '            <a href="/cozinha-6327619447" class="mm-h-mega-heading mm-h-mega-heading-link" data-hero="cozinha">Cozinha</a>',
       '            <ul>',
       '              <li><a href="/cozinha/mesas-de-jantar">Mesas de Jantar</a></li>',
       '              <li><a href="/cozinha/banquetas">Banquetas</a></li>',
       '              <li><a href="/cozinha/cristaleiras">Cristaleiras</a></li>',
       '              <li><a href="/cozinha/cantinhos-do-cafe">Cantinhos do Café</a></li>',
       '            </ul>',
-      '            <a href="/bar-e-cafe" class="mm-h-mega-heading mm-h-mega-heading-link">Bar e Café</a>',
+      '            <a href="/bar-e-cafe" class="mm-h-mega-heading mm-h-mega-heading-link" data-hero="bar-e-cafe">Bar e Café</a>',
       '            <ul>',
       '              <li><a href="/bar-e-cafe/bares">Bares</a></li>',
       '              <li><a href="/bar-e-cafe/cantinhos-do-cafe">Cantinhos do Café</a></li>',
       '            </ul>',
       '          </div>',
       '          <div class="mm-h-mega-col">',
-      '            <a href="/quarto-0961844589" class="mm-h-mega-heading mm-h-mega-heading-link">Quarto</a>',
+      '            <a href="/quarto-0961844589" class="mm-h-mega-heading mm-h-mega-heading-link" data-hero="quarto">Quarto</a>',
       '            <ul>',
       '              <li><a href="/quarto/cabeceiras">Cabeceiras</a></li>',
       '              <li><a href="/quarto/comodas">Cômodas</a></li>',
@@ -110,10 +110,16 @@
       '              <li><a href="/quarto/mesas-de-cabeceira">Mesas de Cabeceira</a></li>',
       '              <li><a href="/quarto/penteadeiras">Penteadeiras</a></li>',
       '            </ul>',
-      '            <a href="/escritorio-899523853" class="mm-h-mega-heading mm-h-mega-heading-link">Escritório</a>',
+      '            <a href="/escritorio-899523853" class="mm-h-mega-heading mm-h-mega-heading-link" data-hero="escritorio">Escritório</a>',
       '            <ul>',
       '              <li><a href="/escritorio/escrivaninhas">Escrivaninhas</a></li>',
       '            </ul>',
+      '          </div>',
+      '          <div class="mm-h-mega-col mm-h-mega-col-hero" aria-hidden="true">',
+      '            <div class="mm-h-mega-hero">',
+      '              <img class="mm-h-mega-hero-img" src="" alt="" loading="lazy" width="320" height="240" />',
+      '              <div class="mm-h-mega-hero-label"></div>',
+      '            </div>',
       '          </div>',
       '        </div>',
       '        <div class="mm-h-mega-footer">',
@@ -244,6 +250,50 @@
       '</div>'
     ].join('\n');
     document.body.insertBefore(header, document.body.firstChild);
+
+    // Mega-menu hero image swap on hover
+    // Detect if running in dev mode (loaded from localhost) vs production (jsDelivr)
+    var HERO_BASE = (function () {
+      try {
+        var script = Array.from(document.scripts).find(function (s) { return s.src && s.src.indexOf('madeira-mania.js') !== -1; });
+        if (script && script.src.indexOf('localhost') !== -1) return 'http://localhost:8080/assets/mega-hero/';
+        return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/assets/mega-hero/';
+      } catch (e) { return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/assets/mega-hero/'; }
+    })();
+
+    var heroLabels = {
+      'sala-de-estar': 'Sala de Estar',
+      'sala-de-jantar': 'Sala de Jantar',
+      'cozinha': 'Cozinha',
+      'bar-e-cafe': 'Bar e Café',
+      'quarto': 'Quarto',
+      'escritorio': 'Escritório'
+    };
+
+    var heroImg = header.querySelector('.mm-h-mega-hero-img');
+    var heroLabel = header.querySelector('.mm-h-mega-hero-label');
+
+    // Preload all hero images
+    Object.keys(heroLabels).forEach(function (slug) {
+      var img = new Image();
+      img.src = HERO_BASE + slug + '.jpg';
+    });
+
+    // Default hero = Sala de Estar (loaded on menu open)
+    function setHero(slug) {
+      if (!heroImg) return;
+      heroImg.src = HERO_BASE + slug + '.jpg';
+      heroImg.alt = heroLabels[slug] || '';
+      if (heroLabel) heroLabel.textContent = heroLabels[slug] || '';
+    }
+    setHero('sala-de-estar');
+
+    // Swap hero on heading hover
+    header.querySelectorAll('.mm-h-mega-heading-link[data-hero]').forEach(function (link) {
+      link.addEventListener('mouseenter', function () {
+        setHero(link.dataset.hero);
+      });
+    });
 
     // Hover-intent for mega-menus (150ms delay to prevent accidental triggers)
     var navItems = header.querySelectorAll('.mm-h-nav-item[data-menu]');
