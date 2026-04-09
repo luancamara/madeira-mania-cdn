@@ -60,26 +60,64 @@
       '      <div class="mm-h-mega" role="menu" aria-label="Ambientes">',
       '        <div class="mm-h-mega-inner">',
       '          <div class="mm-h-mega-col">',
-      '            <h3 class="mm-h-mega-heading">Social</h3>',
+      '            <a href="/sala-de-estar-9677307902" class="mm-h-mega-heading mm-h-mega-heading-link">Sala de Estar</a>',
       '            <ul>',
-      '              <li><a href="/sala-de-estar-9677307902">Sala de Estar</a></li>',
-      '              <li><a href="/sala-de-jantar-1916970475">Sala de Jantar</a></li>',
-      '              <li><a href="/bar-e-cafe">Bar e Café</a></li>',
+      '              <li><a href="/sala-de-estar/mesas">Mesas</a></li>',
+      '              <li><a href="/sala-de-estar/racks">Racks para TV</a></li>',
+      '              <li><a href="/sala-de-estar/estantes">Estantes</a></li>',
+      '              <li><a href="/sala-de-estar/home-theaters">Home Theaters</a></li>',
+      '              <li><a href="/sala-de-estar/aparadores">Aparadores</a></li>',
+      '              <li><a href="/sala-de-estar/cristaleiras">Cristaleiras</a></li>',
+      '              <li><a href="/sala-de-estar/buffets">Buffets</a></li>',
+      '              <li><a href="/sala-de-estar/bares">Bares</a></li>',
+      '              <li><a href="/sala-de-estar/paineis">Painéis</a></li>',
+      '              <li><a href="/sala-de-estar/nichos">Nichos</a></li>',
       '            </ul>',
       '          </div>',
       '          <div class="mm-h-mega-col">',
-      '            <h3 class="mm-h-mega-heading">Casa</h3>',
+      '            <a href="/sala-de-jantar-1916970475" class="mm-h-mega-heading mm-h-mega-heading-link">Sala de Jantar</a>',
       '            <ul>',
-      '              <li><a href="/cozinha-6327619447">Cozinha</a></li>',
-      '              <li><a href="/quarto-0961844589">Quarto</a></li>',
+      '              <li><a href="/sala-de-jantar/mesas">Mesas</a></li>',
+      '              <li><a href="/sala-de-jantar/cadeiras">Cadeiras</a></li>',
+      '              <li><a href="/sala-de-jantar/aparadores">Aparadores</a></li>',
+      '              <li><a href="/sala-de-jantar/buffets">Buffets</a></li>',
+      '              <li><a href="/sala-de-jantar/cristaleiras">Cristaleiras</a></li>',
+      '              <li><a href="/sala-de-jantar/balcoes">Balcões</a></li>',
+      '              <li><a href="/sala-de-jantar/banquetas">Banquetas</a></li>',
+      '              <li><a href="/sala-de-jantar/bares">Bares</a></li>',
       '            </ul>',
       '          </div>',
       '          <div class="mm-h-mega-col">',
-      '            <h3 class="mm-h-mega-heading">Work</h3>',
+      '            <a href="/cozinha-6327619447" class="mm-h-mega-heading mm-h-mega-heading-link">Cozinha</a>',
       '            <ul>',
-      '              <li><a href="/escritorio-899523853">Escritório</a></li>',
+      '              <li><a href="/cozinha/mesas-de-jantar">Mesas de Jantar</a></li>',
+      '              <li><a href="/cozinha/banquetas">Banquetas</a></li>',
+      '              <li><a href="/cozinha/cristaleiras">Cristaleiras</a></li>',
+      '              <li><a href="/cozinha/cantinhos-do-cafe">Cantinhos do Café</a></li>',
+      '            </ul>',
+      '            <a href="/bar-e-cafe" class="mm-h-mega-heading mm-h-mega-heading-link">Bar e Café</a>',
+      '            <ul>',
+      '              <li><a href="/bar-e-cafe/bares">Bares</a></li>',
+      '              <li><a href="/bar-e-cafe/cantinhos-do-cafe">Cantinhos do Café</a></li>',
       '            </ul>',
       '          </div>',
+      '          <div class="mm-h-mega-col">',
+      '            <a href="/quarto-0961844589" class="mm-h-mega-heading mm-h-mega-heading-link">Quarto</a>',
+      '            <ul>',
+      '              <li><a href="/quarto/cabeceiras">Cabeceiras</a></li>',
+      '              <li><a href="/quarto/comodas">Cômodas</a></li>',
+      '              <li><a href="/quarto/guardaroupas">Guarda-Roupas</a></li>',
+      '              <li><a href="/quarto/mesas-de-cabeceira">Mesas de Cabeceira</a></li>',
+      '              <li><a href="/quarto/penteadeiras">Penteadeiras</a></li>',
+      '            </ul>',
+      '            <a href="/escritorio-899523853" class="mm-h-mega-heading mm-h-mega-heading-link">Escritório</a>',
+      '            <ul>',
+      '              <li><a href="/escritorio/escrivaninhas">Escrivaninhas</a></li>',
+      '            </ul>',
+      '          </div>',
+      '        </div>',
+      '        <div class="mm-h-mega-footer">',
+      '          <a href="/envio-imediato" class="mm-h-mega-cta">Ver todos os ambientes <span aria-hidden="true">→</span></a>',
       '        </div>',
       '      </div>',
       '    </li>',
@@ -292,6 +330,60 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && cartScrim) closeCartDrawer();
     });
+
+    // Cart count sync — subscribe to Magazord's reactItemAddedToCart event
+    // and read the count from the native DOM badge (if it exists) OR from data attributes.
+    var cartBadge = document.getElementById('mm-h-cart-count');
+    var cartAction = document.getElementById('mm-h-cart');
+
+    function updateCartCount() {
+      if (!cartBadge) return;
+      // Magazord renders count in multiple places — try several sources
+      var count = 0;
+      // 1. Check for native cart count element
+      var nativeCount = document.querySelector('.header-middle .cart-count, .carrinho-ctn .count, [class*="carrinho"] [class*="qtd"], #cart-preview-area [class*="count"]');
+      if (nativeCount) {
+        var txt = (nativeCount.textContent || '').trim().replace(/\D/g, '');
+        if (txt) count = parseInt(txt, 10) || 0;
+      }
+      // 2. Fallback: count cart items in the drawer
+      if (count === 0) {
+        var items = document.querySelectorAll('#cart-preview-area .cart-item, .carrinho-rapido-ctn .cart-item');
+        count = items.length;
+      }
+      // 3. Fallback: data attribute on body or header (Magazord sometimes sets this)
+      if (count === 0) {
+        var dataCount = document.body.dataset.cartCount || document.querySelector('[data-cart-count]')?.dataset.cartCount;
+        if (dataCount) count = parseInt(dataCount, 10) || 0;
+      }
+
+      if (count > 0) {
+        cartBadge.textContent = count > 99 ? '99+' : String(count);
+        cartBadge.hidden = false;
+      } else {
+        cartBadge.hidden = true;
+      }
+      // Update aria-label for screen readers
+      if (cartAction) {
+        cartAction.setAttribute('aria-label', 'Carrinho, ' + count + ' ' + (count === 1 ? 'item' : 'itens'));
+      }
+    }
+
+    // Listen for cart mutations
+    window.addEventListener('reactItemAddedToCart', updateCartCount);
+    // Also listen on document for jQuery-dispatched events (Magazord is jQuery-based)
+    if (typeof jQuery !== 'undefined') {
+      jQuery(document).on('reactItemAddedToCart', updateCartCount);
+      // Also hook into ajax cart updates directly
+      jQuery(document).ajaxComplete(function (event, xhr, settings) {
+        if (settings && settings.url && settings.url.indexOf('checkout/cart') !== -1) {
+          setTimeout(updateCartCount, 150);
+        }
+      });
+    }
+    // Initial read on load (cart may already have items from session)
+    setTimeout(updateCartCount, 500);
+    setTimeout(updateCartCount, 2000); // retry after Magazord finishes rendering
   }
 
   if (document.readyState === 'loading') {
