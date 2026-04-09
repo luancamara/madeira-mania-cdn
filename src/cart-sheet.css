@@ -1,462 +1,603 @@
 /* =============================================
-   CARRINHO MOBILE - Override Magazord v2
-   Referencia: Figma "Cart List" - Furniture eCommerce
+   CART MODAL (mobile + desktop) — Override Magazord
 
-   COMO APLICAR NO MAGAZORD:
-   - Conteudo Adicional > Novo
-   - Posicao: Cabecalho Superior
-   - Filtro dispositivo: Mobile
-   - Aplicar em: TODAS AS PAGINAS (nao apenas Home)
+   DOM real (confirmado via Playwright + route intercept):
 
-   SELETORES: baseados no DOM mobile real do Magazord
-   #cart-preview-area como raiz
+   MOBILE (.z-[9999] overlay):
+     #cart-preview-area > .z-[9999] > .relative.z-[10]
+       > .border-b.border-solid  ← header
+       > .content-cart > .cart-item  ← items
+       > .border-t.border-solid  ← footer (.title.boleto + .valor-pix + .finalizar-compra)
 
-   APIs Magazord descobertas (referencia):
-   - Zord.checkout.adicionaQuantidade(dataId)
-   - Zord.checkout.removeQuantidade(dataId, true)
-   - Zord.checkout.deleteItem(dataId)
-   - Zord.checkout.atualizaPreview()
-   - Zord.checkout.atualizaContadorCarrinho()
-   - .cart-remove-item[data-id] = ID interno do item
+   DESKTOP (.carrinho-rapido-ctn drawer):
+     #cart-preview-area > .carrinho-rapido-ctn > .carrinho-rapido
+       > .top-carrinho.bg-cor-base  ← header
+         > .meu-carrinho > a "Meu carrinho" + .icon-arrow-bottom
+       > .content-cart
+         > .cart-items > .cart-item  ← items
+         > .area-finalizar-compra  ← footer
+           > .formas.forma-pix (icon + "PIX" + .valor.valor-pix)
+           > .formas.forma-cartao (icon + "Cartão" + .valor.valor-cartao)
+           > a > button.finalizar-compra
+
+   Estratégia:
+     - #cart-preview-area ancestor comum → usado como scope principal
+     - Rules específicas para estrutura diferente mobile vs desktop
+     - .content-cart + .finalizar-compra são classes compartilhadas
+
+   APIs Magazord (referência):
+     - Zord.checkout.adicionaQuantidade(dataId)
+     - Zord.checkout.removeQuantidade(dataId, true)
+     - Zord.checkout.deleteItem(dataId)
+     - .cart-remove-item[data-id] = ID interno do item
    ============================================= */
 
+/* ==========================================================================
+   TOPBAR: esconder topbar do site quando cart overlay está aberto (mobile)
+   ========================================================================== */
 @media (max-width: 768px) {
-
-  /* ==========================================
-     SITE HEADER - esconder quando carrinho aberto
-     ========================================== */
-
-  #cart-preview-area .shadow-overlay {
-    background: #f4f4f4 !important;
-  }
-
-  /* Esconder header APENAS quando overlay do CARRINHO abre
-     - Usa .content-cart como classe exclusiva do overlay do carrinho (descendente, não :has aninhado)
-     - Não afeta: Menu (z-20), Pesquisa (tem #frm-search), Favoritos (não tem .content-cart) */
-  header:has(.z-\[9999\].translate-x-\[0\] .content-cart) > .z-40 {
+  header:has(.z-\[9999\].translate-x-\[0\] .content-cart) > .z-40:not(.fixed) {
     display: none !important;
   }
+}
 
-  header:has(.z-\[9999\].translate-x-\[0\] .content-cart) > .fixed.bottom-0 {
-    visibility: hidden !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    padding: 0 !important;
+/* ==========================================================================
+   DRAWER / SHEET: background cinza checkout
+   ========================================================================== */
+.content-cart,
+.content-cart > div,
+#cart-preview-area,
+#cart-preview-area > div {
+  background: #F2F2F2 !important;
+}
+
+/* ==========================================================================
+   HEADER: título serif + botão fechar redondo
+   ========================================================================== */
+#cart-preview-area .border-b.border-solid {
+  background: #F2F2F2 !important;
+  border-bottom: none !important;
+  padding: 18px 20px !important;
+  min-height: 60px !important;
+}
+
+#cart-preview-area .border-b.border-solid > button,
+#cart-preview-area .border-b.border-solid > button span {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  letter-spacing: -0.01em !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+#cart-preview-area .border-b.border-solid > button svg {
+  display: none !important;
+}
+
+/* Fechar — círculo branco com sombra (touch target 44x44) */
+#cart-preview-area .border-b.border-solid > div {
+  width: 44px !important;
+  height: 44px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E7E7E7 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: border-color 150ms, box-shadow 150ms !important;
+}
+#cart-preview-area .border-b.border-solid > div:hover {
+  border-color: #4B664A !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+#cart-preview-area .border-b.border-solid > div:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
+}
+#cart-preview-area .border-b.border-solid > div span {
+  display: none !important;
+}
+#cart-preview-area .border-b.border-solid > div svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* ==========================================================================
+   LISTA: padding + gap
+   ========================================================================== */
+.content-cart {
+  padding: 12px 16px 16px !important;
+  gap: 10px !important;
+}
+
+/* ==========================================================================
+   CARD DO ITEM: branco com border subtle + radius
+   ========================================================================== */
+.content-cart .cart-item {
+  background: #FFFFFF !important;
+  border: 1px solid #E7E7E7 !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  box-shadow: none !important;
+  position: relative !important;
+}
+
+.content-cart .cart-item .prod-img {
+  width: 84px !important;
+  height: 84px !important;
+  min-width: 84px !important;
+  max-width: 84px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  background: #FFFFFF !important;
+  flex-shrink: 0 !important;
+}
+.content-cart .cart-item .prod-img figure {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.content-cart .cart-item .prod-img img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Nome do produto — Poppins */
+.content-cart .cart-item .prod-nome {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #121212 !important;
+  letter-spacing: -0.005em !important;
+  line-height: 1.35 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.content-cart .cart-item .derivacao {
+  display: none !important;
+}
+
+/* Valor — Poppins bold + tabular-nums (evita layout shift ao mudar quantidade) */
+.content-cart .cart-item .valor,
+.content-cart .cart-item .valor span {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* ==========================================================================
+   FOOTER: seção branca com radius top
+   ========================================================================== */
+#cart-preview-area .border-t.border-solid {
+  background: #FFFFFF !important;
+  border-top: 1px solid #E7E7E7 !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding: 20px 22px 22px !important;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Label "Valor total" */
+#cart-preview-area .title.boleto {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  color: #4B5563 !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* Valor total — Libre Baskerville serif + tabular-nums */
+#cart-preview-area .valor-pix,
+#cart-preview-area .valor-pix span {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  letter-spacing: -0.01em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Texto de parcelamento */
+#cart-preview-area .installment-total {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 12px !important;
+  color: #4B5563 !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* ==========================================================================
+   CTA Finalizar — pill olive, full-width
+   ========================================================================== */
+#cart-preview-area .finalizar-compra {
+  background: #1b7a45 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 14px 24px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin-top: 12px !important;
+  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 200ms, box-shadow 200ms, transform 150ms !important;
+}
+#cart-preview-area .finalizar-compra:hover {
+  background: #155a33 !important;
+  box-shadow: 0 6px 20px rgba(27, 122, 69, 0.28) !important;
+}
+#cart-preview-area .finalizar-compra:active {
+  transform: scale(0.98) !important;
+}
+#cart-preview-area .finalizar-compra:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 3px !important;
+}
+#cart-preview-area .finalizar-compra span {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #FFFFFF !important;
+}
+#cart-preview-area .finalizar-compra svg path {
+  fill: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   QTD BUTTONS: injetados pelo JS — estilo minimalista circular
+   ========================================================================== */
+.content-cart .cart-item .qtd-value {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+.content-cart .cart-item .qtd-value > span:not(.qty-display):not(.cart-remove-item) {
+  display: none !important;
+}
+.content-cart .qty-btn-minus,
+.content-cart .qty-btn-plus {
+  width: 30px !important;
+  height: 30px !important;
+  border: 1px solid #E7E7E7 !important;
+  background: #FFFFFF !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #121212 !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+.content-cart .qty-display {
+  min-width: 24px !important;
+  text-align: center !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #121212 !important;
+}
+
+/* Trash icon no card */
+.content-cart .cart-item .cart-remove-item {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  opacity: 0.35 !important;
+  cursor: pointer !important;
+}
+.content-cart .cart-item .cart-remove-item svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Empty state */
+.content-cart .box-empty-cart {
+  padding: 48px 20px !important;
+}
+.content-cart .empty-cart {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  color: #4B5563 !important;
+  font-weight: 500 !important;
+}
+
+/* ==========================================================================
+   DELETE CONFIRM MODAL (mobile sheet bottom-up)
+   ========================================================================== */
+.mm-confirm-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background: rgba(0,0,0,0.4) !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  animation: mmConfirmIn 0.2s ease !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  backdrop-filter: blur(4px) !important;
+}
+@keyframes mmConfirmIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mmSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.mm-confirm-card {
+  background: #FFFFFF !important;
+  border-radius: 24px 24px 0 0 !important;
+  padding: 28px 24px !important;
+  padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  animation: mmSlideUp 0.25s ease !important;
+}
+.mm-confirm-title {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  margin: 0 0 6px !important;
+}
+.mm-confirm-desc {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  color: #4B5563 !important;
+  margin: 0 0 20px !important;
+  line-height: 1.4 !important;
+}
+.mm-confirm-actions { display: flex !important; gap: 10px !important; }
+.mm-confirm-btn {
+  flex: 1 !important;
+  height: 48px !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+.mm-confirm-btn:active { transform: scale(0.97) !important; }
+.mm-confirm-btn-cancel { background: #F3F4F6 !important; color: #121212 !important; }
+.mm-confirm-btn-delete { background: #EF4444 !important; color: #FFFFFF !important; }
+
+/* ==========================================================================
+   DESKTOP: drawer .carrinho-rapido-ctn tem estrutura diferente do mobile
+   - Header: .top-carrinho (não .border-b.border-solid)
+   - Footer: .area-finalizar-compra (não .border-t.border-solid)
+   - Linhas PIX/Cartão: .formas.forma-pix + .formas.forma-cartao
+   ========================================================================== */
+@media (min-width: 769px) {
+
+  /* Drawer container — background cinza como checkout */
+  .carrinho-rapido-ctn,
+  .carrinho-rapido-ctn .carrinho-rapido,
+  .carrinho-rapido-ctn .content-cart {
+    background: #F2F2F2 !important;
   }
 
-  header:has(.z-\[9999\].translate-x-\[0\] .content-cart) > .fixed.bottom-0 #cart-preview-area,
-  header:has(.z-\[9999\].translate-x-\[0\] .content-cart) > .fixed.bottom-0 #cart-preview-area .h-dvh,
-  header:has(.z-\[9999\].translate-x-\[0\] .content-cart) > .fixed.bottom-0 #cart-preview-area .h-dvh > div {
-    visibility: visible !important;
+  /* HEADER — substitui faixa olive por seção cinza com título serif */
+  .carrinho-rapido-ctn .top-carrinho {
+    background: #F2F2F2 !important;
+    padding: 18px 22px !important;
+    position: relative !important;
   }
 
-  /* ==========================================
-     HEADER - fundo cinza, titulo + fechar
-     ========================================== */
-  #cart-preview-area .border-b.border-solid {
-    background: #f4f4f4 !important;
-    border-bottom: none !important;
-    padding: 16px 20px !important;
-    min-height: 56px !important;
+  .carrinho-rapido-ctn .top-carrinho .meu-carrinho {
+    align-items: center !important;
   }
 
-  #cart-preview-area .border-b.border-solid > button {
-    font-size: 16px !important;
+  .carrinho-rapido-ctn .top-carrinho .meu-carrinho > a {
+    font-family: 'Libre Baskerville', Georgia, serif !important;
+    font-size: 18px !important;
     font-weight: 700 !important;
-    color: #1a1a1a !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
+    color: #121212 !important;
+    letter-spacing: -0.01em !important;
+    text-transform: none !important;
+    text-decoration: none !important;
   }
 
-  #cart-preview-area .border-b.border-solid > button span {
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-  }
-
-  #cart-preview-area .border-b.border-solid > button svg {
-    display: none !important;
-  }
-
-  /* Botao fechar - circulo branco com sombra */
-  #cart-preview-area .border-b.border-solid > div {
-    width: 40px !important;
-    height: 40px !important;
-    background: #ffffff !important;
+  /* Ícone close — círculo branco (touch target 44x44) */
+  .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom {
+    width: 44px !important;
+    height: 44px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E7E7E7 !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    color: #121212 !important;
     cursor: pointer !important;
-    padding: 0 !important;
-    border: none !important;
+    transition: border-color 150ms, box-shadow 150ms !important;
   }
-
-  #cart-preview-area .border-b.border-solid > div span {
-    display: none !important;
+  .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom:hover {
+    border-color: #4B664A !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
   }
-
-  #cart-preview-area .border-b.border-solid > div svg {
-    width: 16px !important;
-    height: 16px !important;
+  .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom:focus-visible {
+    outline: 2px solid #4B664A !important;
+    outline-offset: 2px !important;
   }
-
-  /* ==========================================
-     AREA DE CONTEUDO (lista de itens)
-     ========================================== */
-  #cart-preview-area .content-cart {
-    background: #f4f4f4 !important;
-    padding: 8px 20px 16px !important;
-    gap: 14px !important;
-  }
-
-  /* ==========================================
-     CARD DO PRODUTO
-     ========================================== */
-  #cart-preview-area .cart-item {
-    background: #ffffff !important;
-    border-radius: 16px !important;
-    padding: 12px !important;
-    min-height: auto !important;
-    box-shadow: none !important;
-    border: none !important;
-    overflow: hidden !important;
-    position: relative !important;
-  }
-
-  #cart-preview-area .cart-item > div {
-    gap: 12px !important;
-    padding: 0 !important;
-    align-items: flex-start !important;
-    min-height: auto !important;
-  }
-
-  /* ==========================================
-     IMAGEM DO PRODUTO - quadrada com bordas arredondadas
-     ========================================== */
-  #cart-preview-area .cart-item .prod-img {
-    width: 90px !important;
-    height: 90px !important;
-    min-width: 90px !important;
-    min-height: 90px !important;
-    max-width: 90px !important;
-    max-height: 90px !important;
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    background: #ffffff !important;
-    border: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-top: 0 !important;
-    flex-shrink: 0 !important;
-  }
-
-  #cart-preview-area .cart-item .prod-img figure {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    height: 100% !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-  }
-
-  #cart-preview-area .cart-item .prod-img img {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 0 !important;
-    mix-blend-mode: normal !important;
-  }
-
-  /* ==========================================
-     INFO DO PRODUTO
-     ========================================== */
-
-  #cart-preview-area .cart-item .prod-nome {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    color: #222222 !important;
-    line-height: 1.3 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    margin-bottom: 2px !important;
-  }
-
-  #cart-preview-area .cart-item .derivacao {
-    display: none !important;
-  }
-
-  /* Container preco + quantidade */
-  #cart-preview-area .cart-item .flex.items-center.justify-between {
-    flex-direction: column-reverse !important;
-    align-items: flex-start !important;
-    gap: 6px !important;
-  }
-
-  /* Valor do produto */
-  #cart-preview-area .cart-item .valor {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-    min-width: auto !important;
-    flex: none !important;
-    justify-content: flex-start !important;
-  }
-
-  #cart-preview-area .cart-item .valor span {
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-    font-size: 14px !important;
-  }
-
-  /* ==========================================
-     QUANTIDADE - botoes reais injetados pelo JS
-     ========================================== */
-  #cart-preview-area .cart-item .qtd-value {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0 !important;
-    font-size: 0 !important;
-    width: auto !important;
-  }
-
-  /* Esconder pseudo-elements decorativos antigos (specificity alta para sobrescrever Magazord CDN) */
-  body #cart-preview-area .cart-item .qtd-value.flex.justify-center::before,
-  body #cart-preview-area .cart-item .qtd-value.flex.justify-center::after,
-  #cart-preview-area .content-cart .cart-item .qtd-value::before,
-  #cart-preview-area .content-cart .cart-item .qtd-value::after {
-    display: none !important;
-    content: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    visibility: hidden !important;
-  }
-
-  /* Esconder span original "Qtde: N" e seus pseudo-elements decorativos */
-  #cart-preview-area .cart-item .qtd-value > span:not(.qty-display):not(.cart-remove-item) {
-    display: none !important;
-  }
-
-  /* Botoes reais de quantidade (injetados pelo JS) */
-  #cart-preview-area .qty-btn-minus,
-  #cart-preview-area .qty-btn-plus {
-    width: 30px !important;
-    height: 30px !important;
-    border: none !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-    padding: 0 !important;
-    line-height: 1 !important;
-  }
-
-  #cart-preview-area .qty-btn-minus {
-    background: transparent !important;
-    color: #1a1a1a !important;
-    font-size: 18px !important;
-  }
-
-  #cart-preview-area .qty-btn-plus {
-    background: #1b7a45 !important;
-    color: #ffffff !important;
-    border-radius: 8px !important;
-    font-size: 16px !important;
-  }
-
-  #cart-preview-area .qty-btn-plus:active {
-    background: #156335 !important;
-    transform: scale(0.95) !important;
-  }
-
-  #cart-preview-area .qty-display {
-    width: 28px !important;
-    text-align: center !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    color: #1a1a1a !important;
-  }
-
-  /* Trash icon - posicao absoluta no card */
-  #cart-preview-area .cart-item .cart-remove-item {
-    position: absolute !important;
-    top: 12px !important;
-    right: 12px !important;
-    opacity: 0.3 !important;
-    padding: 0 !important;
-    cursor: pointer !important;
-  }
-
-  #cart-preview-area .cart-item .cart-remove-item svg {
+  .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom svg {
     width: 14px !important;
     height: 14px !important;
+    fill: #121212 !important;
+  }
+  .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom svg path {
+    fill: #121212 !important;
+    stroke: #121212 !important;
   }
 
-  /* ==========================================
-     AREA INFERIOR - FINALIZAR COMPRA
-     ========================================== */
-  #cart-preview-area .border-t.border-solid {
-    background: #ffffff !important;
-    border-radius: 32px 32px 0 0 !important;
-    padding: 24px 24px 28px !important;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.05) !important;
-    border-top: none !important;
+  /* LISTA de items */
+  .carrinho-rapido-ctn .content-cart .cart-items {
+    background: #F2F2F2 !important;
+    padding: 8px 12px !important;
+    max-height: calc(100vh - 340px) !important;
   }
 
-  #cart-preview-area .title.boleto {
-    font-size: 14px !important;
-    color: #999999 !important;
-    font-weight: 400 !important;
-  }
-
-  #cart-preview-area .forma-pix {
-    padding: 4px 0 0 !important;
-  }
-
-  #cart-preview-area .valor-pix {
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-  }
-
-  #cart-preview-area .valor-pix span {
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-  }
-
-  /* Texto de parcelamento no total (injetado pelo JS) */
-  #cart-preview-area .installment-total {
-    font-size: 13px !important;
-    font-weight: 400 !important;
-    color: #999999 !important;
-    margin-top: 2px !important;
-  }
-
-  /* ==========================================
-     BOTAO FINALIZAR COMPRA
-     ========================================== */
-  #cart-preview-area .finalizar-compra {
-    background: #1b7a45 !important;
-    color: #ffffff !important;
-    border-radius: 63px !important;
-    padding: 16px 24px !important;
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
-    border: none !important;
-    width: 100% !important;
-    text-align: center !important;
-    margin-top: 8px !important;
-  }
-
-  #cart-preview-area .finalizar-compra:active {
-    background: #156335 !important;
-    transform: scale(0.98) !important;
-  }
-
-  #cart-preview-area .finalizar-compra span {
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    color: #ffffff !important;
-  }
-
-  #cart-preview-area .finalizar-compra svg path {
-    fill: #ffffff !important;
-  }
-
-  /* ==========================================
-     DELETE CONFIRM MODAL
-     ========================================== */
-  .mm-confirm-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 99999 !important;
-    background: rgba(0,0,0,0.4) !important;
-    display: flex !important;
-    align-items: flex-end !important;
-    justify-content: center !important;
-    animation: mmConfirmIn 0.2s ease !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-    backdrop-filter: blur(4px) !important;
-  }
-
-  @keyframes mmConfirmIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes mmSlideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-
-  .mm-confirm-card {
-    background: #ffffff !important;
-    border-radius: 24px 24px 0 0 !important;
-    padding: 28px 24px !important;
-    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
-    width: 100% !important;
-    max-width: 420px !important;
-    animation: mmSlideUp 0.25s ease !important;
-  }
-
-  .mm-confirm-title {
-    font-size: 17px !important;
-    font-weight: 700 !important;
-    color: #1a1a1a !important;
-    margin: 0 0 6px !important;
-  }
-
-  .mm-confirm-desc {
-    font-size: 14px !important;
-    color: #6b7280 !important;
-    margin: 0 0 20px !important;
-    line-height: 1.4 !important;
-  }
-
-  .mm-confirm-actions {
-    display: flex !important;
-    gap: 10px !important;
-  }
-
-  .mm-confirm-btn {
-    flex: 1 !important;
-    height: 48px !important;
-    border: none !important;
+  /* CARD do item */
+  .carrinho-rapido-ctn .content-cart .cart-item {
+    background: #FFFFFF !important;
+    border: 1px solid #E7E7E7 !important;
     border-radius: 14px !important;
+    margin: 8px 0 !important;
+    padding: 14px !important;
+    min-height: 100px !important;
+    box-shadow: none !important;
+  }
+
+  .carrinho-rapido-ctn .content-cart .cart-item .prod-img {
+    width: 76px !important;
+    height: 76px !important;
+    min-width: 76px !important;
+    border-radius: 10px !important;
+    border: 1px solid #F0F0F0 !important;
+  }
+
+  .carrinho-rapido-ctn .content-cart .cart-item .prod-nome a {
+    font-family: 'Poppins', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #121212 !important;
+    text-decoration: none !important;
+  }
+
+  .carrinho-rapido-ctn .content-cart .cart-item .derivacao {
+    display: flex !important;
+    color: #6B7280 !important;
+    font-size: 11px !important;
+  }
+
+  .carrinho-rapido-ctn .content-cart .cart-item .valor {
+    font-family: 'Poppins', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #121212 !important;
+  }
+
+  /* FOOTER — seção branca com radius top */
+  .carrinho-rapido-ctn .area-finalizar-compra {
+    background: #FFFFFF !important;
+    border-top: 1px solid #E7E7E7 !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 16px 22px 20px !important;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  /* Linhas PIX / Cartão */
+  .carrinho-rapido-ctn .area-finalizar-compra .formas {
+    border: none !important;
+    padding: 6px 0 !important;
+  }
+  .carrinho-rapido-ctn .area-finalizar-compra .formas .tittle {
+    font-family: 'Poppins', system-ui, sans-serif !important;
+    font-size: 12px !important;
+    color: #4B5563 !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  /* Valor destaque — serif para o total + tabular-nums */
+  .carrinho-rapido-ctn .area-finalizar-compra .valor.valor-pix,
+  .carrinho-rapido-ctn .area-finalizar-compra .valor.valor-pix span {
+    font-family: 'Libre Baskerville', Georgia, serif !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #121212 !important;
+    letter-spacing: -0.01em !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .carrinho-rapido-ctn .area-finalizar-compra .valor.valor-cartao,
+  .carrinho-rapido-ctn .area-finalizar-compra .valor.valor-cartao div {
+    font-family: 'Poppins', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #4B5563 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  /* CTA Finalizar — pill olive como /checkout/cart */
+  .carrinho-rapido-ctn .finalizar-compra {
+    background: #1b7a45 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 999px !important;
+    padding: 14px 24px !important;
+    font-family: 'Poppins', system-ui, sans-serif !important;
     font-size: 15px !important;
     font-weight: 600 !important;
-    cursor: pointer !important;
-    -webkit-tap-highlight-color: transparent !important;
+    text-transform: none !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+    box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    transition: background-color 200ms, box-shadow 200ms, transform 150ms !important;
   }
-
-  .mm-confirm-btn:active {
-    transform: scale(0.97) !important;
+  .carrinho-rapido-ctn .finalizar-compra:hover {
+    background: #155a33 !important;
+    box-shadow: 0 6px 20px rgba(27, 122, 69, 0.28) !important;
   }
-
-  .mm-confirm-btn-cancel {
-    background: #f3f4f6 !important;
-    color: #1a1a1a !important;
+  .carrinho-rapido-ctn .finalizar-compra:active {
+    transform: scale(0.98) !important;
   }
-
-  .mm-confirm-btn-delete {
-    background: #ef4444 !important;
-    color: #ffffff !important;
+  .carrinho-rapido-ctn .finalizar-compra:focus-visible {
+    outline: 2px solid #4B664A !important;
+    outline-offset: 3px !important;
   }
+  .carrinho-rapido-ctn .finalizar-compra span {
+    color: #FFFFFF !important;
+    font-family: 'Poppins', system-ui, sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+  }
+  .carrinho-rapido-ctn .finalizar-compra svg,
+  .carrinho-rapido-ctn .finalizar-compra svg path {
+    fill: #FFFFFF !important;
+    stroke: #FFFFFF !important;
+  }
+}
 
+/* ==========================================================================
+   REDUCED MOTION: respeita preferência de sistema
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  #cart-preview-area *,
+  #cart-preview-area *::before,
+  #cart-preview-area *::after,
+  .carrinho-rapido-ctn *,
+  .carrinho-rapido-ctn *::before,
+  .carrinho-rapido-ctn *::after,
+  .mm-confirm-overlay,
+  .mm-confirm-card {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
