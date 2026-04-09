@@ -383,6 +383,16 @@
   padding: 0 6px !important;
 }
 
+/* Kill Magazord .prod-remove hover:bg-cor-base-light (verde olive no hover).
+   O JS move o .cart-remove-item pra fora do .prod-remove no desktop, mas
+   mantemos esse guard caso o wrapper ainda exista. */
+.content-cart .cart-item .prod-remove,
+.content-cart .cart-item .prod-remove:hover {
+  background: transparent !important;
+  color: inherit !important;
+  display: none !important;
+}
+
 /* Trash icon — replica .mm-item-remove (44pt hit area, minimalist, red on hover) */
 .content-cart .cart-item .cart-remove-item,
 .content-cart .cart-item .prod-remove .cart-remove-item {

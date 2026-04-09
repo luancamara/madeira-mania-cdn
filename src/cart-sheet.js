@@ -81,6 +81,16 @@
       var dataId = removeBtn ? removeBtn.getAttribute('data-id') : null;
       if (!dataId) return;
 
+      // Desktop: trash está num wrapper .prod-remove separado com hover:bg-cor-base-light
+      // que deixa tudo verde olive no hover. Move o trash pra dentro do .qtd-value
+      // (inline com qty pill, igual ao padrão mobile e ao /checkout/cart .mm-item-controls),
+      // e esconde o wrapper vazio pra não capturar hover.
+      var prodRemoveWrap = cartItem.querySelector('.prod-remove');
+      if (prodRemoveWrap && !qtdDiv.contains(removeBtn)) {
+        qtdDiv.appendChild(removeBtn);
+        prodRemoveWrap.style.display = 'none';
+      }
+
       // Quantidade vem de data-attribute no .cart-item (disponível em ambos viewports);
       // fallback pra parse do texto do qtdDiv.
       var qty = parseInt(cartItem.getAttribute('data-item-quantity'));
