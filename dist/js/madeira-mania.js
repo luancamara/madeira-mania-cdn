@@ -2560,26 +2560,48 @@
       ];
       var cartBagSvg = '<svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14 8 20v22a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V20l-4-6z"/><path d="M8 20h32"/><path d="M32 28a8 8 0 0 1-16 0"/></svg>';
   
-      function isCartReallyEmpty(content) {
-        if (!content) return false;
-        // Count REAL cart items (exclude our suggestion cards)
-        var allItems = content.querySelectorAll('.cart-item');
-        var realItems = 0;
-        for (var i = 0; i < allItems.length; i++) {
-          if (!allItems[i].closest('.mm-cart-empty-wrapper')) realItems++;
+      function getCartCountFromSources() {
+        // Source 1 (PRIMARY): Magazord's native counter element .item-ctn lives
+        // inside #cart-preview-area (parent of the drawer we lifted). It's
+        // in a display:none parent but the textContent is still readable.
+        var countEl = document.querySelector('#cart-preview-area .item-ctn, .carrinho-container .item-ctn');
+        if (countEl) {
+          var txt = (countEl.textContent || '').trim();
+          if (txt && /\d/.test(txt)) {
+            var n = parseInt(txt.replace(/\D/g, ''), 10);
+            if (!isNaN(n)) return n;
+          }
         }
-        if (realItems > 0) return false;
+        // Source 2: localStorage.pwcart_result (Magazord persists cart state)
+        try {
+          var pw = localStorage.getItem('pwcart_result');
+          if (pw) {
+            var parsed = JSON.parse(pw);
+            if (parsed) {
+              if (Array.isArray(parsed.items)) return parsed.items.length;
+              if (Array.isArray(parsed.produtos)) return parsed.produtos.length;
+              if (parsed.carrinho && Array.isArray(parsed.carrinho.produtos)) return parsed.carrinho.produtos.length;
+              if (typeof parsed.quantidade === 'number') return parsed.quantidade;
+              if (typeof parsed.totalItens === 'number') return parsed.totalItens;
+            }
+          }
+        } catch (e) {}
+        // Source 3: count .cart-item elements in the lifted drawer (fallback)
+        var drawerRef = document.querySelector('.carrinho-rapido-ctn');
+        if (drawerRef) {
+          var real = 0;
+          drawerRef.querySelectorAll('.cart-item').forEach(function (it) {
+            if (!it.closest('.mm-cart-empty-wrapper')) real++;
+          });
+          if (real > 0) return real;
+        }
+        return 0;
+      }
   
-        // No real items — check if native empty box is VISIBLE (not just present)
-        var emptyBox = content.querySelector('.box-empty-cart');
-        if (emptyBox) {
-          var style = getComputedStyle(emptyBox);
-          // If it's hidden via display:none the cart is not empty either
-          if (style.display === 'none' || style.visibility === 'hidden') return false;
-          return true;
-        }
-        // No items AND no empty box — treat as empty (safer default)
-        return true;
+      function isCartReallyEmpty(content) {
+        // Use real count from Magazord state — NOT DOM presence (which is
+        // unreliable because React lazily renders into the hidden parent)
+        return getCartCountFromSources() === 0;
       }
   
       function removeEmptyEnhancement(content) {
@@ -2700,24 +2722,10 @@
   
       function updateCartCount() {
         if (!cartBadge) return;
-        // Magazord renders count in multiple places — try several sources
-        var count = 0;
-        // 1. Check for native cart count element
-        var nativeCount = document.querySelector('.header-middle .cart-count, .carrinho-ctn .count, [class*="carrinho"] [class*="qtd"], #cart-preview-area [class*="count"]');
-        if (nativeCount) {
-          var txt = (nativeCount.textContent || '').trim().replace(/\D/g, '');
-          if (txt) count = parseInt(txt, 10) || 0;
-        }
-        // 2. Fallback: count cart items in the drawer
-        if (count === 0) {
-          var items = document.querySelectorAll('#cart-preview-area .cart-item, .carrinho-rapido-ctn .cart-item');
-          count = items.length;
-        }
-        // 3. Fallback: data attribute on body or header (Magazord sometimes sets this)
-        if (count === 0) {
-          var dataCount = document.body.dataset.cartCount || document.querySelector('[data-cart-count]')?.dataset.cartCount;
-          if (dataCount) count = parseInt(dataCount, 10) || 0;
-        }
+        // Use the canonical source from getCartCountFromSources() — .item-ctn
+        // native element first, localStorage.pwcart_result second, DOM .cart-item
+        // counting as last fallback.
+        var count = getCartCountFromSources();
   
         if (count > 0) {
           cartBadge.textContent = count > 99 ? '99+' : String(count);
@@ -2729,6 +2737,11 @@
         if (cartAction) {
           cartAction.setAttribute('aria-label', 'Carrinho, ' + count + ' ' + (count === 1 ? 'item' : 'itens'));
         }
+  
+        // Also trigger a re-check of the empty state enhancement on the drawer
+        // (in case items loaded after initial enhance call)
+        var drawerNow = findDrawer();
+        if (drawerNow && drawerNow.dataset.mmLifted) enhanceEmptyCart(drawerNow);
       }
   
       // Listen for cart mutations
@@ -2746,6 +2759,22 @@
       // Initial read on load (cart may already have items from session)
       setTimeout(updateCartCount, 500);
       setTimeout(updateCartCount, 2000); // retry after Magazord finishes rendering
+      setTimeout(updateCartCount, 5000); // final retry for slow connections
+  
+      // Watch Magazord's native count element .item-ctn for mutations —
+      // React updates its text when cart items change. This catches cases
+      // where reactItemAddedToCart event doesn't fire (quantity change,
+      // item removal, page navigation, etc).
+      function attachCountObserver() {
+        var nativeEl = document.querySelector('#cart-preview-area .item-ctn, .carrinho-container .item-ctn');
+        if (!nativeEl || nativeEl.dataset.mmObserved) return;
+        nativeEl.dataset.mmObserved = '1';
+        var mo = new MutationObserver(updateCartCount);
+        mo.observe(nativeEl, { childList: true, characterData: true, subtree: true });
+      }
+      attachCountObserver();
+      setTimeout(attachCountObserver, 1000);
+      setTimeout(attachCountObserver, 3000);
   
       // Sticky compact state (scroll-direction sticky)
       var lastScrollY = 0;
