@@ -2495,6 +2495,32 @@
           drawer.style.display = 'block';
           // Force z-index ABOVE our header (100) and scrim (150) so user can close it
           drawer.style.zIndex = '200';
+  
+          // Wire up native close button (.icon-arrow-bottom) — Magazord's native
+          // toggle is defeated by our inline transform, so we must intercept.
+          var nativeClose = drawer.querySelector('.icon-arrow-bottom');
+          if (nativeClose) {
+            // Expand hit area to parent to make the whole 44x44 tappable
+            nativeClose.style.cursor = 'pointer';
+            nativeClose.addEventListener('click', function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              closeCartDrawer();
+            }, true);
+          }
+          // The .top-carrinho parent also has a Magazord onclick — intercept
+          // clicks on the arrow area to prevent native toggle from fighting ours.
+          var topCarrinho = drawer.querySelector('.top-carrinho');
+          if (topCarrinho) {
+            topCarrinho.addEventListener('click', function (e) {
+              // If user clicked the arrow icon (or inside it), close the drawer
+              if (e.target.closest('.icon-arrow-bottom')) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeCartDrawer();
+              }
+            }, true);
+          }
         }
       }
       // Curated top-10 products (captured from /top-10-produtos 2026-04-09).
