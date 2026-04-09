@@ -124,30 +124,57 @@
    LISTA: padding + gap
    ========================================================================== */
 .content-cart {
-  padding: 12px 16px 16px !important;
-  gap: 10px !important;
+  padding: 14px 14px 16px !important;
+  gap: 12px !important;
 }
 
 /* ==========================================================================
-   CARD DO ITEM: branco com border subtle + radius
+   CARD DO ITEM: white surface com border soft, shadow gentil, hover lift
+   Referência visual: .mm-item do /checkout/cart, mas adaptado pro drawer
+   (espaço mais restrito, 390-430px de largura).
    ========================================================================== */
 .content-cart .cart-item {
   background: #FFFFFF !important;
-  border: 1px solid #E7E7E7 !important;
+  border: 1px solid #F0F0F0 !important;
   border-radius: 14px !important;
   padding: 14px !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04) !important;
   position: relative !important;
+  transition:
+    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  animation: mm-cart-item-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+.content-cart .cart-item:hover {
+  border-color: #E0E0E0 !important;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.06) !important;
+  transform: translateY(-1px) !important;
 }
 
+/* Stagger entrada dos cart items */
+.content-cart .cart-item:nth-child(1) { animation-delay: 40ms !important; }
+.content-cart .cart-item:nth-child(2) { animation-delay: 100ms !important; }
+.content-cart .cart-item:nth-child(3) { animation-delay: 160ms !important; }
+.content-cart .cart-item:nth-child(4) { animation-delay: 220ms !important; }
+.content-cart .cart-item:nth-child(5) { animation-delay: 280ms !important; }
+.content-cart .cart-item:nth-child(6) { animation-delay: 340ms !important; }
+
+@keyframes mm-cart-item-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Thumbnail — 90×90 com bg soft e border radius consistente */
 .content-cart .cart-item .prod-img {
-  width: 84px !important;
-  height: 84px !important;
-  min-width: 84px !important;
-  max-width: 84px !important;
+  width: 90px !important;
+  height: 90px !important;
+  min-width: 90px !important;
+  max-width: 90px !important;
   border-radius: 10px !important;
   overflow: hidden !important;
-  background: #FFFFFF !important;
+  background: #FAFAFA !important;
+  border: 1px solid #F3F4F6 !important;
   flex-shrink: 0 !important;
 }
 .content-cart .cart-item .prod-img figure {
@@ -158,17 +185,23 @@
   align-items: center !important;
   justify-content: center !important;
 }
-.content-cart .cart-item .prod-img img {
+.content-cart .cart-item .prod-img img,
+.content-cart .cart-item .prod-img a img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
+  transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.content-cart .cart-item:hover .prod-img img {
+  transform: scale(1.04) !important;
 }
 
-/* Nome do produto — Poppins */
-.content-cart .cart-item .prod-nome {
+/* Nome do produto — Poppins 15 medium, 2-line clamp */
+.content-cart .cart-item .prod-nome,
+.content-cart .cart-item .prod-nome a {
   font-family: 'Poppins', system-ui, sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
   color: #121212 !important;
   letter-spacing: -0.005em !important;
   line-height: 1.35 !important;
@@ -176,20 +209,33 @@
   -webkit-line-clamp: 2 !important;
   -webkit-box-orient: vertical !important;
   overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin: 0 !important;
+  text-decoration: none !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+}
+/* Magazord usa class="truncate" no desktop que força white-space:nowrap — override */
+.content-cart .cart-item .prod-nome.truncate {
+  white-space: normal !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
 }
 
 .content-cart .cart-item .derivacao {
   display: none !important;
 }
 
-/* Valor — Poppins bold + tabular-nums (evita layout shift ao mudar quantidade) */
+/* Valor — Poppins 15 bold + tabular-nums */
 .content-cart .cart-item .valor,
 .content-cart .cart-item .valor span {
   font-family: 'Poppins', system-ui, sans-serif !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
   font-weight: 700 !important;
   color: #121212 !important;
   font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.01em !important;
+  white-space: nowrap !important;
 }
 
 /* ==========================================================================
@@ -298,14 +344,21 @@
   display: none !important;
 }
 
-/* Container .qtd-value — reset pra colocar o wrap + valor em linha */
+/* Container .qtd-value — row única com ordem forçada:
+   qty pill  →  trash  →  preço (push right via margin-left: auto)  */
 .content-cart .cart-item .qtd-value {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  gap: 12px !important;
+  gap: 8px !important;
   width: 100% !important;
+  margin-top: 10px !important;
 }
+
+/* Forçar ordem visual explicitamente (independente da ordem do DOM) */
+.content-cart .cart-item .qtd-value > .mm-qty-wrap    { order: 1 !important; }
+.content-cart .cart-item .qtd-value > .cart-remove-item { order: 2 !important; }
+.content-cart .cart-item .qtd-value > .valor          { order: 3 !important; margin-left: auto !important; }
 
 /* Pill wrap com border (replica .mm-qty do /checkout/cart) */
 .content-cart .cart-item .mm-qty-wrap {
