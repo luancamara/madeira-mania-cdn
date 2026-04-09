@@ -5494,8 +5494,23 @@
                   '<span class="mm-cep-label-text">Calcular frete</span>' +
                   '<a class="mm-cep-label-link" href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Não sei meu CEP</a>' +
                 '</div>' +
+                /* Ignore attributes pra password managers não interferirem.
+                   Bitwarden, 1Password, LastPass e Dashlane respeitam combinações
+                   diferentes — aplica todos pra cobrir o máximo possível.
+                   Também usa name="mm_cep_calc" (não "cep" / "postal" / "zip")
+                   pra evitar heurísticas de form-field matching. */
                 '<div class="mm-cep-row">' +
-                  '<input type="text" class="mm-input" id="mm-cep-input" inputmode="numeric" maxlength="9" placeholder="00000-000" autocomplete="postal-code" />' +
+                  '<input type="text" class="mm-input" id="mm-cep-input"' +
+                    ' name="mm_cep_calc"' +
+                    ' inputmode="numeric"' +
+                    ' maxlength="9"' +
+                    ' placeholder="00000-000"' +
+                    ' autocomplete="off"' +
+                    ' data-lpignore="true"' +
+                    ' data-1p-ignore="true"' +
+                    ' data-bwignore="true"' +
+                    ' data-form-type="other"' +
+                    ' aria-label="CEP" />' +
                   '<button type="button" class="mm-btn-secondary" data-mm-act="calc-cep">Calcular</button>' +
                 '</div>' +
               '</div>' +
