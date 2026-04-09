@@ -204,8 +204,24 @@
   #mm-header .mm-h-topbar { height: var(--h-mobile-topbar); }
   #mm-header .mm-h-topbar-inner { font-size: 11px; gap: 10px; }
   #mm-header .mm-h-main { height: var(--h-mobile-main); padding: 0 var(--container-pad-mobile); }
-  #mm-header .mm-h-main-right { gap: 8px; }
-  #mm-header .mm-h-logo img { max-width: 180px; width: auto; height: auto; }
+
+  /* Switch from desktop absolute-center logo to flex layout
+     (absolute layout causes logo/right-cluster collision at <=767px) */
+  #mm-header .mm-h-main-left { flex: 0 0 auto; }
+  #mm-header .mm-h-main-right { flex: 0 0 auto; gap: 8px; }
+  #mm-header .mm-h-logo {
+    position: static;
+    transform: none;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+  #mm-header .mm-h-logo img {
+    max-width: 160px;
+    width: auto;
+    height: auto;
+  }
 
   /* Show burger, hide desktop-only actions */
   #mm-header .mm-h-burger { display: inline-flex; }
@@ -215,7 +231,7 @@
 }
 
 @media (max-width: 479px) {
-  #mm-header .mm-h-logo img { max-width: 150px; }
+  #mm-header .mm-h-logo img { max-width: 130px; }
 }
 
 /* Reduced motion (a11y) */
