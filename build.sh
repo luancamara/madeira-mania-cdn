@@ -16,8 +16,9 @@ DIST="$SCRIPT_DIR/dist"
 
 mkdir -p "$DIST/js" "$DIST/loaders"
 
-# IMPORTANTE: Atualizar a versão aqui a cada deploy significativo
-CDN_VERSION="v1.0"
+# Semver range: @^2 resolve pra última v2.x.y publicada automaticamente.
+# Major bump (v3.0.0+) requer atualizar aqui E re-colar loader.html no Magazord.
+CDN_VERSION="^2"
 CDN_BASE="https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@${CDN_VERSION}/dist/js"
 
 echo "=== Build Madeira Mania CDN ==="
