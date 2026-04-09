@@ -628,6 +628,182 @@
   }
 }
 
+/* Mobile drawer */
+#mm-header .mm-h-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+}
+#mm-header .mm-h-drawer[hidden] { display: none; }
+#mm-header .mm-h-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--c-scrim);
+  animation: mm-fade-in var(--t-base) ease-out;
+}
+#mm-header .mm-h-drawer-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 86%;
+  max-width: 380px;
+  background: var(--c-header-bg);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: mm-slide-right var(--t-base) ease-out;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+}
+#mm-header .mm-h-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border);
+  min-height: 64px;
+}
+#mm-header .mm-h-drawer-title {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-nav);
+  color: var(--c-text);
+}
+#mm-header .mm-h-drawer-close {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#mm-header .mm-h-drawer-close:hover { color: var(--c-brand); }
+
+#mm-header .mm-h-drawer-search {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border);
+}
+#mm-header .mm-h-drawer-search input {
+  width: 100%;
+  font-size: 16px;
+  font-family: var(--font-sans);
+  padding: 12px 16px;
+  background: var(--c-topbar-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 9999px;
+  outline: none;
+  color: var(--c-text);
+}
+#mm-header .mm-h-drawer-search input:focus {
+  border-color: var(--c-brand);
+}
+
+#mm-header .mm-h-drawer-nav {
+  padding: 8px 0;
+  flex: 1;
+}
+#mm-header .mm-h-drawer-section {
+  border-bottom: 1px solid var(--c-border);
+}
+#mm-header .mm-h-drawer-section summary {
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-nav);
+  color: var(--c-text);
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  touch-action: manipulation;
+}
+#mm-header .mm-h-drawer-section summary::-webkit-details-marker { display: none; }
+#mm-header .mm-h-drawer-section summary::after {
+  content: '+';
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--c-text-muted);
+  transition: transform var(--t-fast);
+}
+#mm-header .mm-h-drawer-section[open] summary::after {
+  content: '−';
+}
+#mm-header .mm-h-drawer-section[open] summary {
+  color: var(--c-brand);
+}
+#mm-header .mm-h-drawer-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 20px 16px 32px;
+}
+#mm-header .mm-h-drawer-section li {
+  padding: 0;
+}
+#mm-header .mm-h-drawer-section li a {
+  display: block;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--c-text);
+  min-height: 44px;
+  line-height: 24px;
+  touch-action: manipulation;
+}
+#mm-header .mm-h-drawer-section li a:hover { color: var(--c-brand); }
+
+#mm-header .mm-h-drawer-link {
+  display: block;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-nav);
+  color: var(--c-text);
+  border-bottom: 1px solid var(--c-border);
+  min-height: 44px;
+  touch-action: manipulation;
+}
+#mm-header .mm-h-drawer-link:hover { color: var(--c-brand); }
+
+#mm-header .mm-h-drawer-footer {
+  padding: 16px 20px;
+  background: var(--c-topbar-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+}
+#mm-header .mm-h-drawer-footer a {
+  display: block;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--c-text);
+  min-height: 44px;
+  line-height: 24px;
+  touch-action: manipulation;
+}
+#mm-header .mm-h-drawer-footer a:hover { color: var(--c-brand); }
+
+@keyframes mm-slide-right {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Drawer hidden on desktop (it's mobile-only) */
+@media (min-width: 768px) {
+  #mm-header .mm-h-drawer { display: none !important; }
+}
+
 /* Reduced motion (a11y) */
 @media (prefers-reduced-motion: reduce) {
   #mm-header *,

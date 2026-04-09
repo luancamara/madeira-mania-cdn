@@ -129,6 +129,97 @@
       '    </li>',
       '  </ul>',
       '</nav>',
+      '<div class="mm-h-drawer" id="mm-h-drawer" hidden role="dialog" aria-modal="true" aria-label="Menu">',
+      '  <div class="mm-h-drawer-backdrop"></div>',
+      '  <aside class="mm-h-drawer-panel">',
+      '    <div class="mm-h-drawer-header">',
+      '      <span class="mm-h-drawer-title">Menu</span>',
+      '      <button class="mm-h-drawer-close" id="mm-h-drawer-close" type="button" aria-label="Fechar menu">',
+      '        <span aria-hidden="true">×</span>',
+      '      </button>',
+      '    </div>',
+      '    <div class="mm-h-drawer-search">',
+      '      <form action="/busca" method="get">',
+      '        <input type="search" name="q" placeholder="Buscar" aria-label="Buscar" />',
+      '      </form>',
+      '    </div>',
+      '    <nav class="mm-h-drawer-nav" aria-label="Navegação móvel">',
+      '      <details class="mm-h-drawer-section">',
+      '        <summary>Sala de Estar</summary>',
+      '        <ul>',
+      '          <li><a href="/sala-de-estar-9677307902">Ver todos</a></li>',
+      '          <li><a href="/sala-de-estar/mesas">Mesas</a></li>',
+      '          <li><a href="/sala-de-estar/racks">Racks para TV</a></li>',
+      '          <li><a href="/sala-de-estar/estantes">Estantes</a></li>',
+      '          <li><a href="/sala-de-estar/home-theaters">Home Theaters</a></li>',
+      '          <li><a href="/sala-de-estar/aparadores">Aparadores</a></li>',
+      '          <li><a href="/sala-de-estar/cristaleiras">Cristaleiras</a></li>',
+      '          <li><a href="/sala-de-estar/buffets">Buffets</a></li>',
+      '          <li><a href="/sala-de-estar/bares">Bares</a></li>',
+      '          <li><a href="/sala-de-estar/paineis">Painéis</a></li>',
+      '          <li><a href="/sala-de-estar/nichos">Nichos</a></li>',
+      '        </ul>',
+      '      </details>',
+      '      <details class="mm-h-drawer-section">',
+      '        <summary>Sala de Jantar</summary>',
+      '        <ul>',
+      '          <li><a href="/sala-de-jantar-1916970475">Ver todos</a></li>',
+      '          <li><a href="/sala-de-jantar/mesas">Mesas</a></li>',
+      '          <li><a href="/sala-de-jantar/cadeiras">Cadeiras</a></li>',
+      '          <li><a href="/sala-de-jantar/aparadores">Aparadores</a></li>',
+      '          <li><a href="/sala-de-jantar/buffets">Buffets</a></li>',
+      '          <li><a href="/sala-de-jantar/cristaleiras">Cristaleiras</a></li>',
+      '          <li><a href="/sala-de-jantar/balcoes">Balcões</a></li>',
+      '          <li><a href="/sala-de-jantar/banquetas">Banquetas</a></li>',
+      '          <li><a href="/sala-de-jantar/bares">Bares</a></li>',
+      '        </ul>',
+      '      </details>',
+      '      <details class="mm-h-drawer-section">',
+      '        <summary>Cozinha</summary>',
+      '        <ul>',
+      '          <li><a href="/cozinha-6327619447">Ver todos</a></li>',
+      '          <li><a href="/cozinha/mesas-de-jantar">Mesas de Jantar</a></li>',
+      '          <li><a href="/cozinha/banquetas">Banquetas</a></li>',
+      '          <li><a href="/cozinha/cristaleiras">Cristaleiras</a></li>',
+      '          <li><a href="/cozinha/cantinhos-do-cafe">Cantinhos do Café</a></li>',
+      '        </ul>',
+      '      </details>',
+      '      <details class="mm-h-drawer-section">',
+      '        <summary>Quarto</summary>',
+      '        <ul>',
+      '          <li><a href="/quarto-0961844589">Ver todos</a></li>',
+      '          <li><a href="/quarto/cabeceiras">Cabeceiras</a></li>',
+      '          <li><a href="/quarto/comodas">Cômodas</a></li>',
+      '          <li><a href="/quarto/guardaroupas">Guarda-Roupas</a></li>',
+      '          <li><a href="/quarto/mesas-de-cabeceira">Mesas de Cabeceira</a></li>',
+      '          <li><a href="/quarto/penteadeiras">Penteadeiras</a></li>',
+      '        </ul>',
+      '      </details>',
+      '      <details class="mm-h-drawer-section">',
+      '        <summary>Bar e Café</summary>',
+      '        <ul>',
+      '          <li><a href="/bar-e-cafe">Ver todos</a></li>',
+      '          <li><a href="/bar-e-cafe/bares">Bares</a></li>',
+      '          <li><a href="/bar-e-cafe/cantinhos-do-cafe">Cantinhos do Café</a></li>',
+      '        </ul>',
+      '      </details>',
+      '      <details class="mm-h-drawer-section">',
+      '        <summary>Escritório</summary>',
+      '        <ul>',
+      '          <li><a href="/escritorio-899523853">Ver todos</a></li>',
+      '          <li><a href="/escritorio/escrivaninhas">Escrivaninhas</a></li>',
+      '        </ul>',
+      '      </details>',
+      '      <a href="/envio-imediato" class="mm-h-drawer-link">Envio Imediato</a>',
+      '      <a href="/outlet" class="mm-h-drawer-link">Outlet</a>',
+      '    </nav>',
+      '    <div class="mm-h-drawer-footer">',
+      '      <a href="/wishlist">Favoritos</a>',
+      '      <a href="/login">Conta</a>',
+      '      <a href="/atendimento">Atendimento</a>',
+      '    </div>',
+      '  </aside>',
+      '</div>',
       '<div class="mm-h-search-overlay" id="mm-h-search-overlay" hidden role="dialog" aria-modal="true" aria-label="Buscar">',
       '  <div class="mm-h-search-backdrop"></div>',
       '  <div class="mm-h-search-inner">',
@@ -256,12 +347,52 @@
       });
     }
 
-    // Stub burger — drawer behavior ships in Phase 6; until then, opens search overlay on mobile
+    // Mobile drawer (replaces the Phase 1 stub that opened search)
+    var drawer = document.getElementById('mm-h-drawer');
+    var drawerClose = document.getElementById('mm-h-drawer-close');
+    var drawerBackdrop = drawer && drawer.querySelector('.mm-h-drawer-backdrop');
+
+    function openDrawer() {
+      if (!drawer) return;
+      drawer.hidden = false;
+      document.body.style.overflow = 'hidden';
+      // Focus first interactive for keyboard users
+      setTimeout(function () {
+        var first = drawer.querySelector('.mm-h-drawer-close');
+        if (first) first.focus();
+      }, 100);
+    }
+    function closeDrawer() {
+      if (!drawer) return;
+      drawer.hidden = true;
+      document.body.style.overflow = '';
+      // Return focus to burger
+      var burger = document.getElementById('mm-h-burger');
+      if (burger) burger.focus();
+    }
+
     var burger = document.getElementById('mm-h-burger');
     if (burger) {
-      burger.addEventListener('click', function () {
-        openSearch(); // temporary until Phase 6 drawer
-      });
+      burger.addEventListener('click', openDrawer);
+    }
+    if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+    if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
+
+    // Esc closes drawer (extends existing Esc handlers — add new listener)
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && drawer && !drawer.hidden) closeDrawer();
+    });
+
+    // Swipe-left to close (basic touch handler)
+    if (drawer) {
+      var touchStartX = 0;
+      drawer.addEventListener('touchstart', function (e) {
+        touchStartX = e.touches[0].clientX;
+      }, { passive: true });
+      drawer.addEventListener('touchend', function (e) {
+        var touchEndX = e.changedTouches[0].clientX;
+        if (touchStartX - touchEndX > 80) closeDrawer();
+      }, { passive: true });
     }
 
     // Cart drawer integration — reuse Magazord native .carrinho-rapido-ctn
