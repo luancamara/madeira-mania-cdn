@@ -28,6 +28,7 @@
       '</div>',
       '<div class="mm-h-main">',
       '  <div class="mm-h-main-left">',
+      '    <button class="mm-h-burger" id="mm-h-burger" type="button" aria-label="Abrir menu"><span aria-hidden="true">☰</span></button>',
       '    <button class="mm-h-action" id="mm-h-buscar" type="button">Buscar</button>',
       '  </div>',
       '  <a class="mm-h-logo" href="/" aria-label="Madeira Mania, ir para a página inicial">',
@@ -44,10 +45,12 @@
     ].join('\n');
     document.body.insertBefore(header, document.body.firstChild);
 
-    // Mobile: reduce topbar content
-    if (window.matchMedia('(max-width: 767px)').matches) {
-      var inner = header.querySelector('.mm-h-topbar-inner');
-      inner.innerHTML = '<span>Frete grátis R$ 2.000+</span><span class="mm-h-topbar-sep" aria-hidden="true">·</span><span>12x sem juros</span>';
+    // Stub burger handler — drawer behavior ships in Phase 6
+    var burger = document.getElementById('mm-h-burger');
+    if (burger) {
+      burger.addEventListener('click', function () {
+        console.log('mm-header: drawer pending Phase 6');
+      });
     }
   }
 
