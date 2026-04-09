@@ -10,8 +10,8 @@
   function init() {
     if (document.getElementById('mm-header')) return;
 
-    var logoUrl = 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/assets/logo-mm.png';
-    // ^^^ placeholder — Task 1.4 will replace with actual logo URL from site or local asset
+    var logoUrl = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
+    // ^^^ extracted from live site (2026-04-09) — Magazord CDN SVG, 1800x446 native
 
     var header = document.createElement('div');
     header.id = 'mm-header';
