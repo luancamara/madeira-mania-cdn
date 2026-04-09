@@ -2052,11 +2052,11 @@
         });
       }
   
-      // Stub burger handler — drawer behavior ships in Phase 6
+      // Stub burger — drawer behavior ships in Phase 6; until then, opens search overlay on mobile
       var burger = document.getElementById('mm-h-burger');
       if (burger) {
         burger.addEventListener('click', function () {
-          console.log('mm-header: drawer pending Phase 6');
+          openSearch(); // temporary until Phase 6 drawer
         });
       }
     }
