@@ -486,3 +486,30 @@ footer.ra-footer,
   }
 }
 
+
+/* =============================================
+   HEADER REBUILD — Hide Magazord native header
+   Aplica em TODO o site — substituído por #mm-header custom
+   ============================================= */
+
+#tickerBar,
+.ticker-bar,
+header.ra-header > .header-top,
+header.ra-header > .header-middle,
+header.ra-header > .header-bottom {
+  display: none !important;
+}
+
+header.ra-header {
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+body {
+  padding-top: var(--mm-header-total, 168px);
+}
+@media (max-width: 767px) {
+  body {
+    padding-top: var(--mm-header-total-mobile, 92px);
+  }
+}
