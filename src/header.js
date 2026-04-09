@@ -704,9 +704,31 @@
     }
 
     function isCartReallyEmpty(content) {
-      // Use real count from Magazord state — NOT DOM presence (which is
-      // unreliable because React lazily renders into the hidden parent)
-      return getCartCountFromSources() === 0;
+      // CONSERVATIVE: only return true if BOTH conditions are met
+      //   1. Zord.get('cart.size') === 0 (canonical count says empty)
+      //   2. DOM shows .box-empty-cart visible (Magazord rendered empty)
+      // This avoids fighting React during hydration when count says "empty"
+      // but items haven't been rendered yet.
+      if (getCartCountFromSources() !== 0) return false;
+      if (!content) return false;
+      var emptyBox = content.querySelector('.box-empty-cart');
+      if (!emptyBox) return false; // Magazord hasn't rendered yet — wait
+      var s = getComputedStyle(emptyBox);
+      if (s.display === 'none' || s.visibility === 'hidden') return false;
+      return true;
+    }
+
+    function hasRealCartItems(content) {
+      // Used for cleanup decisions: only return true if we see actual
+      // cart items rendered in the DOM AND count > 0.
+      if (!content) return false;
+      var count = getCartCountFromSources();
+      if (count === 0) return false;
+      var real = 0;
+      content.querySelectorAll('.cart-item').forEach(function (it) {
+        if (!it.closest('.mm-cart-empty-wrapper')) real++;
+      });
+      return real > 0;
     }
 
     function removeEmptyEnhancement(content) {
@@ -721,13 +743,20 @@
       var content = drawer.querySelector('.content-cart');
       if (!content) return;
 
-      // Self-healing: if cart has items, always clean up our enhancement
-      if (!isCartReallyEmpty(content)) {
+      // Self-healing cleanup: only remove enhancement when we SEE real items
+      // rendered in the DOM. Don't remove based on count alone — React may
+      // not have hydrated yet and removing prematurely leaves an empty drawer.
+      if (hasRealCartItems(content)) {
         removeEmptyEnhancement(content);
         return;
       }
 
-      // Cart is empty — don't re-inject if already enhanced
+      // Only INJECT enhancement when BOTH count is 0 AND native empty box is
+      // visible. In any ambiguous state (count=6 but no DOM items, or count=0
+      // but empty box not yet rendered), do nothing and wait for mutations.
+      if (!isCartReallyEmpty(content)) return;
+
+      // Already enhanced — don't duplicate
       if (content.querySelector(':scope > .mm-cart-empty-wrapper')) return;
 
       // Build our custom empty state node (appended as sibling to native box)
