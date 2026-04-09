@@ -384,6 +384,34 @@
     // Initial read on load (cart may already have items from session)
     setTimeout(updateCartCount, 500);
     setTimeout(updateCartCount, 2000); // retry after Magazord finishes rendering
+
+    // Sticky compact state (scroll-direction sticky)
+    var lastScrollY = 0;
+    var ticking = false;
+    var COMPACT_THRESHOLD = 24;
+
+    function onScroll() {
+      var y = window.scrollY;
+      var delta = y - lastScrollY;
+
+      if (y > COMPACT_THRESHOLD && delta > 0) {
+        // Scrolling DOWN past threshold
+        header.classList.add('is-compact');
+      } else if (y <= COMPACT_THRESHOLD || delta < 0) {
+        // At top OR scrolling UP
+        header.classList.remove('is-compact');
+      }
+
+      lastScrollY = y;
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(onScroll);
+        ticking = true;
+      }
+    }, { passive: true });
   }
 
   if (document.readyState === 'loading') {
