@@ -514,3 +514,34 @@ body {
     padding-top: var(--mm-header-total-mobile, 92px);
   }
 }
+
+/* =============================================
+   TRUST BAR (swiper-componente-id-XjCRvyXQ0)
+   Imagem da trust bar deve ser full-bleed horizontal
+   (tinha margens laterais feias)
+   ============================================= */
+[id^="swiper-componente-id-"] {
+  /* Generic rule for all swiper components — scope via specific selector below */
+}
+#swiper-componente-id-XjCRvyXQ0 {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  padding: 0 !important;
+}
+#swiper-componente-id-XjCRvyXQ0 .swiper-wrapper,
+#swiper-componente-id-XjCRvyXQ0 .swiper-slide {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+#swiper-componente-id-XjCRvyXQ0 img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 0 !important;
+  object-fit: cover;
+}

@@ -17,7 +17,7 @@
   --container-pad-mobile: 16px;
 
   /* Colors */
-  --c-topbar-bg: #F5F1EA;
+  --c-topbar-bg: #F2F2F2; /* matches site canonical bg-background-color */
   --c-header-bg: #FFFFFF;
   --c-text: #333333;
   --c-text-muted: #999999;
@@ -133,18 +133,30 @@
   font-size: 14px;
   font-weight: 500;
   letter-spacing: var(--ls-loose);
-  padding: 12px 16px;
+  padding: 12px 14px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   cursor: pointer;
   background: transparent;
   border: none;
   color: var(--c-text);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 #mm-header .mm-h-action:hover { color: var(--c-brand); }
+#mm-header .mm-h-action svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
 
 /* Hamburger (mobile-only, shown via @media below) */
 #mm-header .mm-h-burger {
@@ -163,13 +175,30 @@
   -webkit-tap-highlight-color: transparent;
 }
 #mm-header .mm-h-burger:hover { color: var(--c-brand); }
+/* Cart badge — pill on top-right of the cart icon */
+#mm-header #mm-h-cart .mm-h-cart-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 #mm-header .mm-h-cart-badge {
-  display: inline-block;
-  margin-left: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--c-brand);
-  vertical-align: super;
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--c-brand);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 9999px;
+  border: 2px solid var(--c-header-bg);
+  box-sizing: content-box;
+  letter-spacing: 0;
 }
 
 /* Focus-visible (a11y) */
@@ -388,6 +417,7 @@
   margin-top: 80px;
   animation: mm-slide-down var(--t-base) ease-out;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
 }
 #mm-header .mm-h-search-close {
   position: absolute;
@@ -415,16 +445,31 @@
   left: -9999px;
 }
 #mm-header .mm-h-search-form {
-  border-bottom: 1px solid var(--c-border);
-  padding-bottom: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--c-topbar-bg);
+  border-radius: 9999px;
+  border: 1px solid var(--c-border);
+}
+#mm-header .mm-h-search-form::before {
+  content: '';
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 #mm-header .mm-h-search-form input {
   width: 100%;
-  font-size: 24px;
+  font-size: 18px;
   font-family: var(--font-sans);
   font-weight: 400;
   border: none;
-  padding: 8px 0;
+  padding: 4px 0;
   outline: none;
   background: transparent;
   color: var(--c-text);
@@ -448,18 +493,21 @@
 #mm-header .mm-h-search-suggestions a {
   display: inline-flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--c-text);
   padding: 10px 16px;
   margin: 0 8px 8px 0;
   background: var(--c-topbar-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 9999px;
   min-height: 44px;
-  transition: background var(--t-fast), color var(--t-fast);
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 #mm-header .mm-h-search-suggestions a:hover {
   background: var(--c-brand);
+  border-color: var(--c-brand);
   color: var(--c-header-bg);
 }
 #mm-header .mm-h-search-hint {

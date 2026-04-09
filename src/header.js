@@ -13,6 +13,14 @@
     var logoUrl = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
     // ^^^ extracted from live site (2026-04-09) — Magazord CDN SVG, 1800x446 native
 
+    // Inline SVG icons (stroke-based, currentColor inherits from text)
+    var svg = {
+      search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+      heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+      user: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      bag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
+    };
+
     var header = document.createElement('div');
     header.id = 'mm-header';
     header.innerHTML = [
@@ -31,16 +39,17 @@
       '<div class="mm-h-main">',
       '  <div class="mm-h-main-left">',
       '    <button class="mm-h-burger" id="mm-h-burger" type="button" aria-label="Abrir menu"><span aria-hidden="true">☰</span></button>',
-      '    <button class="mm-h-action" id="mm-h-buscar" type="button">Buscar</button>',
+      '    <button class="mm-h-action" id="mm-h-buscar" type="button">' + svg.search + '<span>Buscar</span></button>',
       '  </div>',
       '  <a class="mm-h-logo" href="/" aria-label="Madeira Mania, ir para a página inicial">',
       '    <img src="' + logoUrl + '" alt="" width="280" height="70" loading="eager" />',
       '  </a>',
       '  <div class="mm-h-main-right">',
-      '    <a class="mm-h-action" href="/wishlist">Favoritos</a>',
-      '    <a class="mm-h-action" href="/login">Conta</a>',
+      '    <a class="mm-h-action" href="/wishlist">' + svg.heart + '<span>Favoritos</span></a>',
+      '    <a class="mm-h-action" href="/login">' + svg.user + '<span>Conta</span></a>',
       '    <a class="mm-h-action" href="/checkout/cart" id="mm-h-cart" aria-label="Carrinho, 0 itens" aria-live="polite">',
-      '      Carrinho<span class="mm-h-cart-badge" id="mm-h-cart-count" aria-hidden="true" hidden>0</span>',
+      '      <span class="mm-h-cart-icon">' + svg.bag + '<span class="mm-h-cart-badge" id="mm-h-cart-count" aria-hidden="true" hidden>0</span></span>',
+      '      <span>Carrinho</span>',
       '    </a>',
       '  </div>',
       '</div>',
@@ -235,6 +244,8 @@
         drawer.dataset.mmLifted = '1';
         // Remove display:none inheritance from parent chain
         drawer.style.display = 'block';
+        // Force z-index ABOVE our header (100) and scrim (150) so user can close it
+        drawer.style.zIndex = '200';
       }
     }
     function openCartDrawer() {
@@ -244,11 +255,11 @@
       // Force transform via inline style (bypasses Tailwind class system)
       drawer.style.transform = 'translateX(0)';
       drawer.style.transition = 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)';
-      // Scrim
+      // Scrim — z-index 150 (between header 100 and drawer 200)
       if (!cartScrim) {
         cartScrim = document.createElement('div');
         cartScrim.id = 'mm-h-cart-scrim';
-        cartScrim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:15;opacity:0;transition:opacity 320ms;';
+        cartScrim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:150;opacity:0;transition:opacity 320ms;';
         cartScrim.addEventListener('click', closeCartDrawer);
         document.body.appendChild(cartScrim);
         // Trigger transition
