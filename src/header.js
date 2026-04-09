@@ -555,10 +555,95 @@
         drawer.style.zIndex = '200';
       }
     }
+    // Curated top-10 products (captured from /top-10-produtos 2026-04-09).
+    // Fetching at runtime is not viable: /top-10-produtos renders product
+    // cards client-side via React after scroll, so raw fetch() returns no
+    // product links. A hardcoded curated list is stable (top-10 rarely
+    // changes) and guarantees zero layout shift + zero latency.
+    var MM_CART_TOP_PRODUCTS = [
+      {
+        href: '/rack-atenas-cor-naturalle-largura-220-cm',
+        name: 'Rack Atenas 220cm',
+        img: 'https://madeiramania.cdn.magazord.com.br/img/2025/12/produto/5519/am-2501-mavaular-rack-atenas-220-naturalle-lado.jpg?ims=200x200',
+        priceFrom: 'R$ 1.615,49',
+        priceTo: 'R$ 1.032,30'
+      },
+      {
+        href: '/rack-atenas-cor-naturalle-largura-180-cm',
+        name: 'Rack Atenas 180cm',
+        img: 'https://madeiramania.cdn.magazord.com.br/img/2025/12/produto/5419/am-2501-mavaular-rack-atenas-180-naturalle.jpg?ims=200x200',
+        priceFrom: 'R$ 1.688,71',
+        priceTo: 'R$ 942,31'
+      },
+      {
+        href: '/buffet-arcus-cor-naturalle-largura-92-cm',
+        name: 'Buffet Arcus 92cm',
+        img: 'https://madeiramania.cdn.magazord.com.br/img/2025/12/produto/5439/am-2501-mavaular-arcus-02-pts-naturalle.jpg?ims=200x200',
+        priceFrom: 'R$ 1.359,09',
+        priceTo: 'R$ 807,30'
+      },
+      {
+        href: '/buffet-atenas-cor-naturalle',
+        name: 'Buffet Atenas',
+        img: 'https://madeiramania.cdn.magazord.com.br/img/2025/12/produto/4237/am-2502-mavaular-buffet-atenas-naturalle.jpg?ims=200x200',
+        priceFrom: 'R$ 2.124,07',
+        priceTo: 'R$ 1.032,30'
+      }
+    ];
+    var cartBagSvg = '<svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14 8 20v22a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V20l-4-6z"/><path d="M8 20h32"/><path d="M32 28a8 8 0 0 1-16 0"/></svg>';
+
+    function enhanceEmptyCart(drawer) {
+      if (!drawer) return;
+      var content = drawer.querySelector('.content-cart');
+      if (!content) return;
+      var emptyBox = content.querySelector('.box-empty-cart');
+      if (!emptyBox) return; // not empty, nothing to do
+      if (emptyBox.dataset.mmEnhanced) return;
+      emptyBox.dataset.mmEnhanced = '1';
+
+      // Build our custom empty state node, leave the native one untouched
+      // but hidden via CSS class on the wrapper. Using a sibling keeps us
+      // safe from React re-renders clobbering our markup — if React wipes
+      // content, the box-empty-cart returns without mmEnhanced and we
+      // re-inject on next open.
+      var wrap = document.createElement('div');
+      wrap.className = 'mm-cart-empty-wrapper';
+      var productsHtml = '';
+      for (var i = 0; i < MM_CART_TOP_PRODUCTS.length; i++) {
+        var pd = MM_CART_TOP_PRODUCTS[i];
+        productsHtml += '<a class="mm-cart-suggestion-card" href="' + pd.href + '">' +
+          '<span class="mm-cart-suggestion-thumb"><img src="' + pd.img + '" alt="" loading="lazy" width="80" height="80"/></span>' +
+          '<span class="mm-cart-suggestion-body">' +
+            '<span class="mm-cart-suggestion-name">' + pd.name + '</span>' +
+            '<span class="mm-cart-suggestion-price">' +
+              '<span class="mm-cart-suggestion-price-from">' + pd.priceFrom + '</span>' +
+              '<span class="mm-cart-suggestion-price-to">' + pd.priceTo + '</span>' +
+            '</span>' +
+          '</span>' +
+          '</a>';
+      }
+      wrap.innerHTML =
+        '<div class="mm-cart-empty-hero">' +
+          '<div class="mm-cart-empty-icon">' + cartBagSvg + '</div>' +
+          '<h3 class="mm-cart-empty-title">Seu carrinho está vazio</h3>' +
+          '<p class="mm-cart-empty-copy">Dê uma olhada nos móveis que nossos clientes mais amam.</p>' +
+        '</div>' +
+        '<div class="mm-cart-suggestions">' +
+          '<span class="mm-cart-suggestions-label">Você pode gostar de</span>' +
+          '<div class="mm-cart-suggestions-grid">' + productsHtml + '</div>' +
+        '</div>';
+      // Mark the content-cart so our CSS hides the native empty state
+      content.classList.add('mm-cart-has-empty-enhancement');
+      content.appendChild(wrap);
+    }
+
     function openCartDrawer() {
       var drawer = findDrawer();
       if (!drawer) { window.location.href = '/checkout/cart'; return; }
       liftDrawer(drawer);
+      // Try to enhance empty state — runs every open so if React re-renders
+      // the drawer contents between opens, we re-inject.
+      enhanceEmptyCart(drawer);
       // Force transform via inline style (bypasses Tailwind class system)
       drawer.style.transform = 'translateX(0)';
       drawer.style.transition = 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)';

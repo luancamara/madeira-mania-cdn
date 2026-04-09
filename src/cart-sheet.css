@@ -760,6 +760,158 @@
 }
 
 /* ==========================================================================
+   EMPTY CART — brand-aligned + product suggestions
+   Native Magazord renders .box-empty-cart (SVG + "Seu carrinho está vazio").
+   header.js injects a sibling .mm-cart-empty-wrapper when the drawer opens
+   and adds .mm-cart-has-empty-enhancement on the parent .content-cart so
+   we can hide the native version via CSS.
+   ========================================================================== */
+.content-cart.mm-cart-has-empty-enhancement {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  flex-direction: column !important;
+  padding: 24px 20px 24px !important;
+  overflow-y: auto;
+  background: #F2F2F2 !important;
+}
+.content-cart.mm-cart-has-empty-enhancement > .box-empty-cart,
+.content-cart.mm-cart-has-empty-enhancement > .empty-cart {
+  display: none !important;
+}
+.mm-cart-empty-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  color: #333333;
+}
+.mm-cart-empty-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px 8px 8px;
+}
+.mm-cart-empty-icon {
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: #4b664a;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(75, 102, 74, 0.08);
+}
+.mm-cart-empty-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #4b664a;
+  letter-spacing: 0.01em;
+  font-family: 'Playfair Display', 'Montserrat', serif;
+}
+.mm-cart-empty-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #666666;
+  max-width: 280px;
+}
+.mm-cart-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mm-cart-suggestions-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999999;
+  padding-left: 4px;
+}
+.mm-cart-suggestions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mm-cart-suggestion-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  min-height: 80px;
+  background: #FFFFFF;
+  border: 1px solid #E6E6E6;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #333333;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mm-cart-suggestion-card:hover,
+.mm-cart-suggestion-card:focus-visible {
+  border-color: #4b664a;
+  box-shadow: 0 4px 16px rgba(75, 102, 74, 0.12);
+  outline: none;
+  text-decoration: none;
+  color: #333333;
+}
+.mm-cart-suggestion-thumb {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F2F2F2;
+  display: block;
+}
+.mm-cart-suggestion-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.mm-cart-suggestion-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mm-cart-suggestion-name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #333333;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mm-cart-suggestion-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mm-cart-suggestion-price-from {
+  font-size: 11px;
+  color: #999999;
+  text-decoration: line-through;
+}
+.mm-cart-suggestion-price-to {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b664a;
+}
+
+/* ==========================================================================
    REDUCED MOTION: respeita preferência de sistema
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
