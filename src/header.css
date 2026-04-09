@@ -89,6 +89,10 @@
 }
 #mm-header .mm-h-topbar-inner a:hover { color: #2f4a2e; }
 #mm-header .mm-h-topbar-sep { color: var(--c-brand); opacity: 0.4; }
+#mm-header .mm-h-topbar-desktop-only { display: contents; }
+@media (max-width: 767px) {
+  #mm-header .mm-h-topbar-desktop-only { display: none; }
+}
 
 /* Header main */
 #mm-header .mm-h-main {
