@@ -2561,9 +2561,20 @@
       var cartBagSvg = '<svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14 8 20v22a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V20l-4-6z"/><path d="M8 20h32"/><path d="M32 28a8 8 0 0 1-16 0"/></svg>';
   
       function getCartCountFromSources() {
-        // Source 1 (PRIMARY): Magazord's native counter element .item-ctn lives
-        // inside #cart-preview-area (parent of the drawer we lifted). It's
-        // in a display:none parent but the textContent is still readable.
+        // Source 1 (CANONICAL): Zord.get("cart.size") — Magazord's internal
+        // in-memory store. Inspected via Zord.checkout.atualizaPreview source,
+        // which uses exactly this key. Zord.set("cart.size", N) is what
+        // Magazord calls to update it. This is THE source of truth.
+        try {
+          if (typeof Zord !== 'undefined' && typeof Zord.get === 'function') {
+            var size = Zord.get('cart.size');
+            if (typeof size === 'number') return size;
+            if (typeof size === 'string' && /^\d+$/.test(size)) return parseInt(size, 10);
+          }
+        } catch (e) {}
+        // Source 2: Magazord's native counter element .item-ctn — updated by
+        // Zord.checkout.atualizaContadorCarrinho after server sync. Lives in
+        // hidden #cart-preview-area parent but textContent is still readable.
         var countEl = document.querySelector('#cart-preview-area .item-ctn, .carrinho-container .item-ctn');
         if (countEl) {
           var txt = (countEl.textContent || '').trim();
@@ -2572,21 +2583,7 @@
             if (!isNaN(n)) return n;
           }
         }
-        // Source 2: localStorage.pwcart_result (Magazord persists cart state)
-        try {
-          var pw = localStorage.getItem('pwcart_result');
-          if (pw) {
-            var parsed = JSON.parse(pw);
-            if (parsed) {
-              if (Array.isArray(parsed.items)) return parsed.items.length;
-              if (Array.isArray(parsed.produtos)) return parsed.produtos.length;
-              if (parsed.carrinho && Array.isArray(parsed.carrinho.produtos)) return parsed.carrinho.produtos.length;
-              if (typeof parsed.quantidade === 'number') return parsed.quantidade;
-              if (typeof parsed.totalItens === 'number') return parsed.totalItens;
-            }
-          }
-        } catch (e) {}
-        // Source 3: count .cart-item elements in the lifted drawer (fallback)
+        // Source 3: DOM .cart-item fallback (only if Zord not loaded yet)
         var drawerRef = document.querySelector('.carrinho-rapido-ctn');
         if (drawerRef) {
           var real = 0;
