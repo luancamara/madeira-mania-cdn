@@ -49,7 +49,7 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 2. Eliminate every documented anti-pattern: scrolling ticker, social icons in header, duplicated promo text, exposed phone number, emoji-as-icon, 7-item nav.
 3. Apply premium-tier patterns: centered image-logo, text labels over icons, dual-axis mega-menu, sticky compact state with blur, restrained topbar.
 4. Preserve trust signals critical to BR conversion (frete grátis, parcelamento, atendimento) without violating restraint.
-5. Preserve existing conversion drivers: WhatsApp access (via existing floating bubble), Pronta Entrega filter (promoted to nav top-level).
+5. Preserve existing conversion drivers: WhatsApp access (via existing floating bubble), Envio Imediato filter (promoted to nav top-level).
 6. Stay within Magazord constraints — inject via single bundle, hide native header elements via CSS, render custom header via JS.
 
 ### Non-goals
@@ -72,10 +72,10 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 │                                                                                  │     bg #F5F1EA, text #4b664a 12px
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                  │
-│   Buscar                          [LOGO MM]                  ♡ Favoritos   Conta   Sacola (2)   │  ← header 88px
+│   Buscar                          [LOGO MM]                  ♡ Favoritos   Conta   Carrinho (2)   │  ← header 88px
 │                                                                                  │     bg #FFFFFF, logo 280×70px center
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│              Ambientes      Móveis      Pronta Entrega      Outlet              │  ← nav 48px
+│              Ambientes      Móveis      Envio Imediato      Outlet              │  ← nav 48px
 │                                                                                  │     bg #FFFFFF, border-top #E6E6E6
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -100,7 +100,7 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 - **Background**: `#FFFFFF`
 - **Layout**: Flex with absolute-positioned center logo to avoid disputing flex space
   ```
-  [Buscar (left, abs left:40px)]   [LOGO (abs center)]   [Favoritos · Conta · Sacola (right, abs right:40px)]
+  [Buscar (left, abs left:40px)]   [LOGO (abs center)]   [Favoritos · Conta · Carrinho (right, abs right:40px)]
   ```
 - **Container max-width**: 1280px, centered, padding 0 40px
 - **Logo**:
@@ -113,12 +113,12 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
   - Hover: color shifts to `#4b664a`
   - Click → opens **search overlay** (see §3.6)
   - Hit area ≥44×44px (padding 12px 16px)
-- **Right cluster** (`Favoritos · Conta · Sacola`):
+- **Right cluster** (`Favoritos · Conta · Carrinho`):
   - All text, Montserrat 14px weight 500, letter-spacing 0.04em
   - Separated by 32px gap
   - **Favoritos**: links to `/wishlist` (Magazord native)
   - **Conta**: links to `/login` if logged out, `/conta` if logged in
-  - **Sacola**: links to `/checkout/cart`
+  - **Carrinho**: links to `/checkout/cart`
     - Badge: superscript number top-right, 11px, bold, color `#4b664a`, only renders if count > 0
     - Click on desktop: opens existing cart-sheet drawer (already implemented in `src/cart-sheet.js`); on mobile: navigates to `/checkout/cart`
 - **No icons anywhere in this layer.** All actions use text labels.
@@ -132,7 +132,7 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 - **Items**:
   1. **Ambientes** → mega-menu hover (3 cols, see §3.5.1)
   2. **Móveis** → mega-menu hover (3 cols, see §3.5.2)
-  3. **Pronta Entrega** → direct link to filter `/pronta-entrega` (existing Magazord category) — **no mega-menu, single click**
+  3. **Envio Imediato** → direct link to filter `/pronta-entrega` (existing Magazord category) — **no mega-menu, single click**
   4. **Outlet** → direct link to `/outlet`
 - **Active state** (current category): underline 2px `#4b664a`, offset 8px from text baseline
 - **Hover state**: color `#4b664a`, underline animates in 200ms ease-out
@@ -231,7 +231,7 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 │  Frete grátis R$ 2.000+ · 12x  │  ← topbar 28px
 ├─────────────────────────────────┤
 │                                  │
-│  ☰          [LOGO MM]      Sacola│  ← header 64px, logo 200px
+│  ☰          [LOGO MM]      Carrinho│  ← header 64px, logo 200px
 │                                  │
 └─────────────────────────────────┘
 ```
@@ -240,7 +240,7 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 **Header**: 64px tall
 - **Hambúrguer** (left): 24×24px icon, hit area 44×44px, opens drawer
 - **Logo** (center): 200px wide, centered absolute
-- **Sacola** (right): text label "Sacola" 13px, with badge if count > 0, hit area 44×44px
+- **Carrinho** (right): text label "Carrinho" 13px, with badge if count > 0, hit area 44×44px
 
 **Drawer (slide from left)**:
 - Width: 85% of viewport, max 360px
@@ -249,7 +249,7 @@ External research compared 13 sites across BR premium (Etel, Tidelli, Westwing, 
 - **Body**:
   - "Ambientes" (collapsible accordion) — taps expand sub-list
   - "Móveis" (collapsible accordion)
-  - "Pronta Entrega" (link)
+  - "Envio Imediato" (link)
   - "Outlet" (link)
 - **Bottom** (sticky to drawer footer):
   - "Favoritos" (link)
@@ -381,7 +381,7 @@ if (!document.getElementById('mm-header')) {
 }
 ```
 
-**Cart count sync**: subscribe to existing `reactItemAddedToCart` event (already used in `cart-sheet.js`) to update the `Sacola (n)` badge. Initial count read from Magazord state on `DOMContentLoaded`.
+**Cart count sync**: subscribe to existing `reactItemAddedToCart` event (already used in `cart-sheet.js`) to update the `Carrinho (n)` badge. Initial count read from Magazord state on `DOMContentLoaded`.
 
 **Build.sh additions**:
 - New CSS section: `mm-header-css` style guard ID
@@ -408,7 +408,7 @@ if (!document.getElementById('mm-header')) {
 - **Editorial centered logo over functional left-aligned logo**: ditching some horizontal space for actions in exchange for the gallery/atelier feel that the brand needs to project. Mitigation: use absolute positioning so the logo doesn't push actions out of the way; left action ("Buscar") + right cluster (3 items) easily fit at 1280px.
 - **Text labels everywhere over icons**: sacrifices universal recognizability (icons are language-neutral) for the restraint signal. BR audience reads Portuguese; this is fine.
 - **No A/B test, full cut-over after UAT**: per user preference ("híbrido > A/B test"). Reduces complexity, accepts conversion risk in exchange for not splitting traffic and not maintaining two header variants.
-- **Pronta Entrega as a top-level nav item**: violates strict taxonomy (it's a filter, not a category) but is a primary BR conversion driver and deserves the real estate. Endowed-progress + status-quo-bias rationale: showing immediate-availability inventory reduces buyer anxiety on high-ticket purchases.
+- **Envio Imediato as a top-level nav item**: violates strict taxonomy (it's a filter, not a category) but is a primary BR conversion driver and deserves the real estate. Endowed-progress + status-quo-bias rationale: showing immediate-availability inventory reduces buyer anxiety on high-ticket purchases.
 
 ### 7.3 Plan B (if UAT fails)
 
@@ -437,8 +437,8 @@ Capture before/after for:
 - [ ] Logo click routes home from any page
 - [ ] Search overlay opens on click and on `/` keypress; closes on Esc; submits to `/busca?q=`
 - [ ] Mega-menu opens on hover with intent delay; closes on mouse-leave with grace period
-- [ ] Sacola count updates when item added (subscribe to `reactItemAddedToCart`)
-- [ ] Sacola click on desktop opens cart-sheet drawer; on mobile navigates to `/checkout/cart`
+- [ ] Carrinho count updates when item added (subscribe to `reactItemAddedToCart`)
+- [ ] Carrinho click on desktop opens cart-sheet drawer; on mobile navigates to `/checkout/cart`
 - [ ] Sticky compact triggers at scroll > 24px; full state on scroll-up
 - [ ] Mobile drawer opens, closes, traps focus, supports swipe-left to close
 - [ ] No horizontal scroll at any viewport
@@ -466,25 +466,150 @@ Manual UAT by Luan after implementation:
 
 ---
 
-## 9. Open questions to resolve in planning
+## 9. Open questions — RESOLVED in clarification round (2026-04-09)
 
-These are decisions that don't block the design but need answers before implementation:
+| # | Question | Resolution |
+|---|---|---|
+| 1 | `/atendimento` page exists? | **No** — will create. Stub page with: H1 "Atendimento Madeira Mania", short paragraph, WhatsApp CTA button (large green, links to existing wa.me URL `5511915299488`), email line, hours line, FAQ accordion (deferred). Created in Magazord CMS as static page; route `/atendimento`. |
+| 2 | Mega-menu category names | **Probed via Playwright** (2026-04-09) — see §12 for real taxonomy. Magazord has ambiente-only hierarchy; "Móveis" cross-cutting axis requires custom menu creation via Magazord API. **Stakeholder confirmed: proceed with dual-axis (4-item nav) even with added scope.** |
+| 3 | Hero images for mega-menus | **Don't exist** — stakeholder will create as needed. **v1 ships without hero images** (3-col layout only, no 4th column); hero column added in v1.1 once images exist. |
+| 4 | Popular search terms | See §11 — search system itself is under reconsideration (Algolia vs Magazord native). Sugestões will be hand-picked top 5 in v1 regardless of backend. |
+| 5 | Ticker `#tickerBar` removal | **Confirmed safe** — no known dependencies. Remove from `src/ticker.html` and `build.sh`. |
+| 6 | Cart-sheet behavior | **Confirmed** — desktop "Carrinho" click opens existing drawer (`src/cart-sheet.js`), mobile navigates to `/checkout/cart`. **Label: "Carrinho", not "Sacola"** — stakeholder feedback: "carrinho" is the term users actually use. |
 
-1. **`/atendimento` page**: does this exist? If not, who creates the page in Magazord CMS, and what content?
-2. **Mega-menu category names**: exact mapping of current Magazord categories to the proposed Ambientes/Móveis grouping. Need to inspect category tree on the live site.
-3. **Hero images for mega-menus**: are there curated photos available, or do we use the site's existing category banner images?
-4. **Popular search terms** (search overlay sugestões): top 5 from analytics or hand-picked?
-5. **Magazord ticker (`#tickerBar`)**: confirm it's safe to remove entirely from `src/ticker.html` and `build.sh` injection — no other site logic depends on it.
-6. **Cart-sheet integration**: confirm desktop "Sacola" click should open the existing cart-sheet drawer (not navigate). Cross-check with `src/cart-sheet.js`.
+**Decision log (2026-04-09)**:
+- **Search backend**: Path C — header ships v1 with Magazord native search (overlay UX improvement only); separate spec for search replacement (Algolia/Typesense/MeiliSearch) opens in parallel.
+- **Nav structure**: **Dual-Axis 4-item nav** — `Ambientes · Móveis · Envio Imediato · Outlet`. "Móveis" cross-cutting menu will be created via Magazord API in the planning phase.
+
+## 10. Deferred / explicit non-features
 
 ---
 
 ## 10. Deferred / explicit non-features
 
-- **Wishlist count badge** — only Sacola gets a badge in v1; Favoritos badge can be added later if usage justifies
+- **Wishlist count badge** — only Carrinho gets a badge in v1; Favoritos badge can be added later if usage justifies
 - **Region/language switcher** — not needed (BR-only, PT-only)
 - **Currency switcher** — not needed (R$ only)
 - **Full-bleed mega-menu with editorial layout** — deferred; v1 uses 3-col simple layout
 - **Hover-to-reveal nav in compact sticky state** — deferred; v1 uses scroll-direction sticky
 - **Search autocomplete with live results** — deferred; v1 uses static "sugestões populares" + submit-to-search-page
 - **Account dropdown menu** — deferred; v1 routes directly to `/login` or `/conta`
+
+---
+
+## 11. Search backend — open architectural decision
+
+Stakeholder feedback (2026-04-09): "A busca default da Magazord é péssima, seria interessante substituir por Algolia ou similar."
+
+This is a **scope-expanding decision** that the spec author flags rather than silently absorbs. Two paths:
+
+### Path A — v1 ships with Magazord native search (current spec)
+
+- **Scope**: header redesign only. Search overlay submits to existing `/busca?q=` endpoint, results page is whatever Magazord renders today.
+- **Pros**: ships fast, no third-party integration risk, no contract/cost commitment
+- **Cons**: "péssima" search experience persists; users still hit the bad results page; the elegant search overlay leads to a disappointing destination
+
+### Path B — Header redesign blocked on search replacement
+
+- **Scope**: integrate Algolia (or Typesense, MeiliSearch) BEFORE header ships
+- **Pros**: header overlay → live results inline (instant search), proper relevance ranking, typo tolerance, faceted filtering — true premium-tier search experience
+- **Cons**: 2–4 weeks added scope, requires product index sync from Magazord (probably API-based or webhook), monthly cost (Algolia ~US$ 50–500/mo depending on volume), needs separate spec + plan
+
+### Path C — Recommended: Ship header v1 with native search, kick off search-replacement spec in parallel
+
+- **v1**: header ships with native search overlay → submits to `/busca?q=`. UX upgrade from current (overlay > inline cluttered input), even if results page is unchanged.
+- **v2** (parallel track): separate spec `2026-04-XX-search-replacement-design.md` evaluates Algolia/Typesense/MeiliSearch, decides on integration approach, ships when ready.
+- **When v2 lands**: header overlay gets enhanced to render live results inline (this is a small change to the existing overlay component, not a redesign)
+
+**Spec author recommendation: Path C.** Rationale:
+- Header redesign is the immediate, visible win — should not be blocked on backend infrastructure
+- Search backend deserves its own discovery/spec cycle (cost analysis, indexing strategy, Magazord API capabilities)
+- Header search overlay is **architected to be search-backend-agnostic** — swapping from `/busca?q=` to Algolia API later is a localized change, not a rewrite
+- Keeps momentum (per stakeholder preference)
+
+**Decision (2026-04-09)**: **Path C confirmed by stakeholder.** Header proceeds with native search; separate search-replacement spec to be created in parallel.
+
+---
+
+## 12. Magazord taxonomy — real structure (probed 2026-04-09)
+
+Captured via `/tmp/mm-validation/probe-categories.mjs` from live production site. Header-bottom nav renders as ambiente-first hierarchy with no cross-cutting type-level categories.
+
+### Current top-level items (what exists in Magazord today)
+
+1. **Envio Imediato** → `/envio-imediato` (filter, not a category — this becomes "Envio Imediato" in our new nav, preserving Magazord URL)
+2. **Sala de Estar** → `/sala-de-estar-9677307902`
+3. **Sala de Jantar** → `/sala-de-jantar-1916970475`
+4. **Cozinha** → `/cozinha-6327619447`
+5. **Bar e Café** → `/bar-e-cafe`
+6. **Quarto** → `/quarto-0961844589`
+7. **Escritório** → `/escritorio-899523853`
+
+Note: Magazord URL slugs include cryptic numeric suffixes (e.g. `-9677307902`) — these are the canonical URLs; our nav will link to these exact paths.
+
+### Sub-categories per ambiente
+
+| Ambiente | Sub-categorias |
+|---|---|
+| Sala de Estar | Aparadores, Bares, Buffets, Cristaleiras, Estantes, Home Theaters, Mesas, Nichos, Painéis, Racks |
+| Sala de Jantar | Aparadores, Balcões, Banquetas, Bares, Buffets, Cadeiras, Cristaleiras, Mesas |
+| Cozinha | Banquetas, Cantinhos do Café, Cristaleiras, Mesas de Jantar |
+| Bar e Café | Bares, Cantinhos do Café |
+| Quarto | Cabeceiras, Cômodas, Guarda-Roupas, Mesas de Cabeceira, Penteadeiras |
+| Escritório | Escrivaninhas |
+
+### Ambientes mega-menu (maps 1:1, zero API work)
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                                                                       │
+│  SOCIAL              CASA                WORK                         │
+│  Sala de Estar       Cozinha             Escritório                   │
+│  Sala de Jantar      Quarto              [Hero image once available]  │
+│  Bar e Café          —                                                │
+│                                                                       │
+│                                          Ver todos os ambientes →    │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+Column headings ("SOCIAL", "CASA", "WORK") are semantic groupings to avoid a bare 6-item list. Columns feel balanced (3+2+1 vs 6+0+0). Sub-items link to the actual ambiente pages.
+
+### Móveis mega-menu — REQUIRES Magazord API work
+
+The "Móveis" axis does not exist in Magazord's current taxonomy. To implement, the planning phase must:
+
+1. **Investigate Magazord API** — determine whether custom menus/categories can be created via API, and what structures are supported (virtual categories, tag-based filters, or saved searches)
+2. **Choose implementation strategy** — most likely one of:
+   - **Strategy A**: Create virtual categories in Magazord (if API supports it) that aggregate products by type across all ambientes
+   - **Strategy B**: Use facet/tag filters on search URLs (e.g. `/busca?tipo=mesas`) — requires products to be tagged consistently
+   - **Strategy C**: Hard-code cross-links to ambiente sub-categories (e.g. "Mesas" menu item links to a landing page that lists all ambientes' Mesas sub-categories)
+3. **Map cross-cutting types** based on the real taxonomy:
+
+Proposed Móveis mega-menu structure (3 cols, based on aggregating the probed sub-categories):
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                                                                       │
+│  MESAS & CADEIRAS    GUARDA & APOIO        ESTANTES & QUARTO          │
+│  Mesas de Jantar     Guarda-Roupas         Estantes                   │
+│  Mesas de Centro     Cômodas               Racks                      │
+│  Mesas de Cabeceira  Aparadores            Home Theaters              │
+│  Cadeiras            Buffets               Painéis                    │
+│  Banquetas           Cristaleiras          Nichos                     │
+│                      Balcões               Cabeceiras                 │
+│                                             Penteadeiras              │
+│                                             Escrivaninhas             │
+│                                                                       │
+│                                          Ver todos os móveis →       │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Missing in taxonomy**: "Bar e Café" sub-items (Bares, Cantinhos do Café) don't fit cleanly — they could go into a "BAR & LAZER" 4th column if we have hero image space, or fold under "Guarda & Apoio".
+
+**Planning phase must confirm**: whether this Móveis menu can be implemented via Magazord API (Strategy A is ideal; B is fallback; C is last resort).
+
+### "Envio Imediato" — preserve existing naming
+
+Nav item will be labeled **"Envio Imediato"** (not "Envio Imediato") to match the existing Magazord URL `/envio-imediato` and avoid breaking user familiarity.
+
+**Final nav (4 items)**: `Ambientes · Móveis · Envio Imediato · Outlet`
