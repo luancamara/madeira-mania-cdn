@@ -43,11 +43,24 @@
 
 /* ==========================================================================
    DRAWER / SHEET: background cinza checkout
+
+   IMPORTANTE: não usar selector `#cart-preview-area > div` porque existem
+   DOIS elementos com id=cart-preview-area (bug do Magazord) e um deles é
+   o wrapper do ícone do carrinho no header, cujo filho direto é o scrim
+   fullscreen (.fixed.w-screen.h-screen.bg-black/40) que abre junto com o
+   drawer. Pintar esse div cinza cobria a tela inteira.
+
+   Escopamos só nos containers REAIS do drawer.
    ========================================================================== */
 .content-cart,
-.content-cart > div,
-#cart-preview-area,
-#cart-preview-area > div {
+.content-cart > .cart-item,
+.carrinho-rapido-ctn,
+.carrinho-rapido-ctn .carrinho-rapido {
+  background: #F2F2F2 !important;
+}
+
+/* Mobile overlay (.z-[9999]) — esse wrapper tem o panel branco como filho */
+.z-\[9999\] .relative.z-\[10\] {
   background: #F2F2F2 !important;
 }
 
