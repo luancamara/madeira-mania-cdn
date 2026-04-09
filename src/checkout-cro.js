@@ -17,6 +17,8 @@
   var CEP_KEY = 'mm_cep';
   var CART_SNAPSHOT_KEY = 'mm_cart_snapshot';
   var CART_SNAPSHOT_TTL_MS = 30 * 60 * 1000; /* 30 min */
+  var ONEPAGE_DRAFT_KEY = 'mm_onepage_draft';
+  var ONEPAGE_DRAFT_TTL_MS = 24 * 60 * 60 * 1000; /* 24h */
   var FRETE_GRATIS_THRESHOLD = 2000;
   var MM_LOGO_URL = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
   var MM_WHATSAPP_URL = 'https://api.whatsapp.com/send?phone=5511915299488&text=' + encodeURIComponent('Olá! Estou no checkout e gostaria de tirar uma dúvida sobre meu pedido.');
@@ -26,6 +28,13 @@
   var isIdentify = path.indexOf('/checkout/identify') !== -1;
   var isOnepage = path.indexOf('/checkout/onepage') !== -1;
   var isPayment = path.indexOf('/checkout/payment') !== -1;
+  var isDone = path.indexOf('/checkout/done') !== -1;
+
+  /* Pedido confirmado — limpa o draft do onepage (user terminou o fluxo) */
+  if (isDone) {
+    try { localStorage.removeItem('mm_onepage_draft'); } catch (e) {}
+    return;
+  }
 
   if (!isCart && !isIdentify && !isOnepage && !isPayment) return;
 
@@ -62,12 +71,12 @@
 
   /* Lucide-style icons (stroke 2) */
   var ICON = {
-    truck: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    truck: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2a3 3 0 0 0 6 0h6a3 3 0 0 0 6 0h2v-5l-3-4zM6 18.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm12 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm.5-7H17V9.5h2.04l1.46 2-.04 0z"/></svg>',
     check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     checkCircle: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
     bolt: '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
-    shield: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
-    lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    shield: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4zm-1.4 16L6 12.4l1.4-1.4 3.2 3.2 6.8-6.8L18.8 8.8 10.6 17z"/></svg>',
+    lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6z"/></svg>',
     card: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
     rotate: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>',
     minus: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
@@ -110,6 +119,9 @@
         couponCode: state.couponCode,
         shipping: state.shipping,
         shippingDeadline: state.shippingDeadline,
+        shippingName: state.shippingName,
+        shippingCity: state.shippingCity,
+        shippingOptions: state.shippingOptions,
         cepValue: state.cepValue
       };
       STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
@@ -126,6 +138,68 @@
     } catch (e) { return null; }
   }
 
+  /* Draft do onepage — persiste campos em localStorage pra sobreviver
+     reload. TTL 24h. Chaves == ids dos inputs (mm-op-*).
+     IMPORTANTE: não sobrescreve o draft existente se NENHUM campo tem
+     valor (ex: chamado do beforeunload na página do step 3 onde os
+     inputs mm-op-* não existem). Isso preservaria o draft bom. */
+  function saveOnepageDraft() {
+    try {
+      var ids = ['mm-op-email','mm-op-nome','mm-op-cpf','mm-op-tel','mm-op-cep','mm-op-rua','mm-op-num','mm-op-comp','mm-op-bairro','mm-op-cidade','mm-op-uf'];
+      var data = { ts: Date.now() };
+      var count = 0;
+      for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (el && el.value) { data[ids[i]] = el.value; count++; }
+      }
+      /* Guard: zero campos = não sobrescreve. Preserva draft anterior. */
+      if (count === 0) {
+        if (window._mmDraftDebug) console.log('[mm-draft] skip save (0 fields)');
+        return;
+      }
+      STORAGE.set(ONEPAGE_DRAFT_KEY, JSON.stringify(data));
+      if (window._mmDraftDebug) console.log('[mm-draft] saved', count, 'fields', data);
+    } catch (e) {
+      if (window._mmDraftDebug) console.warn('[mm-draft] save failed', e);
+    }
+  }
+  function loadOnepageDraft() {
+    try {
+      var raw = STORAGE.get(ONEPAGE_DRAFT_KEY);
+      if (!raw) return null;
+      var d = JSON.parse(raw);
+      if (!d || !d.ts) return null;
+      if (Date.now() - d.ts > ONEPAGE_DRAFT_TTL_MS) { STORAGE.remove(ONEPAGE_DRAFT_KEY); return null; }
+      return d;
+    } catch (e) { return null; }
+  }
+  function clearOnepageDraft() {
+    try { STORAGE.remove(ONEPAGE_DRAFT_KEY); } catch(e) {}
+  }
+  function restoreOnepageDraft() {
+    var d = loadOnepageDraft();
+    if (!d) {
+      if (window._mmDraftDebug) console.log('[mm-draft] no draft to restore');
+      return null;
+    }
+    var ids = ['mm-op-email','mm-op-nome','mm-op-cpf','mm-op-tel','mm-op-cep','mm-op-rua','mm-op-num','mm-op-comp','mm-op-bairro','mm-op-cidade','mm-op-uf'];
+    var restored = 0;
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      /* Sempre restaura (não checa !el.value) — draft é autoritative */
+      if (el && d[ids[i]]) {
+        try {
+          var nativeSet = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeSet.call(el, d[ids[i]]);
+        } catch (e) { el.value = d[ids[i]]; }
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        restored++;
+      }
+    }
+    if (window._mmDraftDebug) console.log('[mm-draft] restored', restored, 'fields from draft', d);
+    return d;
+  }
+
 
   /* =============================================
      READ — extrai estado da DOM Magazord
@@ -137,9 +211,12 @@
       subtotalPix: 0,      /* valor em PIX (já descontado) */
       subtotalFull: 0,     /* soma de data-valor (preço cheio) */
       discount: 0,         /* desconto do cupom */
-      shipping: null,      /* null = não calculado, 0 = grátis, > 0 = valor */
+      shipping: null,      /* null = não calculado, 0 = grátis, > 0 = valor (modalidade selecionada) */
       shippingRaw: '',     /* texto original do frete-calculado */
-      shippingDeadline: '',/* prazo em dias */
+      shippingDeadline: '',/* prazo da modalidade selecionada */
+      shippingName: '',    /* nome da modalidade selecionada (Econômico, Normal, Expressa) */
+      shippingCity: '',    /* cidade do CEP (São Paulo/SP) */
+      shippingOptions: [], /* todas as modalidades: [{id, name, deadline, value, isFree, isSelected}] */
       couponCode: '',      /* se aplicado */
       cepValue: '',        /* valor atual do #cep */
       canFinalize: false,  /* true se tem itens */
@@ -199,18 +276,79 @@
       if (m) state.couponCode = m[1];
     }
 
-    /* Shipping */
-    var freteEl = mainArea.querySelector('#resumo-compra .frete-calculado');
+    /* Shipping — parse rico via .servico-frete + fallback texto */
+    var freteEl = mainArea.querySelector('#resumo-compra .frete-calculado, .frete-calculado');
     if (freteEl && freteEl.textContent.trim()) {
       state.shippingRaw = freteEl.textContent.trim();
-      if (/gr[aá]tis/i.test(state.shippingRaw)) {
-        state.shipping = 0;
-      } else {
-        var parsed = parseBRL(state.shippingRaw);
-        if (parsed > 0) state.shipping = parsed;
+
+      /* Cidade do CEP — ".frete-location .city" */
+      var cityEl = freteEl.querySelector('.frete-location .city');
+      if (cityEl) state.shippingCity = cityEl.textContent.trim();
+
+      /* Opções de modalidade — cada .servico-frete com data attrs e radio */
+      var servEls = freteEl.querySelectorAll('.servico-frete');
+      for (var si = 0; si < servEls.length; si++) {
+        var s = servEls[si];
+        var radio = s.querySelector('input[type="radio"]');
+        var prazoEl = s.querySelector('.dias-entrega');
+        var valor = parseFloat(s.getAttribute('data-valor-frete') || '0');
+        var nome = s.getAttribute('data-servico-frete') || '';
+        var prazoText = prazoEl ? prazoEl.textContent.trim().replace(/\s+/g, ' ').replace(/\s*-\s*$/, '').trim() : '';
+        /* Normaliza prazo: extrai só "8 a 10 dias úteis" do texto bruto */
+        var pm = prazoText.match(/(\d+(?:\s*[aà]\s*\d+)?\s*dias?(?:\s*[úu]teis)?)/i);
+        var prazoClean = pm ? pm[1].replace(/\s+/g, ' ') : prazoText;
+        state.shippingOptions.push({
+          id: radio ? radio.value : '',
+          name: nome,
+          deadline: prazoClean,
+          value: valor,
+          isFree: valor === 0,
+          isSelected: radio ? radio.checked : false
+        });
       }
-      var deadlineMatch = state.shippingRaw.match(/(\d+)\s*dias?/i);
-      if (deadlineMatch) state.shippingDeadline = deadlineMatch[1] + ' dias úteis';
+
+      /* Modalidade selecionada — usa info-frete-selec se existir, senão pega o checked */
+      var selectedOpt = state.shippingOptions.filter(function(o) { return o.isSelected; })[0];
+      if (!selectedOpt && state.shippingOptions.length > 0) selectedOpt = state.shippingOptions[0];
+
+      if (selectedOpt) {
+        state.shipping = selectedOpt.value;
+        state.shippingName = selectedOpt.name;
+        state.shippingDeadline = selectedOpt.deadline;
+      } else {
+        /* Fallback: parsing por texto (sem .servico-frete) */
+        var infoSelec = freteEl.querySelector('.info-frete-selec');
+        var diasEl = freteEl.querySelector('.dias-entrega, .info-frete-selec .dias-entrega');
+        var valEl = freteEl.querySelector('.valor-frete .value, .value.valor-frete');
+        var nomeSelEl = freteEl.querySelector('.info-frete-selec .info-title span, .info-title span');
+        if (valEl) {
+          var valTxt = valEl.textContent.trim();
+          if (/gr[aá]tis/i.test(valTxt)) {
+            state.shipping = 0;
+          } else {
+            var parsed = parseBRL(valTxt);
+            if (parsed > 0) state.shipping = parsed;
+          }
+        }
+        if (diasEl) {
+          var dpm = diasEl.textContent.match(/(\d+(?:\s*[aà]\s*\d+)?\s*dias?(?:\s*\([^)]+\))?(?:\s*[úu]teis)?)/i);
+          if (dpm) state.shippingDeadline = dpm[1].replace(/\s+/g, ' ').replace(/\(s\)/, '').trim();
+        }
+        if (nomeSelEl) state.shippingName = nomeSelEl.textContent.trim();
+        /* Fallback final por regex no raw */
+        if (state.shipping === null) {
+          if (/gr[aá]tis/i.test(state.shippingRaw)) {
+            state.shipping = 0;
+          } else {
+            var parsedRaw = parseBRL(state.shippingRaw);
+            if (parsedRaw > 0) state.shipping = parsedRaw;
+          }
+        }
+        if (!state.shippingDeadline) {
+          var dm2 = state.shippingRaw.match(/(\d+(?:\s*[aà]\s*\d+)?)\s*dias?/i);
+          if (dm2) state.shippingDeadline = dm2[1] + ' dias úteis';
+        }
+      }
     }
 
     /* CEP input */
@@ -258,7 +396,8 @@
      ambas marcam "Entrega" como ativo (continuidade visual entre telas) */
   function renderCheckoutHeader(currentStep) {
     currentStep = currentStep || 'cart';
-    var lockBig = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+    /* Shield-check filled — universal SSL/security mark, recognizable at small sizes */
+    var lockBig = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4zm-1.4 16L6 12.4l1.4-1.4 3.2 3.2 6.8-6.8L18.8 8.8 10.6 17z"/></svg>';
 
     function step(key, label) {
       var isActive = key === currentStep;
@@ -402,11 +541,13 @@
       } else {
         freteValue = '<span class="mm-row-value">' + formatBRL(state.shipping) + '</span>';
       }
+      var freteLabelParts = '<span class="mm-row-label">Frete';
+      if (state.shippingName) freteLabelParts += ' <span class="mm-row-sub">· ' + escapeHTML(state.shippingName) + '</span>';
+      if (state.shippingDeadline) freteLabelParts += ' <span class="mm-row-sub">· ' + escapeHTML(state.shippingDeadline) + '</span>';
+      freteLabelParts += '</span>';
       rows +=
         '<div class="mm-row">' +
-          '<span class="mm-row-label">Frete' +
-            (state.shippingDeadline ? ' <span class="mm-row-sub">· ' + escapeHTML(state.shippingDeadline) + '</span>' : '') +
-          '</span>' +
+          freteLabelParts +
           freteValue +
         '</div>';
     }
@@ -482,13 +623,19 @@
      ============================================= */
 
   function buildLayout() {
-    if (document.getElementById('mm-layout')) return document.getElementById('mm-layout');
+    var existing = document.getElementById('mm-layout');
+    if (existing) {
+      /* Safety: se o Magazord reparentou pra dentro de .container,
+         move de volta pra ser filho direto do mainArea. Senão o
+         mm-shadow-mode joga o .container pai offscreen junto. */
+      if (existing.parentElement !== mainArea) {
+        mainArea.insertBefore(existing, mainArea.firstChild);
+      }
+      return existing;
+    }
 
     var layout = document.createElement('div');
     layout.id = 'mm-layout';
-
-    /* Use o .container ou o próprio mainArea */
-    var container = mainArea.querySelector('.container') || mainArea;
 
     layout.innerHTML =
       renderCheckoutHeader('cart') +
@@ -536,7 +683,12 @@
         '</aside>' +
       '</div>';
 
-    container.insertBefore(layout, container.firstChild);
+    /* IMPORTANTE: insere direto no mainArea (não no .container).
+       O CSS mm-shadow-mode joga > * (filhos diretos do mainArea) offscreen,
+       então o mm-layout precisa ser filho direto pra escapar do hide.
+       Caso contrário o .container que envolve nosso layout vai offscreen
+       e o mm-layout vai junto, mesmo com :not(#mm-layout) no seletor. */
+    mainArea.insertBefore(layout, mainArea.firstChild);
     mainArea.classList.add('mm-shadow-mode');
     document.body.classList.add('mm-checkout-rebuild');
     /* Remove anti-flicker loading class — nosso layout já renderizou */
@@ -1111,7 +1263,13 @@
 
   /* ----- monta o layout completo do identify ----- */
   function buildIdentifyLayout(snap) {
-    if (document.getElementById('mm-layout')) return document.getElementById('mm-layout');
+    var existing = document.getElementById('mm-layout');
+    if (existing) {
+      if (existing.parentElement !== mainArea) {
+        mainArea.insertBefore(existing, mainArea.firstChild);
+      }
+      return existing;
+    }
 
     var layout = document.createElement('div');
     layout.id = 'mm-layout';
@@ -1423,18 +1581,18 @@
 
   /* ----- icons usados no onepage form ----- */
   var ICONS_OP = {
-    mail: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
-    user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    doc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="17" y2="13"/><line x1="7" y1="17" x2="13" y2="17"/></svg>',
-    phone: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
-    pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
-    /* Fase 4 — step 3 payment */
-    pix: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4.5L4.5 7.5a3 3 0 0 0 0 4.24l.38.38M7.5 19.5l-3-3a3 3 0 0 1 0-4.24l.38-.38M16.5 19.5l3-3a3 3 0 0 0 0-4.24l-.38-.38M16.5 4.5l3 3a3 3 0 0 1 0 4.24l-.38.38"/><path d="M9.88 6.5 7 9.38a3 3 0 0 0 0 4.24L9.88 16.5m4.24 0L17 13.62a3 3 0 0 0 0-4.24L14.12 6.5"/></svg>',
-    cardBig: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>',
-    barcode: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5v14M6 5v14M9 5v10M12 5v14M15 5v14M18 5v10M21 5v14"/></svg>',
-    alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-    editPencil: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>'
+    mail: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+    user: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',
+    doc: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 12h8v2H8zm0 4h5v2H8z"/></svg>',
+    phone: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>',
+    pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
+    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>',
+    /* Fase 4 — step 3 payment (todos filled, 24px) */
+    /* PIX — logo oficial via svgrepo.com/download/500416/pix.svg */
+    pix: '<svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M11.917 11.71a2.046 2.046 0 0 1-1.454-.602l-2.1-2.1a.4.4 0 0 0-.551 0l-2.108 2.108a2.044 2.044 0 0 1-1.454.602h-.414l2.66 2.66c.83.83 2.177.83 3.007 0l2.667-2.668h-.253zM4.25 4.282c.55 0 1.066.214 1.454.602l2.108 2.108a.39.39 0 0 0 .552 0l2.1-2.1a2.044 2.044 0 0 1 1.453-.602h.253L9.503 1.623a2.127 2.127 0 0 0-3.007 0l-2.66 2.66h.414z"/><path d="m14.377 6.496-1.612-1.612a.307.307 0 0 1-.114.023h-.733c-.379 0-.75.154-1.017.422l-2.1 2.1a1.005 1.005 0 0 1-1.425 0L5.268 5.32a1.448 1.448 0 0 0-1.018-.422h-.9a.306.306 0 0 1-.109-.021L1.623 6.496c-.83.83-.83 2.177 0 3.008l1.618 1.618a.305.305 0 0 1 .108-.022h.901c.38 0 .75-.153 1.018-.421L7.375 8.57a1.034 1.034 0 0 1 1.426 0l2.1 2.1c.267.268.638.421 1.017.421h.733c.04 0 .079.01.114.024l1.612-1.612c.83-.83.83-2.178 0-3.008z"/></svg>',
+    cardBig: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>',
+    barcode: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h2v12H2zm3 0h1v12H5zm2 0h3v12H7zm4 0h1v12h-1zm3 0h2v12h-2zm3 0h1v12h-1zm2 0h3v12h-3z"/></svg>',
+    editPencil: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>'
   };
 
   /* ----- render do form onepage (dados + endereço) ----- */
@@ -1524,7 +1682,13 @@
 
   /* ----- monta layout completo do onepage ----- */
   function buildOnepageLayout(snap, prefilledEmail) {
-    if (document.getElementById('mm-layout')) return document.getElementById('mm-layout');
+    var existing = document.getElementById('mm-layout');
+    if (existing) {
+      if (existing.parentElement !== mainArea) {
+        mainArea.insertBefore(existing, mainArea.firstChild);
+      }
+      return existing;
+    }
 
     var layout = document.createElement('div');
     layout.id = 'mm-layout';
@@ -1564,56 +1728,176 @@
         '</div>';
       return;
     }
-    /* state = { value: number|0, deadline: string } */
+    /* state = { value: number|0, deadline: string, name: string, city: string, options: array } */
     var isFree = state.value === 0;
     var valueLabel = isFree
-      ? '<strong class="mm-op-frete-value is-free">' + ICON.check + ' Frete grátis</strong>'
+      ? '<strong class="mm-op-frete-value is-free">Grátis</strong>'
       : '<strong class="mm-op-frete-value">' + formatBRL(state.value) + '</strong>';
+    var nameLabel = state.name
+      ? '<span class="mm-op-frete-name">' + escapeHTML(state.name) + '</span>'
+      : '';
     var deadlineLabel = state.deadline
       ? '<span class="mm-op-frete-deadline">Entrega em ' + escapeHTML(state.deadline) + '</span>'
       : '';
+    var cityLabel = state.city
+      ? '<span class="mm-op-frete-city">para ' + escapeHTML(state.city) + '</span>'
+      : '';
+
+    /* Se tem múltiplas opções, mostra a selecionada + link "alterar" */
+    var optionsHTML = '';
+    if (state.options && state.options.length > 1) {
+      optionsHTML =
+        '<div class="mm-op-frete-options">' +
+          '<button type="button" class="mm-op-frete-toggle" data-mm-act="toggle-frete-opts" aria-expanded="false">' +
+            'Ver outras opções (' + state.options.length + ')' +
+          '</button>' +
+          '<div class="mm-op-frete-options-list" hidden>';
+      for (var oi = 0; oi < state.options.length; oi++) {
+        var opt = state.options[oi];
+        var sel = opt.isSelected ? ' is-selected' : '';
+        var ov = opt.isFree
+          ? '<span class="mm-op-frete-opt-value is-free">Grátis</span>'
+          : '<span class="mm-op-frete-opt-value">' + formatBRL(opt.value) + '</span>';
+        optionsHTML +=
+          '<button type="button" class="mm-op-frete-opt' + sel + '" data-mm-act="op-ship-select" data-ship-id="' + escapeHTML(opt.id) + '" aria-pressed="' + (opt.isSelected ? 'true' : 'false') + '">' +
+            '<span class="mm-op-frete-opt-radio" aria-hidden="true"><span></span></span>' +
+            '<span class="mm-op-frete-opt-body">' +
+              '<span class="mm-op-frete-opt-name">' + escapeHTML(opt.name || 'Padrão') + '</span>' +
+              (opt.deadline ? '<span class="mm-op-frete-opt-deadline">' + escapeHTML(opt.deadline) + '</span>' : '') +
+            '</span>' +
+            ov +
+          '</button>';
+      }
+      optionsHTML += '</div></div>';
+    }
+
     slot.innerHTML =
-      '<div class="mm-op-frete-card">' +
-        ICON.truck +
-        '<div class="mm-op-frete-body">' + valueLabel + deadlineLabel + '</div>' +
-      '</div>';
+      '<div class="mm-op-frete-card' + (isFree ? ' is-free' : '') + '">' +
+        '<div class="mm-op-frete-icon">' + ICON.truck + '</div>' +
+        '<div class="mm-op-frete-body">' +
+          '<div class="mm-op-frete-row">' +
+            nameLabel +
+            valueLabel +
+          '</div>' +
+          deadlineLabel +
+          cityLabel +
+        '</div>' +
+      '</div>' +
+      optionsHTML;
   }
 
-  /* Lê frete do DOM Magazord — busca deadline em múltiplos lugares (onepage
-     às vezes coloca prazo em .line-entrega texto, .info-entrega, ou nome-servico) */
+  /* Lê frete do DOM Magazord — retorna { value, deadline, name, city, options[] }
+     Suporta tanto cart (.frete-calculado com .servico-frete) quanto onepage
+     (.info-frete-selec com .item-frete + .dias-entrega). */
   function readFreteFromDom() {
     function parseDeadline(text) {
       if (!text) return '';
-      var m = text.match(/(\d+)(?:\s*[aà]\s*(\d+))?\s*dias?/i);
+      var m = text.match(/(\d+(?:\s*[aà]\s*\d+)?)\s*dias?(?:\s*\([^)]+\))?\s*([úu]teis)?/i);
       if (!m) return '';
-      return m[2] ? m[1] + ' a ' + m[2] + ' dias úteis' : m[1] + ' dias úteis';
+      return m[1].replace(/\s+/g, ' ') + ' dias úteis';
     }
-    /* Onepage: .line.line-entrega contém valor + prazo no mesmo bloco */
+
+    /* Lê todas as opções de modalidade — funciona em qualquer página
+       que tenha .frete-calculado com .servico-frete (cart e às vezes onepage) */
+    function readOptions(scope) {
+      var out = [];
+      var servEls = scope.querySelectorAll('.servico-frete');
+      for (var i = 0; i < servEls.length; i++) {
+        var s = servEls[i];
+        var radio = s.querySelector('input[type="radio"]');
+        var prazoEl = s.querySelector('.dias-entrega');
+        var valor = parseFloat(s.getAttribute('data-valor-frete') || '0');
+        var nome = s.getAttribute('data-servico-frete') || '';
+        var prazoText = prazoEl ? prazoEl.textContent.trim() : '';
+        var pm = prazoText.match(/(\d+(?:\s*[aà]\s*\d+)?\s*dias?(?:\s*[úu]teis)?)/i);
+        out.push({
+          id: radio ? radio.value : '',
+          name: nome,
+          deadline: pm ? pm[1].replace(/\s+/g, ' ') : prazoText,
+          value: valor,
+          isFree: valor === 0,
+          isSelected: radio ? radio.checked : false
+        });
+      }
+      return out;
+    }
+
+    /* 1) .frete-calculado existe (cart + às vezes onepage com cálculo recente) */
+    var freteEl = mainArea.querySelector('.frete-calculado');
+    if (freteEl && freteEl.textContent.trim()) {
+      var options = readOptions(freteEl);
+      var cityEl = freteEl.querySelector('.frete-location .city');
+      var city = cityEl ? cityEl.textContent.trim() : '';
+      var selected = options.filter(function(o) { return o.isSelected; })[0] || options[0];
+      if (selected) {
+        return {
+          value: selected.value,
+          name: selected.name,
+          deadline: selected.deadline,
+          city: city,
+          options: options
+        };
+      }
+      /* Fallback: parse pelo .info-frete-selec se .servico-frete não existir */
+      var infoTitle = freteEl.querySelector('.info-frete-selec .info-title span, .info-title span');
+      var diasEl = freteEl.querySelector('.info-frete-selec .dias-entrega, .dias-entrega');
+      var valEl = freteEl.querySelector('.value.valor-frete, .valor-frete .value');
+      var rawTxt = freteEl.textContent;
+      var val = null;
+      if (valEl) {
+        if (/gr[aá]tis/i.test(valEl.textContent)) val = 0;
+        else val = parseBRL(valEl.textContent);
+      }
+      if (val === null) {
+        if (/gr[aá]tis/i.test(rawTxt)) val = 0;
+        else val = parseBRL(rawTxt) || null;
+      }
+      if (val !== null) {
+        return {
+          value: val,
+          name: infoTitle ? infoTitle.textContent.trim() : '',
+          deadline: diasEl ? parseDeadline(diasEl.textContent) : parseDeadline(rawTxt),
+          city: city,
+          options: []
+        };
+      }
+    }
+
+    /* 2) Onepage: .line-entrega (Magazord nativo, simples) — Magazord onepage
+       só expõe o valor final, não as modalidades. Mergeia com snapshot pra
+       recuperar nome/prazo/opções salvos pelo cart. */
     var lineEntrega = mainArea.querySelector('.line-entrega');
-    if (lineEntrega) {
-      var fullText = (lineEntrega.textContent || '').trim();
+    var valorFreteEl = mainArea.querySelector('.value.valor-frete, .valor-frete .value');
+    if (lineEntrega || valorFreteEl) {
+      var fullText = ((lineEntrega || valorFreteEl).textContent || '').trim();
+      var snap = loadCartSnapshot();
+      var snapName = snap ? (snap.shippingName || '') : '';
+      var snapDeadline = snap ? (snap.shippingDeadline || '') : '';
+      var snapCity = snap ? (snap.shippingCity || '') : '';
+      var snapOptions = snap ? (snap.shippingOptions || []) : [];
+
       if (fullText) {
-        var nome = (mainArea.querySelector('.nome-servico-frete') || {}).textContent || '';
-        var infoEntrega = (mainArea.querySelector('.info-entrega, .prazo-entrega, .line-entrega .sub') || {}).textContent || '';
-        var deadline = parseDeadline(infoEntrega) || parseDeadline(nome) || parseDeadline(fullText);
-        if (/gr[aá]tis/i.test(fullText)) return { value: 0, deadline: deadline };
+        var nome2 = (mainArea.querySelector('.nome-servico-frete, .info-frete-selec .info-title span') || {}).textContent || '';
+        var infoEntrega = (mainArea.querySelector('.info-entrega, .prazo-entrega, .line-entrega .sub, .info-frete-selec .dias-entrega') || {}).textContent || '';
+        var deadline = parseDeadline(infoEntrega) || parseDeadline(fullText) || snapDeadline;
+        var name = nome2.trim() || snapName;
+        if (/gr[aá]tis/i.test(fullText)) return { value: 0, deadline: deadline, name: name, city: snapCity, options: snapOptions };
         var p = parseBRL(fullText);
-        if (p > 0) return { value: p, deadline: deadline };
+        if (p > 0) return { value: p, deadline: deadline, name: name, city: snapCity, options: snapOptions };
+      }
+
+      /* fallback puro: usa snapshot se DOM existe mas vazio */
+      if (snap && snap.shipping !== null && snap.shipping !== undefined) {
+        return {
+          value: snap.shipping,
+          deadline: snapDeadline,
+          name: snapName,
+          city: snapCity,
+          options: snapOptions
+        };
       }
     }
-    /* Cart: #resumo-compra .frete-calculado */
-    var cartEl = mainArea.querySelector('#resumo-compra .frete-calculado');
-    if (cartEl && cartEl.textContent.trim()) {
-      var raw2 = cartEl.textContent.trim();
-      var value = null;
-      if (/gr[aá]tis/i.test(raw2)) {
-        value = 0;
-      } else {
-        var p2 = parseBRL(raw2);
-        if (p2 > 0) value = p2;
-      }
-      if (value !== null) return { value: value, deadline: parseDeadline(raw2) };
-    }
+
     return null;
   }
 
@@ -1666,6 +1950,9 @@
         if (snap) {
           snap.shipping = result.value;
           snap.shippingDeadline = result.deadline;
+          snap.shippingName = result.name || '';
+          snap.shippingCity = result.city || '';
+          snap.shippingOptions = result.options || [];
           STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
           rehydrateIdentifySummary(snap);
         }
@@ -1685,6 +1972,60 @@
     var layout = document.getElementById('mm-layout');
     if (!layout || layout._mmOpBound) return;
     layout._mmOpBound = true;
+
+    /* Click handlers — frete options + toggle */
+    layout.addEventListener('click', function(e) {
+      var toggle = e.target.closest('[data-mm-act="toggle-frete-opts"]');
+      if (toggle) {
+        e.preventDefault();
+        var list = toggle.parentElement.querySelector('.mm-op-frete-options-list');
+        if (list) {
+          var hidden = list.hasAttribute('hidden');
+          if (hidden) list.removeAttribute('hidden'); else list.setAttribute('hidden', '');
+          toggle.setAttribute('aria-expanded', hidden ? 'true' : 'false');
+          toggle.textContent = hidden ? 'Ocultar opções' : 'Ver outras opções';
+        }
+        return;
+      }
+      var optBtn = e.target.closest('[data-mm-act="op-ship-select"]');
+      if (optBtn) {
+        e.preventDefault();
+        var modId = optBtn.getAttribute('data-ship-id');
+        if (!modId) return;
+        var radio = mainArea.querySelector('.servico-frete input[type="radio"][value="' + modId + '"]');
+        if (!radio) {
+          console.warn('[mm-op] modalidade não encontrada no DOM:', modId);
+          return;
+        }
+        /* Optimistic UI */
+        var btns = layout.querySelectorAll('.mm-op-frete-opt');
+        for (var i = 0; i < btns.length; i++) {
+          var b = btns[i];
+          var match = b.getAttribute('data-ship-id') === modId;
+          b.classList.toggle('is-selected', match);
+          b.setAttribute('aria-pressed', match ? 'true' : 'false');
+        }
+        radio.checked = true;
+        radio.click();
+        /* Re-poll the frete result após Magazord recalcular */
+        setTimeout(function() {
+          var result = readFreteFromDom();
+          if (result) {
+            renderFreteResult(result);
+            var snap = loadCartSnapshot();
+            if (snap) {
+              snap.shipping = result.value;
+              snap.shippingDeadline = result.deadline;
+              snap.shippingName = result.name || '';
+              snap.shippingOptions = result.options || [];
+              STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
+              rehydrateIdentifySummary(snap);
+            }
+          }
+        }, 700);
+        return;
+      }
+    });
 
     /* Submit form principal */
     layout.addEventListener('submit', function(e) {
@@ -1742,6 +2083,10 @@
       /* Persistir email + checkoutmode pra próxima etapa */
       STORAGE.set('mm_user_email', data.email.trim());
 
+      /* NÃO limpa draft aqui — usuário pode voltar pro onepage e ainda
+         deve encontrar seus dados preenchidos. Draft expira em 24h ou
+         é limpo em /checkout/done quando o pedido é confirmado. */
+
       /* Copiar values pros inputs Magazord originais */
       submitOnepageToMagazord(data);
     });
@@ -1768,7 +2113,28 @@
          não o valor/prazo do frete). Recalcular a cada keystroke causava
          múltiplos polls concorrentes e prazo perdido. Dedupe em calcFreteOnepage
          + trigger único no handleCepComplete resolvem o problema. */
+
+      /* Persiste draft do form (debounced 400ms) */
+      if (t.id && t.id.indexOf('mm-op-') === 0) {
+        if (bindOnepageEvents._draftTimer) clearTimeout(bindOnepageEvents._draftTimer);
+        bindOnepageEvents._draftTimer = setTimeout(saveOnepageDraft, 400);
+      }
     });
+
+    /* Flush imediato em blur + beforeunload — cobre reloads rápidos
+       e navegações antes do debounce disparar. */
+    function flushDraftSave() {
+      if (bindOnepageEvents._draftTimer) {
+        clearTimeout(bindOnepageEvents._draftTimer);
+        bindOnepageEvents._draftTimer = null;
+      }
+      saveOnepageDraft();
+    }
+    layout.addEventListener('blur', function(e) {
+      var t = e.target;
+      if (t && t.id && t.id.indexOf('mm-op-') === 0) flushDraftSave();
+    }, true);
+    window.addEventListener('beforeunload', flushDraftSave);
   }
 
   /* CEP completo: dispara ViaCEP fetch + auto-fill + cálculo de frete */
@@ -2110,17 +2476,29 @@
 
     /* Re-ativa shadow-mode (tinha sido removido no submit chain) */
     mainArea.classList.add('mm-shadow-mode');
+    document.body.classList.add('mm-checkout-rebuild');
 
-    /* Rebuild layout */
+    /* Rebuild layout — CRÍTICO: sempre garantir que o mm-layout seja
+       filho DIRETO do mainArea (não dentro de .container). O CSS
+       mm-shadow-mode joga > * offscreen, então se o layout estiver
+       wrapped em .container, ele vai offscreen junto. Magazord
+       re-renderiza o mainArea na transição pro step 3 — o layout
+       existente pode ter sido removido ou reparentado. */
     var layout = document.getElementById('mm-layout');
-    if (!layout) {
+    if (!layout || layout.parentElement !== mainArea) {
+      if (layout && layout.parentElement) {
+        layout.parentElement.removeChild(layout);
+      }
       layout = document.createElement('div');
       layout.id = 'mm-layout';
-      mainArea.appendChild(layout);
+      mainArea.insertBefore(layout, mainArea.firstChild);
     }
     layout.className = 'mm-op-layout mm-op-step3-layout';
     layout.style.display = '';
     layout.innerHTML = buildStep3Layout(snap, userData, formas);
+
+    /* Remove anti-flicker class se ainda ativa */
+    document.documentElement.classList.remove('mm-cart-loading');
 
     /* Remove overlay */
     var ov = document.getElementById('mm-op-overlay');
@@ -2135,16 +2513,18 @@
   function buildStep3Layout(snap, userData, formas) {
     var footerHTML = typeof renderGlobalFooter === 'function' ? renderGlobalFooter() : '';
 
+    /* Layout 2-col: payment card sozinho à esquerda, direita com
+       dados + endereço + resumo empilhados (mesma coluna do resumo). */
     return (
       renderCheckoutHeader('payment') +
       '<main class="mm-op-main">' +
         '<div class="mm-op-step3-grid">' +
           '<section class="mm-op-step3-left">' +
-            renderStep3CompletedCards(userData) +
             renderStep3PaymentCard(formas) +
             renderStep3TrustFooter() +
           '</section>' +
-          '<aside class="mm-id-sum-wrap mm-op-step3-sum-wrap">' +
+          '<aside class="mm-op-step3-sum-wrap">' +
+            renderStep3CompletedCards(userData) +
             renderStep3Summary(snap, formas, 'pix') +
           '</aside>' +
         '</div>' +
@@ -2229,9 +2609,8 @@
           '</div>' +
         '</div>' +
         '<div class="mm-op-pay-detail">' +
-          (save > 0
-            ? '<p class="mm-op-pay-highlight">' + ICON.bolt + ' Você economiza <strong>' + formatBRL(save) + '</strong> pagando no PIX</p>'
-            : '') +
+          /* Desconto já aparece 2x (badge no header + row no resumo) —
+             não duplicar aqui. Só benefícios úteis. */
           '<ul class="mm-op-pay-benefits">' +
             '<li>' + ICON.check + '<span>QR Code e Copia-e-Cola após confirmar</span></li>' +
             '<li>' + ICON.check + '<span>Pedido aprovado em até 1 minuto</span></li>' +
@@ -2256,35 +2635,39 @@
       return '<span class="mm-op-field-err" id="' + id + '-err" role="alert" aria-live="polite"></span>';
     }
 
+    /* Estado inicial: PIX ativo, cartão inativo → inputs do cartão começam
+       disabled + autocomplete="off" pra não serem preenchidos pelo
+       Bitwarden/password managers. setActiveForma habilita quando o user
+       escolhe cartão. (Os data-* guardam o autocomplete original.) */
     var cartaoForm =
       '<div class="mm-op-card-form">' +
         '<div class="mm-op-card-field mm-op-card-field-full">' +
           '<label for="mm-pay-card-num">Número do cartão' + req + '</label>' +
           '<div class="mm-input-wrap mm-input-wrap-card">' +
-            ICON.card +
-            '<input id="mm-pay-card-num" type="tel" class="mm-input" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="23" aria-describedby="mm-pay-card-num-err" aria-required="true">' +
+            '<span class="mm-input-icon" aria-hidden="true">' + ICON.card + '</span>' +
+            '<input id="mm-pay-card-num" type="tel" class="mm-input" inputmode="numeric" autocomplete="off" data-mmac="cc-number" placeholder="0000 0000 0000 0000" maxlength="23" aria-describedby="mm-pay-card-num-err" aria-required="true" disabled>' +
             '<span class="mm-op-card-brand-detected" aria-live="polite"></span>' +
           '</div>' +
           errSlot('mm-pay-card-num') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-full">' +
           '<label for="mm-pay-card-name">Nome impresso no cartão' + req + '</label>' +
-          '<input id="mm-pay-card-name" type="text" class="mm-input mm-input-noicon" autocomplete="cc-name" placeholder="Como aparece no cartão" maxlength="100" aria-describedby="mm-pay-card-name-err" aria-required="true">' +
+          '<input id="mm-pay-card-name" type="text" class="mm-input mm-input-noicon" autocomplete="off" data-mmac="cc-name" placeholder="Como aparece no cartão" maxlength="100" aria-describedby="mm-pay-card-name-err" aria-required="true" disabled>' +
           errSlot('mm-pay-card-name') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-half">' +
           '<label for="mm-pay-card-exp">Validade' + req + '</label>' +
-          '<input id="mm-pay-card-exp" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" aria-describedby="mm-pay-card-exp-err" aria-required="true">' +
+          '<input id="mm-pay-card-exp" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="off" data-mmac="cc-exp" placeholder="MM/AA" maxlength="5" aria-describedby="mm-pay-card-exp-err" aria-required="true" disabled>' +
           errSlot('mm-pay-card-exp') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-half">' +
           '<label for="mm-pay-card-cvv">CVV' + req + '</label>' +
-          '<input id="mm-pay-card-cvv" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="cc-csc" placeholder="000" maxlength="4" aria-describedby="mm-pay-card-cvv-err" aria-required="true">' +
+          '<input id="mm-pay-card-cvv" type="tel" class="mm-input mm-input-noicon" inputmode="numeric" autocomplete="off" data-mmac="cc-csc" placeholder="000" maxlength="4" aria-describedby="mm-pay-card-cvv-err" aria-required="true" disabled>' +
           errSlot('mm-pay-card-cvv') +
         '</div>' +
         '<div class="mm-op-card-field mm-op-card-field-full">' +
           '<label for="mm-pay-card-installments">Condições de pagamento' + req + '</label>' +
-          '<select id="mm-pay-card-installments" class="mm-input mm-input-noicon mm-op-card-installments" aria-describedby="mm-pay-card-installments-err" aria-required="true">' +
+          '<select id="mm-pay-card-installments" class="mm-input mm-input-noicon mm-op-card-installments" aria-describedby="mm-pay-card-installments-err" aria-required="true" disabled>' +
             '<option value="">Digite o cartão pra ver as condições</option>' +
           '</select>' +
           errSlot('mm-pay-card-installments') +
@@ -2326,10 +2709,8 @@
           '</div>' +
         '</div>' +
         '<div class="mm-op-pay-detail">' +
-          '<div class="mm-op-pay-warning">' +
-            ICONS_OP.alert +
-            '<span>Pedido só é separado após a compensação do pagamento (1–3 dias úteis).</span>' +
-          '</div>' +
+          /* Prazo já aparece no sub do header ("Aprovação em 1 a 3 dias úteis")
+             — sem warning duplicado. Só benefícios úteis. */
           '<ul class="mm-op-pay-benefits">' +
             '<li>' + ICON.check + '<span>Código de barras enviado por e-mail</span></li>' +
             '<li>' + ICON.check + '<span>Pagamento em banco, lotérica ou app</span></li>' +
@@ -2679,11 +3060,26 @@
         try { nativeRadio.click(); } catch (e) {}
       }
 
-      /* Atualiza summary lateral (total + label + destaque) */
-      updateSummaryForForma(forma);
+      /* Desabilita inputs do cartão quando não for cartão — evita que o
+         Bitwarden/password managers tentem autofill em campos invisíveis.
+         Inputs disabled são ignorados por form autofill e submission. */
+      var cardFormInputs = layout.querySelectorAll('.mm-op-card-form input, .mm-op-card-form select');
+      var cardActive = forma === 'cartao';
+      cardFormInputs.forEach(function(input) {
+        input.disabled = !cardActive;
+        /* Toggle autocomplete: restaura o cc-* value original quando ativo,
+           força "off" quando inativo. O data-mmac guarda o valor original. */
+        if (cardActive) {
+          if (input.dataset.mmac) {
+            input.setAttribute('autocomplete', input.dataset.mmac);
+          }
+        } else {
+          input.setAttribute('autocomplete', 'off');
+        }
+      });
 
-      /* Atualiza CTA label (valor + texto conforme forma) */
-      updateCtaLabel(forma);
+      /* Atualiza summary lateral (total + label + destaque) + CTA label */
+      updateSummaryForForma(forma);
 
       /* Se cartão ativo, foca no input do cartão (próximo step lógico) */
       if (forma === 'cartao') {
@@ -2694,13 +3090,80 @@
       }
     }
 
+    /* Update cirúrgico — evita o flicker de innerHTML replace.
+       Anima só o valor total + swap label + toggle da linha de desconto PIX. */
     function updateSummaryForForma(forma) {
       var sum = layout.querySelector('.mm-op-step3-sum');
       if (!sum) return;
       sum.setAttribute('data-active-forma', forma);
-      /* Re-render summary com o total certo (simples: regen o innerHTML do wrap) */
-      var wrap = layout.querySelector('.mm-op-step3-sum-wrap');
-      if (wrap) wrap.innerHTML = renderStep3Summary(snap, formas, forma);
+
+      var pixVal = formas.pix ? formas.pix.valorTotal : 0;
+      var cartaoVal = formas.cartao ? formas.cartao.valorTotal : 0;
+      var boletoVal = formas.boleto ? formas.boleto.valorTotal : 0;
+      var save = cartaoVal > pixVal ? cartaoVal - pixVal : 0;
+      var newTotal = forma === 'pix' ? pixVal : (forma === 'boleto' ? boletoVal : cartaoVal);
+      var newLabel = forma === 'pix' ? 'no PIX' : (forma === 'boleto' ? 'no boleto' : 'no cartão');
+
+      /* Anima o valor do total de forma incremental */
+      var totalEl = sum.querySelector('[data-mm-total]');
+      if (totalEl) {
+        var fromText = totalEl.textContent || '';
+        var fromVal = parseBRL(fromText);
+        if (fromVal !== newTotal) {
+          animateValue(totalEl, fromVal, newTotal, 360);
+        } else {
+          totalEl.textContent = formatBRL(newTotal);
+        }
+      }
+
+      /* Swap label "no PIX" / "no cartão" / "no boleto" */
+      var subEl = sum.querySelector('[data-mm-total-sub] span');
+      if (subEl && subEl.textContent !== newLabel) {
+        subEl.textContent = newLabel;
+      }
+
+      /* Toggle row de desconto PIX — aparece só em PIX com save > 0 */
+      var rowsEl = sum.querySelector('.mm-sum-rows');
+      var discountRow = rowsEl ? rowsEl.querySelector('.mm-row-pix-discount') : null;
+      if (forma === 'pix' && save > 0) {
+        if (!discountRow && rowsEl) {
+          var tmp = document.createElement('div');
+          tmp.innerHTML =
+            '<div class="mm-row mm-row-pix-discount">' +
+              '<span class="mm-row-label">' + ICON.bolt + ' Desconto PIX</span>' +
+              '<span class="mm-row-value is-discount">− ' + formatBRL(save) + '</span>' +
+            '</div>';
+          rowsEl.appendChild(tmp.firstChild);
+        }
+      } else if (discountRow) {
+        discountRow.remove();
+      }
+
+      /* Atualiza CTA label também */
+      updateCtaLabel(forma);
+    }
+
+    /* Animação de número incremental com easing cubic-out */
+    function animateValue(el, from, to, duration) {
+      if (el._mmAnimToken) cancelAnimationFrame(el._mmAnimToken);
+      var start = null;
+      var diff = to - from;
+      function step(ts) {
+        if (!start) start = ts;
+        var elapsed = ts - start;
+        var t = Math.min(1, elapsed / duration);
+        /* easeOutCubic */
+        var eased = 1 - Math.pow(1 - t, 3);
+        var current = from + diff * eased;
+        el.textContent = formatBRL(current);
+        if (t < 1) {
+          el._mmAnimToken = requestAnimationFrame(step);
+        } else {
+          el.textContent = formatBRL(to);
+          el._mmAnimToken = null;
+        }
+      }
+      el._mmAnimToken = requestAnimationFrame(step);
     }
 
     function updateCtaLabel(forma) {
@@ -2963,8 +3426,28 @@
       /* Limpa flag mm_checkout_mode (já foi usada pra entrar no flow guest) */
       STORAGE.remove('mm_checkout_mode');
 
+      /* Liga debug do draft — expose pra user inspecionar no console.
+         Desativa com: window._mmDraftDebug = false */
+      if (typeof window._mmDraftDebug === 'undefined') window._mmDraftDebug = true;
+
       buildOnepageLayout(snap, prefilledEmail);
       bindOnepageEvents();
+
+      /* Restaura draft salvo (campos que o user já tinha digitado antes do reload) */
+      var draft = restoreOnepageDraft();
+
+      /* Render inicial do frete a partir do snapshot do cart — Magazord
+         onepage não expõe modalidades (.servico-frete), só o valor final.
+         O snapshot tem nome+prazo+opções porque foi salvo no cart. */
+      if (snap && snap.shipping !== null && snap.shipping !== undefined) {
+        renderFreteResult({
+          value: snap.shipping,
+          name: snap.shippingName || '',
+          deadline: snap.shippingDeadline || '',
+          city: snap.shippingCity || '',
+          options: snap.shippingOptions || []
+        });
+      }
 
       /* Garante que o tab "Compra sem cadastro" do Magazord esteja ativo
          (caso não esteja por default) — clicamos no link nativo */
