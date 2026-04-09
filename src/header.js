@@ -81,17 +81,30 @@
       '      <a href="/outlet" class="mm-h-nav-link">Outlet</a>',
       '    </li>',
       '  </ul>',
-      '</nav>'
+      '</nav>',
+      '<div class="mm-h-search-overlay" id="mm-h-search-overlay" hidden role="dialog" aria-modal="true" aria-label="Buscar">',
+      '  <div class="mm-h-search-backdrop"></div>',
+      '  <div class="mm-h-search-inner">',
+      '    <button class="mm-h-search-close" id="mm-h-search-close" type="button" aria-label="Fechar busca">',
+      '      <span aria-hidden="true">×</span>',
+      '    </button>',
+      '    <form action="/busca" method="get" class="mm-h-search-form">',
+      '      <label for="mm-h-search-input" class="mm-h-search-label">O que você procura?</label>',
+      '      <input type="search" name="q" id="mm-h-search-input" placeholder="O que você procura?" autocomplete="off" />',
+      '    </form>',
+      '    <div class="mm-h-search-suggestions">',
+      '      <span class="mm-h-search-sug-label">Sugestões populares</span>',
+      '      <a href="/busca?q=mesa+de+jantar">Mesa de jantar</a>',
+      '      <a href="/busca?q=rack">Rack</a>',
+      '      <a href="/busca?q=guarda-roupas">Guarda-roupas</a>',
+      '      <a href="/busca?q=cristaleira">Cristaleira</a>',
+      '      <a href="/busca?q=aparador">Aparador</a>',
+      '    </div>',
+      '    <div class="mm-h-search-hint"><kbd>Esc</kbd> para fechar</div>',
+      '  </div>',
+      '</div>'
     ].join('\n');
     document.body.insertBefore(header, document.body.firstChild);
-
-    // Stub burger handler — drawer behavior ships in Phase 6
-    var burger = document.getElementById('mm-h-burger');
-    if (burger) {
-      burger.addEventListener('click', function () {
-        console.log('mm-header: drawer pending Phase 6');
-      });
-    }
 
     // Hover-intent for mega-menus (150ms delay to prevent accidental triggers)
     var navItems = header.querySelectorAll('.mm-h-nav-item[data-menu]');
@@ -137,6 +150,71 @@
     var ambientesLink = header.querySelector('.mm-h-nav-item[data-menu="ambientes"] > .mm-h-nav-link');
     if (ambientesLink) {
       ambientesLink.addEventListener('click', function (e) { e.preventDefault(); });
+    }
+
+    // Search overlay
+    var overlay = document.getElementById('mm-h-search-overlay');
+    var openBtn = document.getElementById('mm-h-buscar');
+    var closeBtn = document.getElementById('mm-h-search-close');
+    var searchInput = document.getElementById('mm-h-search-input');
+    var searchBackdrop = overlay && overlay.querySelector('.mm-h-search-backdrop');
+    var prevFocus = null;
+
+    function openSearch() {
+      if (!overlay) return;
+      prevFocus = document.activeElement;
+      overlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(function () { if (searchInput) searchInput.focus(); }, 50);
+    }
+    function closeSearch() {
+      if (!overlay) return;
+      overlay.hidden = true;
+      document.body.style.overflow = '';
+      if (prevFocus && prevFocus.focus) prevFocus.focus();
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openSearch);
+    if (closeBtn) closeBtn.addEventListener('click', closeSearch);
+    if (searchBackdrop) searchBackdrop.addEventListener('click', closeSearch);
+
+    // Keyboard: Esc closes overlay, `/` opens search when not typing
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay && !overlay.hidden) {
+        closeSearch();
+        return;
+      }
+      if (e.key === '/' && overlay && overlay.hidden) {
+        var tag = document.activeElement && document.activeElement.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !(document.activeElement && document.activeElement.isContentEditable)) {
+          e.preventDefault();
+          openSearch();
+        }
+      }
+    });
+
+    // Basic focus trap (Tab cycles inside overlay)
+    if (overlay) {
+      overlay.addEventListener('keydown', function (e) {
+        if (e.key !== 'Tab' || overlay.hidden) return;
+        var focusables = overlay.querySelectorAll('button, input, a[href]');
+        if (focusables.length === 0) return;
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault(); first.focus();
+        }
+      });
+    }
+
+    // Stub burger handler — drawer behavior ships in Phase 6
+    var burger = document.getElementById('mm-h-burger');
+    if (burger) {
+      burger.addEventListener('click', function () {
+        console.log('mm-header: drawer pending Phase 6');
+      });
     }
   }
 
