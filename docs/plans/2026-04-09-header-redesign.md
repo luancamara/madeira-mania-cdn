@@ -15,19 +15,33 @@
 
 ---
 
-## Phasing overview
+## Phasing overview (v1 — 3-item nav)
 
 | Phase | Scope | Risk | Blockers |
 |---|---|---|---|
-| 0 | Magazord API research for Móveis axis | LOW (research only) | None |
+| ~~0~~ | ~~Magazord API research~~ | ✅ **DONE** (2026-04-09) — see spec §13; pivot to 3-item nav | — |
 | 1 | Shell: topbar + header main + hide natives + body padding | MED (base layer) | None |
 | 2 | Nav row + Ambientes mega-menu (desktop) | LOW | Phase 1 |
-| 3 | Móveis mega-menu (depends on Phase 0 findings) | MED-HIGH | Phase 0 + Phase 2 |
+| ~~3~~ | ~~Móveis mega-menu~~ | **DEFERRED to v1.1** — see spec §13 rationale | — |
 | 4 | Search overlay | LOW | Phase 1 |
 | 5 | Sticky compact state (scroll behavior) | MED | Phase 1 |
-| 6 | Mobile drawer + responsive adaptations | MED | Phase 1 |
+| 6 | Mobile drawer + responsive adaptations (3-item nav in drawer) | MED | Phase 1 |
 | 7 | `/atendimento` page content (Magazord CMS, manual by Luan) | LOW | Phase 1 |
 | 8 | UAT + deploy (push + tag v1.0 move) | HIGH (production) | All phases + Luan UAT sign-off |
+
+**Phase 0 findings summary** (consolidated into spec §13, deleted from this plan):
+- Magazord `/v2/site/paginas` Pesquisa filter only accepts single scalar categoria — array valor and multi-filtros entries rejected silently
+- Parent categorias auto-aggregate children → Ambientes axis needs zero new pages
+- Cross-cutting Móveis requires either bulk product multi-categorization (148+ products touched, SEO risk) or manual CMS work (3-4h Luan time)
+- **Decision**: ship 3-item nav for v1, Móveis upgrade path for v1.1 is additive and non-blocking
+
+**Ambientes cat IDs (verified via GET /v2/site/categoria)** for Phase 2 mega-menu:
+- Sala de Estar → cat 56, URL `/sala-de-estar-9677307902`
+- Sala de Jantar → cat 65, URL `/sala-de-jantar-1916970475`
+- Cozinha → cat 74, URL `/cozinha-6327619447`
+- Bar e Café → cat 85, URL `/bar-e-cafe`
+- Quarto → cat 76, URL `/quarto-0961844589`
+- Escritório → cat 82, URL `/escritorio-899523853`
 
 **Phasing principle**: ship each phase as a green commit with visual validation. Luan can stop/redirect between phases. **No phase runs without Playwright validation.**
 
@@ -586,9 +600,6 @@ After the `.mm-h-main` div, before the closing of `header.innerHTML`:
     <li class="mm-h-nav-item" data-menu="ambientes">
       <a href="#" class="mm-h-nav-link">Ambientes</a>
     </li>
-    <li class="mm-h-nav-item" data-menu="moveis">
-      <a href="#" class="mm-h-nav-link">Móveis</a>
-    </li>
     <li class="mm-h-nav-item">
       <a href="/envio-imediato" class="mm-h-nav-link">Envio Imediato</a>
     </li>
@@ -603,7 +614,7 @@ After the `.mm-h-main` div, before the closing of `header.innerHTML`:
 
 ```bash
 git add src/header.js
-git commit -m "feat(header): nav row with 4 items (Ambientes, Moveis, Envio Imediato, Outlet)"
+git commit -m "feat(header): nav row with 3 items (Ambientes, Envio Imediato, Outlet)"
 ```
 
 ---
@@ -693,7 +704,7 @@ git commit -m "feat(header): nav row styles with hover underline animation"
 
 **Step 1: Append mega-menu HTML inside nav list**
 
-Inside the `data-menu="ambientes"` `<li>`, after the link, add:
+Inside the `data-menu="ambientes"` `<li>`, after the link, add. URLs verified via `GET /v2/site/paginas` — these are the real Magazord slugs for each ambiente top-level category page:
 
 ```html
 <div class="mm-h-mega" role="menu" aria-label="Ambientes">
@@ -875,82 +886,15 @@ git tag phase-2-nav-ambientes
 
 ---
 
-## Phase 3 — Móveis mega-menu (depends on Phase 0)
+## Phase 3 — Móveis mega-menu — DEFERRED to v1.1
 
-### Task 3.1: Apply Phase 0 strategy
+**Status**: removed from v1 scope after Magazord API investigation (2026-04-09). See spec §13 for full rationale.
 
-**Branches based on Strategy (A/B/C) from Phase 0:**
-
-#### If Strategy A (real Magazord categories via API):
-- Create new custom categories via API (one per aggregated type: Mesas, Cadeiras, etc.)
-- Document the new category IDs
-- Use these URLs in the mega-menu
-
-#### If Strategy B (facet filters):
-- Identify the query params Magazord supports (e.g. `/busca?tipo=mesas`)
-- Test each facet URL manually in browser — confirm results render correctly
-- Use these URLs in the mega-menu
-
-#### If Strategy C (hard-coded cross-links):
-- For each aggregated type, pick ONE representative ambiente URL (or create a static landing page listing multiple)
-- Example: "Mesas" → `/sala-de-jantar/mesas` (most common) + note in tooltip/footer "também disponível em Sala de Estar, Cozinha, Quarto"
-- Least elegant; fallback only
-
-**Step 1: Update `src/header.js` with Móveis mega-menu HTML**
-
-```html
-<!-- Inside data-menu="moveis" li -->
-<div class="mm-h-mega" role="menu" aria-label="Móveis">
-  <div class="mm-h-mega-inner">
-    <div class="mm-h-mega-col">
-      <h3 class="mm-h-mega-heading">Mesas & Cadeiras</h3>
-      <ul>
-        <li><a href="[STRATEGY-DEPENDENT URL]">Mesas de Jantar</a></li>
-        <li><a href="[...]">Mesas de Centro</a></li>
-        <li><a href="[...]">Mesas de Cabeceira</a></li>
-        <li><a href="[...]">Cadeiras</a></li>
-        <li><a href="[...]">Banquetas</a></li>
-      </ul>
-    </div>
-    <div class="mm-h-mega-col">
-      <h3 class="mm-h-mega-heading">Guarda & Apoio</h3>
-      <ul>
-        <li><a href="[...]">Guarda-Roupas</a></li>
-        <li><a href="[...]">Cômodas</a></li>
-        <li><a href="[...]">Aparadores</a></li>
-        <li><a href="[...]">Buffets</a></li>
-        <li><a href="[...]">Cristaleiras</a></li>
-      </ul>
-    </div>
-    <div class="mm-h-mega-col">
-      <h3 class="mm-h-mega-heading">Estantes & Quarto</h3>
-      <ul>
-        <li><a href="[...]">Estantes</a></li>
-        <li><a href="[...]">Racks</a></li>
-        <li><a href="[...]">Home Theaters</a></li>
-        <li><a href="[...]">Painéis</a></li>
-        <li><a href="[...]">Cabeceiras</a></li>
-        <li><a href="[...]">Escrivaninhas</a></li>
-      </ul>
-    </div>
-  </div>
-</div>
-```
-
-**Step 2: Build + validate**
-
-```bash
-bash ./build.sh && cd /tmp/mm-validation && node validate-header-p2.mjs
-```
-
-(Reuse p2 script, add hover step for `[data-menu="moveis"]`)
-
-**Step 3: Commit**
-
-```bash
-git add src/header.js dist/js/madeira-mania.js
-git commit -m "feat(header): Moveis mega-menu with cross-cutting types (strategy [A|B|C])"
-```
+**v1.1 upgrade path** (non-blocking, to be executed later):
+1. Luan creates manual collection pages in Magazord CMS admin (one per aggregated type: Mesas, Cadeiras, Aparadores, Guarda-Roupas, etc.)
+2. Collection pages use Magazord's native collection/coleção feature — not API-created Pesquisa pages (since those only accept single scalar filter)
+3. Once collection URLs exist, add a 4th nav item in `src/header.js`: `<li data-menu="moveis">` with mega-menu pointing to the new collection URLs
+4. Additive change — no risk to v1 behavior, no architectural impact
 
 ---
 
@@ -1262,12 +1206,6 @@ In JS, append to the left side: `<button class="mm-h-burger" id="mm-h-burger" ar
           <li><a href="/bar-e-cafe">Bar e Café</a></li>
           <li><a href="/quarto-0961844589">Quarto</a></li>
           <li><a href="/escritorio-899523853">Escritório</a></li>
-        </ul>
-      </details>
-      <details>
-        <summary>Móveis</summary>
-        <ul>
-          <!-- Populated same as mega-menu (Phase 3) -->
         </ul>
       </details>
       <a href="/envio-imediato">Envio Imediato</a>

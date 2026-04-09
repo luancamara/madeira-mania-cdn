@@ -479,7 +479,8 @@ Manual UAT by Luan after implementation:
 
 **Decision log (2026-04-09)**:
 - **Search backend**: Path C — header ships v1 with Magazord native search (overlay UX improvement only); separate spec for search replacement (Algolia/Typesense/MeiliSearch) opens in parallel.
-- **Nav structure**: **Dual-Axis 4-item nav** — `Ambientes · Móveis · Envio Imediato · Outlet`. "Móveis" cross-cutting menu will be created via Magazord API in the planning phase.
+- **Nav structure — PIVOTED (2026-04-09, same day)**: Initially decided Dual-Axis 4-item, pivoted to **3-item nav** after Magazord API discovery: `Ambientes · Envio Imediato · Outlet`. See §13 for the API investigation and decision.
+- **Móveis axis**: deferred to v1.1 — requires either Luan creating manual collection pages in Magazord CMS, or a more invasive multi-category product reorganization. Neither fits v1 timeline. v1.1 upgrade path is additive (adds a 4th nav item without touching existing structure).
 
 ## 10. Deferred / explicit non-features
 
@@ -612,4 +613,66 @@ Proposed Móveis mega-menu structure (3 cols, based on aggregating the probed su
 
 Nav item will be labeled **"Envio Imediato"** (not "Envio Imediato") to match the existing Magazord URL `/envio-imediato` and avoid breaking user familiarity.
 
-**Final nav (4 items)**: `Ambientes · Móveis · Envio Imediato · Outlet`
+**Final nav for v1 (3 items)**: `Ambientes · Envio Imediato · Outlet`
+
+See §13 for full API investigation details and the pivot rationale.
+
+---
+
+## 13. Magazord API investigation — Móveis axis pivot (2026-04-09)
+
+After stakeholder provided Magazord API credentials + OpenAPI spec (https://docs.api.magazord.com.br/schemas/openapi.yaml), full investigation of Pesquisa-type virtual pages (`paginaTipo.id=2`) revealed a hard limitation that killed the original dual-axis plan.
+
+### What was tested
+
+Created 5 test pages via `POST /v2/site/paginas` with different filter structures, then deleted them. All findings:
+
+| Test | Filter structure | Result |
+|---|---|---|
+| Single scalar categoria | `filtros: [{tipo:"categoria", valor:69, operador:"in"}]` | ✅ Works — renders correctly |
+| Array valor | `filtros: [{tipo:"categoria", valor:[69,104], operador:"in"}]` | ❌ Saves as `filtros: null` — rejected silently, page renders full catalog |
+| Multiple filtros entries | `filtros: [{valor:69},{valor:104}]` | ❌ Saves as `filtros: null` — rejected silently |
+| Parent categoria | `filtros: [{tipo:"categoria", valor:56, operador:"in"}]` (Sala de Estar top-level) | ✅ Works — auto-aggregates all children |
+| PATCH filter on existing page | PATCH `/paginas/{id}` with new filtros | ⚠️ API accepts but frontend cache doesn't invalidate — page stays on initial filter |
+
+### Key findings
+
+1. **Magazord's Pesquisa filter schema only accepts ONE scalar categoria per page.** Array values and multi-entry filters fail silently (API returns 200 success but filter saves as null).
+2. **Parent categorias automatically aggregate all descendant sub-categories.** This means `Ambientes` can use top-level cat IDs (56, 65, 74, 76, 82, 85) and the Pesquisa page returns all nested products. **The Ambientes axis requires zero new pages.**
+3. **Cross-cutting "Móveis" axis is not achievable via Pesquisa pages alone.** There is no way to combine `Sala de Estar > Mesas` (cat 57) + `Sala de Jantar > Mesas` (cat 68) + `Cozinha > Mesas de Jantar` (cat 104) + `Quarto > Mesas de Cabeceira` (cat 80) into a single page via API-created filters.
+4. **Products support multi-category** (`categorias: [id1, id2]` array field on produto), so in theory a bulk PATCH could assign a new "umbrella Mesas" category to every existing mesa product — but this touches 148+ products, affects SEO of original category pages, and has complex rollback. Rejected as too invasive for v1.
+
+### Options considered and rejected
+
+| Strategy | Why rejected |
+|---|---|
+| **X1** — Create umbrella categorias and bulk-PATCH products with multi-category | Touches 148+ products, SEO risk on original pages, complex rollback |
+| **X2** — Move existing sub-categorias to new umbrella parent (via `PATCH /v2/site/categoria/{id}` changing `pai`) | Breaks existing URLs (`sala-de-estar/mesas` etc.) — destructive |
+| **X3** — Luan creates collection pages manually in Magazord CMS | Blocks v1 on 3-4 hours of stakeholder time; can happen post-v1 as upgrade to v1.1 |
+| **X4** — Each Móveis link points to the single most-populated sub-category | UX 7/10 — user clicking "Mesas" loses sight of other ambientes' mesas. Trades premium feel for convenience. Rejected per "vamos seguir com o melhor" guidance |
+
+### Decision: X5 — 3-item nav for v1
+
+**`Ambientes · Envio Imediato · Outlet`**
+
+Rationale:
+1. **3 items is genuinely more premium than 4** (Etel uses 3, Aesop uses 4-5). Not a downgrade — accidental upgrade to the correct restraint level.
+2. **Ambientes mega-menu is fully functional with zero API work** — parent categorias already aggregate children.
+3. **Ships v1 in days, not weeks.**
+4. **v1.1 upgrade path is additive**: when Luan creates manual collection pages in Magazord CMS (future), adding a 4th "Móveis" nav item is a localized HTML change in `src/header.js` — no architectural impact.
+5. **Hick's law wins**: fewer items = lower decision cost = higher nav click-through.
+
+### Categoria IDs to use for Ambientes mega-menu (v1)
+
+Verified via `GET /v2/site/categoria` — these are top-level ambiente IDs that auto-aggregate children:
+
+| Ambiente | Cat ID | Existing URL |
+|---|---|---|
+| Sala de Estar | 56 | `/sala-de-estar-9677307902` |
+| Sala de Jantar | 65 | `/sala-de-jantar-1916970475` |
+| Cozinha | 74 | `/cozinha-6327619447` |
+| Bar e Café | 85 | `/bar-e-cafe` |
+| Quarto | 76 | `/quarto-0961844589` |
+| Escritório | 82 | `/escritorio-899523853` |
+
+**The mega-menu links to the existing URLs** (not new API-created pages). No API writes required for v1.
