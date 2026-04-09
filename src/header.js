@@ -668,20 +668,50 @@
     ];
     var cartBagSvg = '<svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14 8 20v22a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V20l-4-6z"/><path d="M8 20h32"/><path d="M32 28a8 8 0 0 1-16 0"/></svg>';
 
+    function isCartReallyEmpty(content) {
+      if (!content) return false;
+      // Count REAL cart items (exclude our suggestion cards)
+      var allItems = content.querySelectorAll('.cart-item');
+      var realItems = 0;
+      for (var i = 0; i < allItems.length; i++) {
+        if (!allItems[i].closest('.mm-cart-empty-wrapper')) realItems++;
+      }
+      if (realItems > 0) return false;
+
+      // No real items — check if native empty box is VISIBLE (not just present)
+      var emptyBox = content.querySelector('.box-empty-cart');
+      if (emptyBox) {
+        var style = getComputedStyle(emptyBox);
+        // If it's hidden via display:none the cart is not empty either
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        return true;
+      }
+      // No items AND no empty box — treat as empty (safer default)
+      return true;
+    }
+
+    function removeEmptyEnhancement(content) {
+      if (!content) return;
+      content.classList.remove('mm-cart-has-empty-enhancement');
+      var existingWrap = content.querySelector(':scope > .mm-cart-empty-wrapper');
+      if (existingWrap) existingWrap.remove();
+    }
+
     function enhanceEmptyCart(drawer) {
       if (!drawer) return;
       var content = drawer.querySelector('.content-cart');
       if (!content) return;
-      var emptyBox = content.querySelector('.box-empty-cart');
-      if (!emptyBox) return; // not empty, nothing to do
-      if (emptyBox.dataset.mmEnhanced) return;
-      emptyBox.dataset.mmEnhanced = '1';
 
-      // Build our custom empty state node, leave the native one untouched
-      // but hidden via CSS class on the wrapper. Using a sibling keeps us
-      // safe from React re-renders clobbering our markup — if React wipes
-      // content, the box-empty-cart returns without mmEnhanced and we
-      // re-inject on next open.
+      // Self-healing: if cart has items, always clean up our enhancement
+      if (!isCartReallyEmpty(content)) {
+        removeEmptyEnhancement(content);
+        return;
+      }
+
+      // Cart is empty — don't re-inject if already enhanced
+      if (content.querySelector(':scope > .mm-cart-empty-wrapper')) return;
+
+      // Build our custom empty state node (appended as sibling to native box)
       var wrap = document.createElement('div');
       wrap.className = 'mm-cart-empty-wrapper';
       var productsHtml = '';
@@ -720,6 +750,16 @@
       // Try to enhance empty state — runs every open so if React re-renders
       // the drawer contents between opens, we re-inject.
       enhanceEmptyCart(drawer);
+      // Also observe changes to .content-cart so adding an item removes the
+      // empty enhancement and vice-versa (self-healing)
+      var content = drawer.querySelector('.content-cart');
+      if (content && !content.dataset.mmObserved) {
+        content.dataset.mmObserved = '1';
+        var observer = new MutationObserver(function () {
+          enhanceEmptyCart(drawer);
+        });
+        observer.observe(content, { childList: true, subtree: true, attributes: false });
+      }
       // Force transform via inline style (bypasses Tailwind class system)
       drawer.style.transform = 'translateX(0)';
       drawer.style.transition = 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)';
