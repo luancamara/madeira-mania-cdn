@@ -997,15 +997,15 @@
     var cartBagSvg = '<svg viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14 8 20v22a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V20l-4-6z"/><path d="M8 20h32"/><path d="M32 28a8 8 0 0 1-16 0"/></svg>';
 
     function getCartCountFromSources() {
-      // Source 1 (CANONICAL): Zord.get("cart.size") — Magazord's internal
-      // in-memory store. Inspected via Zord.checkout.atualizaPreview source,
-      // which uses exactly this key. Zord.set("cart.size", N) is what
-      // Magazord calls to update it. This is THE source of truth.
+      // Source 1: Zord.get("cart.size") — Magazord's internal in-memory store.
+      // IMPORTANT: only trust Zord when count > 0. When Zord says 0, it can
+      // be stale (e.g. reactItemAddedToCart already fired but Zord.set hasn't
+      // run yet). Fall through to DOM-based sources for confirmation.
       try {
         if (typeof Zord !== 'undefined' && typeof Zord.get === 'function') {
           var size = Zord.get('cart.size');
-          if (typeof size === 'number') return size;
-          if (typeof size === 'string' && /^\d+$/.test(size)) return parseInt(size, 10);
+          if (typeof size === 'number' && size > 0) return size;
+          if (typeof size === 'string' && /^\d+$/.test(size) && parseInt(size, 10) > 0) return parseInt(size, 10);
         }
       } catch (e) {}
       // Source 2: Magazord's native counter element .item-ctn — updated by
