@@ -10693,16 +10693,21 @@
   
       /* Submit final — direciona pro form nativo Magazord correto */
       function submitFinalizar() {
+        console.log('[mm-checkout] submitFinalizar() entry', { submitting: state.submitting, activeForma: state.activeForma });
         if (state.submitting) return;
   
         var forma = state.activeForma;
         var btn = layout.querySelector('.mm-op-finalizar');
-        if (!btn) return;
+        if (!btn) {
+          console.log('[mm-checkout] submitFinalizar: no .mm-op-finalizar btn');
+          return;
+        }
   
         /* Validação por forma — usa validateField (com textos específicos) */
         if (forma === 'cartao') {
           var fields = ['mm-pay-card-num', 'mm-pay-card-name', 'mm-pay-card-exp', 'mm-pay-card-cvv', 'mm-pay-card-installments'];
           var errors = fields.filter(function(id) { return !validateField(id); });
+          console.log('[mm-checkout] validation', { errorCount: errors.length, errors: errors });
   
           if (errors.length) {
             var first = document.getElementById(errors[0]);
@@ -10858,28 +10863,110 @@
           }, 600);
         }
   
-        /* Para cartão: espera o token do MercadoPago ficar pronto.
-           MP SDK tokeniza async (~1-3 seg após digitar). Submeter antes
-           causa rejeição silenciosa. */
-        if (forma === 'cartao') {
+        /* Para cartão: gera o token do MercadoPago DIRETAMENTE.
+           Magazord usa SDK v1 com chave 661ca8d3-cf8a-493a-987d-9cb3f4e685b1.
+           Em vez de esperar o listener interno (que depende de eventos
+           específicos que nossa sincronização programática não dispara),
+           chamamos Mercadopago.createToken() manualmente com os dados
+           do formulário custom. */
+        function resetSubmitState() {
+          state.submitting = false;
+          btn.classList.remove('is-loading');
+          btn.removeAttribute('aria-busy');
+          var lblReset = btn.querySelector('.mm-op-finalizar-label');
+          if (lblReset) lblReset.textContent = 'Finalizar compra';
+          var ov = document.getElementById('mm-op-overlay');
+          if (ov) ov.remove();
+        }
+  
+        function fallbackWaitForToken() {
           var tokenStart = Date.now();
           var TOKEN_MAX_WAIT = 10000;
           (function waitForToken() {
-            var tokenEl = document.getElementById('pag-cartao-token-mp');
-            var tokenVal = tokenEl ? (tokenEl.value || '').trim() : '';
+            var tokenEl2 = document.getElementById('pag-cartao-token-mp');
+            var tokenVal = tokenEl2 ? (tokenEl2.value || '').trim() : '';
             var tokenReady = tokenVal && tokenVal !== 'loading...' && tokenVal.length > 10;
-            if (tokenReady) {
-              dbg('token ready', { length: tokenVal.length });
-              doSubmit();
-              return;
-            }
+            if (tokenReady) { dbg('fallback: token ready'); doSubmit(); return; }
             if (Date.now() - tokenStart >= TOKEN_MAX_WAIT) {
-              dbg('token timeout, submitting anyway', { lastVal: tokenVal });
+              dbg('fallback: timeout', { lastVal: tokenVal });
               doSubmit();
               return;
             }
             setTimeout(waitForToken, 200);
           })();
+        }
+  
+        function generateMpTokenAndSubmit() {
+          dbg('generateMpTokenAndSubmit() start');
+  
+          if (typeof Mercadopago === 'undefined') {
+            dbg('Mercadopago global missing, falling back to wait strategy');
+            fallbackWaitForToken();
+            return;
+          }
+  
+          var tokenEl = document.getElementById('pag-cartao-token-mp');
+          var existing = tokenEl ? (tokenEl.value || '').trim() : '';
+          if (existing && existing !== 'loading...' && existing.length > 10) {
+            dbg('token already present, submitting', { len: existing.length });
+            doSubmit();
+            return;
+          }
+  
+          var rawNum = (document.getElementById('mm-pay-card-num')?.value || '').replace(/\D/g, '');
+          var rawExp = (document.getElementById('mm-pay-card-exp')?.value || '').replace(/\D/g, '');
+          var rawCvv = (document.getElementById('mm-pay-card-cvv')?.value || '').replace(/\D/g, '');
+          var cardName = (document.getElementById('mm-pay-card-name')?.value || '').trim();
+          var docNumber = ((userData && userData.cpf) || document.getElementById('mm-op-cpf')?.value || '').replace(/\D/g, '');
+  
+          if (!rawNum || !rawExp || !rawCvv || !cardName || !docNumber) {
+            dbg('missing card fields', { num: rawNum.length, exp: rawExp.length, cvv: rawCvv.length, name: !!cardName, doc: docNumber.length });
+            alert('Preencha todos os dados do cartão antes de finalizar.');
+            resetSubmitState();
+            return;
+          }
+  
+          var month = rawExp.slice(0, 2);
+          var year = rawExp.length === 4 ? '20' + rawExp.slice(2) : rawExp.slice(2);
+  
+          dbg('calling Mercadopago.createToken', { numLen: rawNum.length, month: month, year: year });
+  
+          try {
+            Mercadopago.createToken({
+              cardNumber: rawNum,
+              securityCode: rawCvv,
+              cardExpirationMonth: month,
+              cardExpirationYear: year,
+              cardholderName: cardName,
+              docType: 'CPF',
+              docNumber: docNumber
+            }, function (status, response) {
+              dbg('createToken callback', { status: status, hasId: !!(response && response.id), err: response && response.error });
+              if (status === 200 || status === 201) {
+                if (tokenEl) {
+                  var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  setter.call(tokenEl, response.id);
+                  tokenEl.dispatchEvent(new Event('input', { bubbles: true }));
+                  tokenEl.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                doSubmit();
+              } else {
+                var msg = 'Não foi possível validar os dados do cartão.';
+                if (response && response.cause && response.cause[0] && response.cause[0].description) {
+                  msg = response.cause[0].description;
+                }
+                alert(msg);
+                resetSubmitState();
+              }
+            });
+          } catch (e) {
+            dbg('createToken exception', e.message);
+            fallbackWaitForToken();
+          }
+        }
+  
+        if (forma === 'cartao') {
+          generateMpTokenAndSubmit();
         } else {
           setTimeout(doSubmit, 500);
         }
