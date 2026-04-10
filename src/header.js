@@ -47,10 +47,10 @@
       '  <div class="mm-h-main-right">',
       '    <a class="mm-h-action" href="/wishlist">' + svg.heart + '<span>Favoritos</span></a>',
       '    <a class="mm-h-action" href="/login">' + svg.user + '<span>Conta</span></a>',
-      '    <a class="mm-h-action" href="/checkout/cart" id="mm-h-cart" aria-label="Carrinho, 0 itens" aria-live="polite">',
+      '    <button class="mm-h-action" type="button" id="mm-h-cart" aria-label="Carrinho, 0 itens" aria-live="polite">',
       '      <span class="mm-h-cart-icon">' + svg.bag + '<span class="mm-h-cart-badge" id="mm-h-cart-count" aria-hidden="true" hidden>0</span></span>',
       '      <span>Carrinho</span>',
-      '    </a>',
+      '    </button>',
       '  </div>',
       '</div>',
       '<nav class="mm-h-nav" role="navigation" aria-label="Categorias">',
@@ -153,7 +153,7 @@
       '      <details class="mm-h-drawer-section">',
       '        <summary>Sala de Estar</summary>',
       '        <ul>',
-      '          <li><a href="/sala-de-estar-9677307902">Ver todos</a></li>',
+      '          <li class="mm-h-drawer-viewall"><a href="/sala-de-estar-9677307902">Ver todos →</a></li>',
       '          <li><a href="/sala-de-estar/mesas">Mesas</a></li>',
       '          <li><a href="/sala-de-estar/racks">Racks para TV</a></li>',
       '          <li><a href="/sala-de-estar/estantes">Estantes</a></li>',
@@ -169,7 +169,7 @@
       '      <details class="mm-h-drawer-section">',
       '        <summary>Sala de Jantar</summary>',
       '        <ul>',
-      '          <li><a href="/sala-de-jantar-1916970475">Ver todos</a></li>',
+      '          <li class="mm-h-drawer-viewall"><a href="/sala-de-jantar-1916970475">Ver todos →</a></li>',
       '          <li><a href="/sala-de-jantar/mesas">Mesas</a></li>',
       '          <li><a href="/sala-de-jantar/cadeiras">Cadeiras</a></li>',
       '          <li><a href="/sala-de-jantar/aparadores">Aparadores</a></li>',
@@ -183,7 +183,7 @@
       '      <details class="mm-h-drawer-section">',
       '        <summary>Cozinha</summary>',
       '        <ul>',
-      '          <li><a href="/cozinha-6327619447">Ver todos</a></li>',
+      '          <li class="mm-h-drawer-viewall"><a href="/cozinha-6327619447">Ver todos →</a></li>',
       '          <li><a href="/cozinha/mesas-de-jantar">Mesas de Jantar</a></li>',
       '          <li><a href="/cozinha/banquetas">Banquetas</a></li>',
       '          <li><a href="/cozinha/cristaleiras">Cristaleiras</a></li>',
@@ -193,7 +193,7 @@
       '      <details class="mm-h-drawer-section">',
       '        <summary>Quarto</summary>',
       '        <ul>',
-      '          <li><a href="/quarto-0961844589">Ver todos</a></li>',
+      '          <li class="mm-h-drawer-viewall"><a href="/quarto-0961844589">Ver todos →</a></li>',
       '          <li><a href="/quarto/cabeceiras">Cabeceiras</a></li>',
       '          <li><a href="/quarto/comodas">Cômodas</a></li>',
       '          <li><a href="/quarto/guardaroupas">Guarda-Roupas</a></li>',
@@ -204,7 +204,7 @@
       '      <details class="mm-h-drawer-section">',
       '        <summary>Bar e Café</summary>',
       '        <ul>',
-      '          <li><a href="/bar-e-cafe">Ver todos</a></li>',
+      '          <li class="mm-h-drawer-viewall"><a href="/bar-e-cafe">Ver todos →</a></li>',
       '          <li><a href="/bar-e-cafe/bares">Bares</a></li>',
       '          <li><a href="/bar-e-cafe/cantinhos-do-cafe">Cantinhos do Café</a></li>',
       '        </ul>',
@@ -212,7 +212,7 @@
       '      <details class="mm-h-drawer-section">',
       '        <summary>Escritório</summary>',
       '        <ul>',
-      '          <li><a href="/escritorio-899523853">Ver todos</a></li>',
+      '          <li class="mm-h-drawer-viewall"><a href="/escritorio-899523853">Ver todos →</a></li>',
       '          <li><a href="/escritorio/escrivaninhas">Escrivaninhas</a></li>',
       '        </ul>',
       '      </details>',
@@ -398,11 +398,23 @@
       });
     }
 
-    // Search autocomplete — debounced filter + "Buscar por" CTA + recent searches
-    // NOTE: Magazord has no JSON autocomplete endpoint (probed 2026-04-09) and /busca
-    // renders products client-side via React, so raw fetch() can't scrape results.
-    // Strategy: instant "Buscar por '<q>'" CTA + filtered popular terms + recent
-    // searches from localStorage. Honest, zero-latency, no broken promises.
+    // Search autocomplete — live visual results + CTA + recent searches.
+    //
+    // STRATEGY (revised 2026-04-09 after re-probing Magazord):
+    // Previous session concluded "no JSON endpoint" and used static popular
+    // terms only. Re-investigation showed that `/busca?q=<query>` returns
+    // SSR HTML (202KB, ~30KB gzipped) with all products as static markup
+    // (ul.product-list > li with img, title, price, slug). We can fetch
+    // this from the customer's session (AWS WAF cookie already set) and
+    // parse with DOMParser to extract top N products for live autocomplete.
+    //
+    // Implementation:
+    //   • Debounce 300ms after input stops
+    //   • Min 3 chars before fetching (below 3 = popular filter only)
+    //   • Session-scoped cache (sessionStorage) with 10min TTL per query
+    //   • AbortController cancels stale in-flight requests
+    //   • Extracts first 6 products: href, title, img, price, oldPrice, discount
+    //   • Graceful fallback: on network/parse error, shows CTA + popular only
     var searchResults = document.getElementById('mm-h-search-results');
     var searchSuggestions = document.getElementById('mm-h-search-suggestions');
     var POPULAR_TERMS = [
@@ -444,6 +456,181 @@
     var searchIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
     var clockIconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 
+    // ------- Live product search (fetch /busca?q=X, parse SSR HTML) -------
+    var SEARCH_CACHE_KEY = 'mm_search_cache_v1';
+    var SEARCH_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+    var MAX_CACHE_ENTRIES = 20;
+    var searchAbortController = null;
+
+    function loadSearchCache() {
+      try { return JSON.parse(sessionStorage.getItem(SEARCH_CACHE_KEY) || '{}'); }
+      catch (e) { return {}; }
+    }
+    function saveSearchCache(cache) {
+      try {
+        // Trim to last MAX_CACHE_ENTRIES by timestamp
+        var keys = Object.keys(cache);
+        if (keys.length > MAX_CACHE_ENTRIES) {
+          keys.sort(function (a, b) { return cache[a].ts - cache[b].ts; });
+          for (var i = 0; i < keys.length - MAX_CACHE_ENTRIES; i++) delete cache[keys[i]];
+        }
+        sessionStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(cache));
+      } catch (e) { /* quota exceeded — ignore */ }
+    }
+    function getCachedSearch(q) {
+      var cache = loadSearchCache();
+      var entry = cache[q.toLowerCase()];
+      if (!entry) return null;
+      if (Date.now() - entry.ts > SEARCH_CACHE_TTL_MS) return null;
+      return entry.products;
+    }
+    function setCachedSearch(q, products) {
+      var cache = loadSearchCache();
+      cache[q.toLowerCase()] = { ts: Date.now(), products: products };
+      saveSearchCache(cache);
+    }
+
+    // Parse the /busca HTML. Product data is embedded as SSR JSON inside an
+    // inline script: `var dataVitrine = { id, itens: [...] }`. This is what
+    // the Magazord React component hydrates from — it's the authoritative
+    // source. We extract just the `itens` array via bracket-balanced slice
+    // and JSON.parse it (keys are quoted inside the array, so it's valid JSON).
+    //
+    // Fields per item that we use:
+    //   nome, titulo     — product name
+    //   link             — PDP slug (starts with /)
+    //   midia_url        — primary thumbnail
+    //   valor            — current price (string, e.g. "3651.60")
+    //   valor_de         — old price (number)
+    //   percentual_off   — discount % (number)
+    //   nota             — rating (e.g. "4.97")
+    //   avaliacoes       — review count
+    function extractItensJson(html) {
+      // Find the itens array inside dataVitrine. There may be multiple
+      // dataVitrine blocks on pages with several vitrines — pick the first
+      // one that has 1+ items (the search result block).
+      var marker = 'itens:';
+      var idx = 0;
+      while ((idx = html.indexOf(marker, idx)) !== -1) {
+        // Skip forward to the `[`
+        var bracketIdx = html.indexOf('[', idx);
+        if (bracketIdx === -1) return null;
+        // Count brackets and parse strings properly (strings can contain
+        // brackets like "[12,\"3651.60\"]" nested arrays too)
+        var depth = 0;
+        var inString = false;
+        var escape = false;
+        var end = -1;
+        for (var i = bracketIdx; i < html.length; i++) {
+          var ch = html.charAt(i);
+          if (escape) { escape = false; continue; }
+          if (ch === '\\') { escape = true; continue; }
+          if (ch === '"') { inString = !inString; continue; }
+          if (inString) continue;
+          if (ch === '[') depth++;
+          else if (ch === ']') {
+            depth--;
+            if (depth === 0) { end = i; break; }
+          }
+        }
+        if (end !== -1) {
+          var json = html.substring(bracketIdx, end + 1);
+          try {
+            var arr = JSON.parse(json);
+            if (Array.isArray(arr) && arr.length > 0) return arr;
+          } catch (e) {}
+        }
+        idx = bracketIdx + 1;
+      }
+      return null;
+    }
+
+    function parseSearchHtml(html) {
+      var itens = extractItensJson(html);
+      if (!itens) return [];
+      var out = [];
+      for (var i = 0; i < itens.length && out.length < 6; i++) {
+        var it = itens[i];
+        if (!it) continue;
+        var title = it.titulo || it.nome || '';
+        if (!title) continue;
+        var href = it.link || '';
+        if (href && href.charAt(0) !== '/' && href.indexOf('http') !== 0) href = '/' + href;
+        var img = it.midia_url || '';
+        // valor is a string like "3651.60" — format to BRL
+        var valorNum = parseFloat(it.valor);
+        var valorDeNum = parseFloat(it.valor_de);
+        var priceText = !isNaN(valorNum)
+          ? 'R$ ' + valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '';
+        var oldPriceText = (!isNaN(valorDeNum) && valorDeNum > valorNum)
+          ? 'R$ ' + valorDeNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '';
+        var discountText = '';
+        if (typeof it.percentual_off === 'number' && it.percentual_off > 0) {
+          discountText = '-' + Math.round(it.percentual_off) + '%';
+        }
+        out.push({
+          href: href,
+          title: title,
+          img: img,
+          price: priceText,
+          oldPrice: oldPriceText,
+          discount: discountText
+        });
+      }
+      return out;
+    }
+
+    function fetchSearchProducts(q) {
+      // Returns a Promise<Product[]> — cached, debounced, abortable
+      var key = q.toLowerCase().trim();
+      if (!key || key.length < 3) return Promise.resolve([]);
+      var cached = getCachedSearch(key);
+      if (cached) return Promise.resolve(cached);
+      if (searchAbortController) {
+        try { searchAbortController.abort(); } catch (e) {}
+      }
+      searchAbortController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var url = '/busca?q=' + encodeURIComponent(key);
+      var opts = { credentials: 'same-origin', headers: { 'Accept': 'text/html' } };
+      if (searchAbortController) opts.signal = searchAbortController.signal;
+      return fetch(url, opts)
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function (html) {
+          var products = parseSearchHtml(html);
+          setCachedSearch(key, products);
+          return products;
+        })
+        .catch(function (e) {
+          if (e && e.name === 'AbortError') return null; // stale request — ignore
+          return []; // network/parse error — treat as "no results"
+        });
+    }
+
+    // Render a product card row. Expects a product parsed by parseSearchHtml.
+    function renderProductCard(p) {
+      var imgHtml = p.img
+        ? '<img src="' + escHtml(p.img) + '" alt="" loading="lazy" width="64" height="64"/>'
+        : '<div class="mm-h-search-product-noimg"></div>';
+      var priceHtml = p.price
+        ? '<span class="mm-h-search-product-price">' + escHtml(p.price) + '</span>'
+        : '';
+      var oldHtml = p.oldPrice && p.oldPrice !== p.price
+        ? '<span class="mm-h-search-product-oldprice">' + escHtml(p.oldPrice) + '</span>'
+        : '';
+      var discountHtml = p.discount
+        ? '<span class="mm-h-search-product-discount">' + escHtml(p.discount) + '</span>'
+        : '';
+      return '<a class="mm-h-search-product" href="' + escHtml(p.href) + '" data-recent="1">' +
+        '<span class="mm-h-search-product-thumb">' + imgHtml + discountHtml + '</span>' +
+        '<span class="mm-h-search-product-body">' +
+          '<span class="mm-h-search-product-name">' + escHtml(p.title) + '</span>' +
+          '<span class="mm-h-search-product-prices">' + oldHtml + priceHtml + '</span>' +
+        '</span>' +
+      '</a>';
+    }
+
     function renderEmptyState() {
       if (!searchResults) return;
       var recents = getRecentSearches();
@@ -471,24 +658,25 @@
       if (searchSuggestions) searchSuggestions.hidden = false;
     }
 
-    function renderQueryResults(q) {
-      if (!searchResults) return;
+    // Render the CTA + popular matches sync portion. Returns the current qTrim
+    // so the async product fetch can verify it's still current before injecting.
+    function renderSyncQueryResults(q) {
+      if (!searchResults) return '';
       if (searchSuggestions) searchSuggestions.hidden = true;
       var qTrim = q.trim();
-      if (qTrim.length < 2) { renderEmptyState(); return; }
+      if (qTrim.length < 2) { renderEmptyState(); return ''; }
       var qLower = qTrim.toLowerCase();
-      // Filter popular terms that match
       var matches = POPULAR_TERMS.filter(function (t) {
         return t.label.toLowerCase().indexOf(qLower) !== -1 || t.q.toLowerCase().indexOf(qLower) !== -1;
-      }).slice(0, 5);
-      var html = '<ul class="mm-h-search-list">';
+      }).slice(0, 4);
+      var html = '';
       // Primary "Buscar por" CTA (always first)
+      html += '<ul class="mm-h-search-list">';
       html += '<li><a class="mm-h-search-result mm-h-search-result-primary" href="/busca?q=' + encodeURIComponent(qTrim) + '" data-recent="1">' +
         '<span class="mm-h-search-result-icon">' + searchIconSvg + '</span>' +
         '<span class="mm-h-search-result-label">Buscar por <strong>&ldquo;' + escHtml(qTrim) + '&rdquo;</strong></span>' +
         '<span class="mm-h-search-result-arrow" aria-hidden="true">&rarr;</span>' +
         '</a></li>';
-      // Filtered popular matches
       for (var i = 0; i < matches.length; i++) {
         var m = matches[i];
         html += '<li><a class="mm-h-search-result" href="/busca?q=' + encodeURIComponent(m.q) + '" data-recent="1">' +
@@ -497,8 +685,46 @@
           '</a></li>';
       }
       html += '</ul>';
+      // Product section placeholder (populated asynchronously by fetchSearchProducts)
+      if (qTrim.length >= 3) {
+        html += '<div class="mm-h-search-products-section" data-q="' + escHtml(qTrim) + '">' +
+          '<span class="mm-h-search-sug-label">Produtos</span>' +
+          '<div class="mm-h-search-products-grid mm-h-search-products-loading">' +
+            '<div class="mm-h-search-product-skel"></div>' +
+            '<div class="mm-h-search-product-skel"></div>' +
+            '<div class="mm-h-search-product-skel"></div>' +
+            '<div class="mm-h-search-product-skel"></div>' +
+          '</div>' +
+        '</div>';
+      }
       searchResults.innerHTML = html;
       searchResults.hidden = false;
+      return qTrim;
+    }
+
+    function renderQueryResults(q) {
+      var qTrim = renderSyncQueryResults(q);
+      if (!qTrim || qTrim.length < 3) return;
+      // Async fetch + inject
+      fetchSearchProducts(qTrim).then(function (products) {
+        // Stale check: input may have changed while fetch was in flight
+        if (!searchInput) return;
+        var currentQ = (searchInput.value || '').trim();
+        if (currentQ !== qTrim) return; // user typed more, this result is stale
+        if (products === null) return; // AbortError from stale cancel
+        var section = searchResults && searchResults.querySelector('.mm-h-search-products-section[data-q="' + qTrim.replace(/"/g, '\\"') + '"]');
+        if (!section) return;
+        var grid = section.querySelector('.mm-h-search-products-grid');
+        if (!grid) return;
+        grid.classList.remove('mm-h-search-products-loading');
+        if (!products || products.length === 0) {
+          section.innerHTML = '<span class="mm-h-search-sug-label">Nenhum produto encontrado para &ldquo;' + escHtml(qTrim) + '&rdquo;</span>';
+          return;
+        }
+        var cards = '';
+        for (var i = 0; i < products.length; i++) cards += renderProductCard(products[i]);
+        grid.innerHTML = cards;
+      });
     }
 
     var searchDebounce = null;
@@ -509,7 +735,7 @@
         searchDebounce = setTimeout(function () {
           if (!val || val.trim().length < 2) renderEmptyState();
           else renderQueryResults(val);
-        }, 180);
+        }, 300);
       });
       // Wire up recent-search persistence on result click and form submit
       if (searchResults) {
@@ -551,12 +777,16 @@
       }, 100);
     }
     function closeDrawer() {
-      if (!drawer) return;
-      drawer.hidden = true;
+      if (!drawer || drawer.hidden) return;
+      // Play exit animation, then hide
+      drawer.classList.add('mm-h-drawer-closing');
       document.body.style.overflow = '';
-      // Return focus to burger
-      var burger = document.getElementById('mm-h-burger');
-      if (burger) burger.focus();
+      setTimeout(function () {
+        drawer.hidden = true;
+        drawer.classList.remove('mm-h-drawer-closing');
+        var burger = document.getElementById('mm-h-burger');
+        if (burger) burger.focus();
+      }, 320);
     }
 
     var burger = document.getElementById('mm-h-burger');
@@ -583,6 +813,56 @@
       }, { passive: true });
     }
 
+    // Animated expand/collapse for <details> sections in the mobile drawer.
+    // Native <details> snaps open/close instantly. We intercept the toggle,
+    // animate maxHeight + opacity, then set/remove [open] attribute.
+    if (drawer) {
+      drawer.querySelectorAll('.mm-h-drawer-section summary').forEach(function (summary) {
+        summary.addEventListener('click', function (e) {
+          e.preventDefault();
+          var details = summary.parentElement;
+          var ul = details.querySelector('ul');
+          if (!ul) return;
+          if (details.open) {
+            // Close: animate from current height → 0
+            ul.style.maxHeight = ul.scrollHeight + 'px';
+            ul.style.opacity = '1';
+            requestAnimationFrame(function () {
+              ul.style.maxHeight = '0';
+              ul.style.opacity = '0';
+              ul.style.paddingTop = '0';
+              ul.style.paddingBottom = '0';
+            });
+            setTimeout(function () {
+              details.open = false;
+              ul.style.maxHeight = '';
+              ul.style.opacity = '';
+              ul.style.paddingTop = '';
+              ul.style.paddingBottom = '';
+            }, 300);
+          } else {
+            // Open: set open, measure, animate from 0 → scrollHeight
+            details.open = true;
+            var h = ul.scrollHeight;
+            ul.style.maxHeight = '0';
+            ul.style.opacity = '0';
+            ul.style.paddingTop = '0';
+            ul.style.paddingBottom = '0';
+            requestAnimationFrame(function () {
+              ul.style.maxHeight = h + 'px';
+              ul.style.opacity = '1';
+              ul.style.paddingTop = '';
+              ul.style.paddingBottom = '';
+            });
+            setTimeout(function () {
+              ul.style.maxHeight = '';
+              ul.style.opacity = '';
+            }, 320);
+          }
+        });
+      });
+    }
+
     // Cart drawer integration — reuse Magazord native .carrinho-rapido-ctn
     // (The drawer lives inside .header-middle which we hide via display:none.
     //  We lift it out on first open, then toggle transform to slide in/out.)
@@ -591,45 +871,93 @@
     var cartScrim = null;
 
     function findDrawer() {
-      // Drawer may not exist yet on first page load — Magazord renders it client-side
       return document.querySelector('.carrinho-rapido-ctn');
     }
-    function liftDrawer(drawer) {
-      if (drawer && !drawer.dataset.mmLifted) {
-        // Move out of hidden parent and make it a body-level fixed element
-        document.body.appendChild(drawer);
-        drawer.dataset.mmLifted = '1';
-        // Remove display:none inheritance from parent chain
-        drawer.style.display = 'block';
-        // Force z-index ABOVE our header (100) and scrim (150) so user can close it
-        drawer.style.zIndex = '200';
+    // Inline SVG X used for the close button. Kept small so it inherits
+    // currentColor from the .mm-close-x wrapper for theming.
+    var cartCloseSvg = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
-        // Wire up native close button (.icon-arrow-bottom) — Magazord's native
-        // toggle is defeated by our inline transform, so we must intercept.
-        var nativeClose = drawer.querySelector('.icon-arrow-bottom');
-        if (nativeClose) {
-          // Expand hit area to parent to make the whole 44x44 tappable
-          nativeClose.style.cursor = 'pointer';
-          nativeClose.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeCartDrawer();
-          }, true);
+    // The drawer has TWO possible structures depending on whether
+    // Magazord's atualizaPreview AJAX has run yet:
+    //   (a) SSR initial: .top-carrinho > .icon-arrow-bottom  (empty cart)
+    //   (b) Post-AJAX:   .header-cart > .close-car-fast      (with items)
+    // We wire whichever is present at the time we lift, and also add a
+    // delegated listener on the drawer so closes keep working even if
+    // Magazord re-renders the header mid-session.
+    // Inject X icon into .close-car-fast (may be called multiple times since
+    // Magazord's atualizaPreview AJAX can replace the header on subsequent
+    // re-renders). Idempotent: only injects if the span is empty.
+    function hydrateCloseFast(drawer) {
+      if (!drawer) return;
+      var closeFast = drawer.querySelector('.close-car-fast');
+      if (closeFast && !closeFast.innerHTML.trim()) {
+        closeFast.innerHTML = cartCloseSvg;
+        closeFast.setAttribute('aria-label', 'Fechar carrinho');
+        closeFast.setAttribute('role', 'button');
+        closeFast.setAttribute('tabindex', '0');
+      }
+    }
+
+    // The drawer has TWO possible structures depending on whether
+    // Magazord's atualizaPreview AJAX has run yet:
+    //   (a) SSR initial: .top-carrinho > .icon-arrow-bottom  (empty cart)
+    //   (b) Post-AJAX:   .header-cart > .close-car-fast      (with items)
+    // Delegated click listener on the drawer (outer element, never replaced
+    // by AJAX) handles both. Called once per drawer via dataset.mmCloseWired.
+    function wireCloseButtons(drawer) {
+      if (!drawer || drawer.dataset.mmCloseWired) return;
+      drawer.dataset.mmCloseWired = '1';
+      drawer.addEventListener('click', function (e) {
+        var t = e.target;
+        if (t && t.closest && (t.closest('.close-car-fast') || t.closest('.icon-arrow-bottom'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeCartDrawer();
         }
-        // The .top-carrinho parent also has a Magazord onclick — intercept
-        // clicks on the arrow area to prevent native toggle from fighting ours.
-        var topCarrinho = drawer.querySelector('.top-carrinho');
-        if (topCarrinho) {
-          topCarrinho.addEventListener('click', function (e) {
-            // If user clicked the arrow icon (or inside it), close the drawer
-            if (e.target.closest('.icon-arrow-bottom')) {
-              e.preventDefault();
-              e.stopPropagation();
-              closeCartDrawer();
-            }
-          }, true);
+      }, true);
+      drawer.addEventListener('keydown', function (e) {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.closest && e.target.closest('.close-car-fast')) {
+          e.preventDefault();
+          closeCartDrawer();
+        }
+      });
+    }
+
+    function liftDrawer(drawer) {
+      // NOTE: we intentionally no longer move the drawer out of its parent.
+      // Earlier versions did `document.body.appendChild(drawer)` to escape
+      // `.header-middle { display: none }`, but that broke React
+      // reconciliation on subsequent updates (Zord.checkout.adicionaQuantidade
+      // threw NotFoundError: Failed to execute removeChild) AND made
+      // atualizaPreview's target selector `$(".carrinho-rapido", "#cart-preview-area")`
+      // return 0 elements, so AJAX updates to the drawer content were dropped.
+      //
+      // Instead, global.css hides .header-middle via `visibility:hidden +
+      // width/height:0` and explicitly opts `.carrinho-rapido-ctn` back in
+      // to `visibility:visible`. The position:fixed drawer renders at the
+      // viewport while staying in the React-owned DOM tree.
+      if (!drawer) return;
+      if (!drawer.dataset.mmLifted) {
+        drawer.dataset.mmLifted = '1';
+        drawer.style.position = 'fixed';
+        drawer.style.display = 'block';
+        drawer.style.zIndex = '200';
+        // Clear stacking contexts on ancestors between the drawer and
+        // .header-middle. Magazord's CSS may set z-index, transform, or
+        // filter on intermediate wrappers (#cart-preview-area, etc) which
+        // creates a stacking context that traps the drawer's z-index:200
+        // inside it — making it paint below our scrim (150) and header (100).
+        var p = drawer.parentElement;
+        while (p && !p.classList.contains('header-middle')) {
+          p.style.zIndex = 'auto';
+          p.style.transform = 'none';
+          p.style.filter = 'none';
+          p.style.isolation = 'auto';
+          p = p.parentElement;
         }
       }
+      wireCloseButtons(drawer);
+      hydrateCloseFast(drawer);
     }
     // Curated top-10 products (captured from /top-10-produtos 2026-04-09).
     // Fetching at runtime is not viable: /top-10-produtos renders product
@@ -791,10 +1119,74 @@
       content.appendChild(wrap);
     }
 
+    // Trigger Magazord's native preview loader. Source (inspected via
+    // Zord.checkout.atualizaPreview.toString()):
+    //   if (!Zord.get("cart.preview") && 0 < Zord.get("cart.size") || forced) {
+    //     Zord.set("cart.preview", true);
+    //     var b = $(".carrinho-rapido", "#cart-preview-area");
+    //     b.addClass("loading").empty();
+    //     Zord.call("cliente", "getInfoExtra", {preview:true}, function(a) {
+    //       if (a.preview) b.html(a.preview);
+    //     });
+    //   }
+    // CRITICAL: the target selector requires .carrinho-rapido to be a child
+    // of #cart-preview-area. If we lift the drawer out BEFORE this AJAX
+    // completes, the response handler finds 0 elements and the drawer stays
+    // empty. So we must wait for the preview HTML to land before lifting.
+    function loadCartPreview(drawer, done) {
+      try {
+        if (typeof Zord === 'undefined' || !Zord.checkout || typeof Zord.checkout.atualizaPreview !== 'function') {
+          done();
+          return;
+        }
+        var count = getCartCountFromSources();
+        if (count === 0) { done(); return; }
+        // If items already rendered, skip reload
+        if (drawer.querySelector('.cart-item')) { done(); return; }
+        // Force reload (no-arg form sets a=true inside Magazord's fn)
+        Zord.checkout.atualizaPreview();
+        // Poll for .cart-item to appear (AJAX is async, ~200-800ms typical)
+        var start = Date.now();
+        var MAX_WAIT = 2000;
+        (function poll() {
+          if (drawer.querySelector('.cart-item')) { done(); return; }
+          if (Date.now() - start >= MAX_WAIT) { done(); return; }
+          setTimeout(poll, 50);
+        })();
+      } catch (e) {
+        done();
+      }
+    }
+
     function openCartDrawer() {
       var drawer = findDrawer();
-      if (!drawer) { window.location.href = '/checkout/cart'; return; }
+      if (drawer) {
+        loadCartPreview(drawer, function () { continueOpenDrawer(drawer); });
+        return;
+      }
+      // Retry — React may not have rendered .carrinho-rapido-ctn yet
+      // (common on mobile where hydration can be slower)
+      var retries = 0;
+      var maxRetries = 5;
+      (function retry() {
+        retries++;
+        drawer = findDrawer();
+        if (drawer) {
+          loadCartPreview(drawer, function () { continueOpenDrawer(drawer); });
+        } else if (retries < maxRetries) {
+          setTimeout(retry, 150);
+        } else {
+          window.location.href = '/checkout/cart';
+        }
+      })();
+    }
+
+    function continueOpenDrawer(drawer) {
       liftDrawer(drawer);
+      // Re-hydrate close X icon in case AJAX re-rendered the header since
+      // last open (wireCloseButtons is one-time but hydrateCloseFast must
+      // run whenever .close-car-fast is freshly empty).
+      hydrateCloseFast(drawer);
       // Try to enhance empty state — runs every open so if React re-renders
       // the drawer contents between opens, we re-inject.
       enhanceEmptyCart(drawer);
@@ -836,9 +1228,11 @@
     }
 
     if (cartLink) {
+      // Desktop: our #mm-h-cart button opens the drawer via click.
+      // Mobile: Magazord's native tabbar (.header-bottom) has its own cart
+      // button that opens the drawer via React's built-in handler — we
+      // re-show .header-bottom on mobile via CSS so that continues to work.
       cartLink.addEventListener('click', function (e) {
-        // Mobile: let default navigate to /checkout/cart (drawer comes Phase 6 via different path)
-        if (window.matchMedia('(max-width: 767px)').matches) return;
         e.preventDefault();
         openCartDrawer();
       });

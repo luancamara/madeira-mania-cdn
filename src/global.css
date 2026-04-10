@@ -492,17 +492,110 @@ footer.ra-footer,
    Aplica em TODO o site — substituído por #mm-header custom
    ============================================= */
 
+/* Hide ALL Magazord header elements — covers home, PDP, category, etc.
+   Using wildcard on direct children catches any page-specific extras
+   (breadcrumb bars, search overlays, category navs) that Magazord injects
+   differently per page type. */
 #tickerBar,
 .ticker-bar,
-header.ra-header > .header-top,
-header.ra-header > .header-middle,
-header.ra-header > .header-bottom {
+header.ra-header > * {
   display: none !important;
+}
+/* Re-show .header-middle (needed for cart drawer inside it) */
+header.ra-header > .header-middle {
+  display: block !important;
+}
+/* Re-show .header-bottom on mobile — this is Magazord's native tabbar
+   with cart/search/account icons. Its cart button opens the drawer natively
+   (Magazord's own React handler). Hiding it broke mobile cart access. */
+@media (max-width: 767px) {
+  header.ra-header > .header-bottom {
+    display: block !important;
+    pointer-events: auto !important;
+  }
+}
+
+/* .header-middle can't use display:none because the native cart drawer
+   (.carrinho-rapido-ctn, position:fixed) lives inside it and must render.
+   Lifting the drawer out of the DOM breaks React reconciliation on
+   subsequent Magazord updates (adicionaQuantidade, deleteItem etc), so we
+   must keep it in its React-owned parent. Instead we:
+   1. Strip .header-middle from layout flow (abs 0×0 + overflow visible)
+   2. Hide every descendant explicitly via `* { visibility: hidden }`
+      (targeting `*` is required because SVG elements don't always inherit
+       visibility from parent — they have presentation-attribute handling
+       that can escape the cascade)
+   3. Opt the drawer subtree back in */
+header.ra-header > .header-middle {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  /* overflow:hidden would clip the position:fixed cart drawer in some
+     rendering paths (Chrome creates a clipping context when an abs-pos
+     parent with overflow:hidden contains fixed descendants). We rely
+     instead on display:none for SVGs and visibility:hidden cascade to
+     hide non-drawer descendants. */
+  overflow: visible !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* Belt + suspenders: force every descendant hidden via visibility cascade.
+   NOTE: we CAN'T use `opacity: 0` here — opacity cascades multiplicatively
+   (parent × child) and cannot be "overridden" by a descendant setting
+   opacity: 1, so the cart drawer would render totally transparent. Stick
+   to visibility which IS overridable per-element. */
+header.ra-header > .header-middle,
+header.ra-header > .header-middle * {
+  visibility: hidden !important;
+}
+/* Hide non-drawer SVGs via display:none (SVG elements can escape parent
+   visibility cascade due to presentation-attribute semantics). */
+header.ra-header > .header-middle svg,
+header.ra-header > .header-middle svg * {
+  display: none !important;
+}
+/* Opt back in only the cart drawer and its subtree — NOT any siblings of
+   the drawer (logo, icons, nav etc were replaced by #mm-header). */
+header.ra-header > .header-middle .carrinho-rapido-ctn,
+header.ra-header > .header-middle .carrinho-rapido-ctn * {
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+/* SVG inside the drawer (close X, qty +/-, trash) — override the blanket
+   display:none rule above so our drawer SVGs render. */
+header.ra-header > .header-middle .carrinho-rapido-ctn svg,
+header.ra-header > .header-middle .carrinho-rapido-ctn svg * {
+  display: initial !important;
+  visibility: visible !important;
+}
+/* Ensure the drawer is fixed-positioned and high z-index so it paints above
+   our #mm-header (z-index 100) and custom scrim (150). */
+.carrinho-rapido-ctn {
+  position: fixed !important;
+  z-index: 200 !important;
 }
 
 header.ra-header {
   min-height: 0 !important;
+  max-height: 0 !important;
+  height: 0 !important;
   padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: auto !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important; /* prevent Magazord React from intercepting taps */
+}
+/* Cart drawer inside ra-header still needs pointer events */
+header.ra-header .carrinho-rapido-ctn,
+header.ra-header .carrinho-rapido-ctn * {
+  pointer-events: auto !important;
 }
 
 body {
