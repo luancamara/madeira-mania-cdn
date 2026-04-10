@@ -20,7 +20,7 @@
   var ONEPAGE_DRAFT_KEY = 'mm_onepage_draft';
   var ONEPAGE_DRAFT_TTL_MS = 24 * 60 * 60 * 1000; /* 24h */
   var FRETE_GRATIS_THRESHOLD = 2000;
-  var MM_LOGO_URL = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
+  var MM_LOGO_URL = 'https://magazord-public.s3.sa-east-1.amazonaws.com/madeiramania/resources/Design%20sem%20nome%20(1).svg';
   var MM_WHATSAPP_URL = 'https://api.whatsapp.com/send?phone=5511915299488&text=' + encodeURIComponent('Olá! Estou no checkout e gostaria de tirar uma dúvida sobre meu pedido.');
 
   var path = location.pathname;

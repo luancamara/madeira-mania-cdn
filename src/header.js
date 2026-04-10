@@ -10,7 +10,7 @@
   function init() {
     if (document.getElementById('mm-header')) return;
 
-    var logoUrl = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
+    var logoUrl = 'https://magazord-public.s3.sa-east-1.amazonaws.com/madeiramania/resources/Design%20sem%20nome%20(1).svg';
     // ^^^ extracted from live site (2026-04-09) — Magazord CDN SVG, 1800x446 native
 
     // Inline SVG icons (stroke-based, currentColor inherits from text)

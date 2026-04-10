@@ -71,7 +71,7 @@
    Aplica em TODAS as páginas (inclusive checkout)
    --- */
 (function buildMmFooter() {
-  var MM_LOGO_URL = 'https://madeiramania.cdn.magazord.com.br/resources/Design%20sem%20nome%20(1).svg';
+  var MM_LOGO_URL = 'https://magazord-public.s3.sa-east-1.amazonaws.com/madeiramania/resources/Design%20sem%20nome%20(1).svg';
   var WHATS = 'https://api.whatsapp.com/send?phone=5511915299488&text=' + encodeURIComponent('Olá! Vim pelo site e gostaria de ajuda.');
 
   var ICONS = {
