@@ -22,11 +22,16 @@ body.mm-checkout-rebuild .pagina-conteudo-adicional.conteudo-adicional-25 {
   display: none !important;
 }
 
-/* Esconder distrações no checkout: ticker bar + popup whats flutuante */
+/* Esconder distrações no checkout: ticker bar + popup whats + floating whatsapp */
 body.mm-checkout-rebuild #tickerBar,
 body.mm-checkout-rebuild .ticker-bar,
-body.mm-checkout-rebuild #popup-msg-whats {
+body.mm-checkout-rebuild #popup-msg-whats,
+body.mm-checkout-rebuild #mm-floating-whatsapp {
   display: none !important;
+}
+/* Remove body padding reserved for #mm-header (not injected on checkout) */
+body.mm-checkout-rebuild {
+  padding-top: 0 !important;
 }
 
 /* Override do padding inflado do .checkout-main da Magazord */
@@ -331,40 +336,43 @@ body.mm-checkout-rebuild .checkout-main {
   margin-top: 1px;
 }
 
-/* Mobile: 2 rows — logo+secure on top, stepper on bottom */
+/* Mobile: logo centered on top, stepper below, secure badge hidden on small */
 @media (max-width: 1023px) {
   .mm-checkout-header {
-    grid-template-columns: auto auto;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      "logo secure"
-      "steps steps";
-    gap: var(--mm-s3) var(--mm-s4);
+      "logo"
+      "steps";
+    gap: var(--mm-s3);
     padding: var(--mm-s4) 0;
     margin-bottom: var(--mm-s4);
     min-height: 0;
+    justify-items: center;
   }
   .mm-checkout-header-logo {
     grid-area: logo;
+    justify-self: center;
   }
   .mm-checkout-header-logo img {
     height: 36px;
   }
   .mm-checkout-secure {
-    grid-area: secure;
+    display: none;
   }
-  .mm-checkout-secure svg {
-    width: 16px;
-    height: 16px;
-  }
-  .mm-checkout-secure-text strong { font-size: 12px; }
-  .mm-checkout-secure-text small { font-size: 11px; }
   .mm-checkout-steps {
     grid-area: steps;
     justify-self: center;
-    padding-top: var(--mm-s2);
+    padding-top: 0;
   }
-  .mm-checkout-steps ol { gap: var(--mm-s2); }
-  .mm-checkout-step { font-size: 12px; }
+  .mm-checkout-steps ol { gap: var(--mm-s3); }
+  .mm-checkout-step {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+  }
+  .mm-checkout-step.is-active {
+    font-weight: 600;
+  }
 
   /* Touch target compliance: bump qty buttons to 44 on mobile */
   .mm-qty-btn {
@@ -1415,8 +1423,14 @@ body.mm-checkout-rebuild .checkout-main {
    ========================================== */
 
 @media (max-width: 1023px) {
-  .mm-items-card {
+  .mm-items-card,
+  .mm-sum-card {
     padding: 0 var(--mm-s4);
+    margin: 0 var(--mm-s3);
+  }
+  .mm-h {
+    margin-left: var(--mm-s3);
+    margin-right: var(--mm-s3);
   }
 
   .mm-item {

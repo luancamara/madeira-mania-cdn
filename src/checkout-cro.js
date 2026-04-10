@@ -367,26 +367,11 @@
      RENDER — componentes
      ============================================= */
 
-  /* Shipping nudge: SÓ aparece enquanto falta valor pra frete grátis.
-     Quando atingido, a linha "Frete: Grátis" no resumo já comunica. */
-  function renderShippingNudge(state) {
-    var subtotal = state.subtotalFull > 0 ? state.subtotalFull : state.subtotalPix;
-    if (subtotal <= 0) return '';
-    if (subtotal >= FRETE_GRATIS_THRESHOLD) return '';
-    if (state.shipping === 0) return '';
-
-    var falta = Math.max(0, FRETE_GRATIS_THRESHOLD - subtotal);
-    var pct = Math.min((subtotal / FRETE_GRATIS_THRESHOLD) * 100, 100);
-    return (
-      '<div class="mm-nudge">' +
-        '<div class="mm-nudge-head">' +
-          ICON.truck +
-          '<span>Adicione mais <strong>' + formatBRL(falta) + '</strong> e ganhe frete grátis</span>' +
-        '</div>' +
-        '<div class="mm-nudge-track"><div class="mm-nudge-fill" style="width:' + pct + '%"></div></div>' +
-      '</div>'
-    );
-  }
+  /* Shipping nudge REMOVED — the "Adicione mais R$ X e ganhe frete grátis"
+     with olive bg + truck icon was ai-slop. Shipping info is now handled by
+     the cart drawer's mmRenderShipping() pattern (CEP-aware, delivery dates,
+     subtle progress bar). The checkout summary already shows "Frete: Grátis"
+     when threshold is met — no separate nudge needed. */
 
   /* Custom checkout header — substitui o header-checkout da Magazord
      ui-ux-pro-max applied: visual hierarchy via size > color, premium spacing,
@@ -649,8 +634,7 @@
         '<aside class="mm-sum">' +
           '<h2 class="mm-h">Resumo</h2>' +
           '<div class="mm-sum-card">' +
-            /* Shipping nudge slot — só renderiza se faltar valor */
-            '<div id="mm-nudge-slot"></div>' +
+            /* nudge slot removed — shipping communicated via summary line */ '' +
             /* CEP card */
             '<div class="mm-cep">' +
               '<div class="mm-cep-label">' +
@@ -724,8 +708,7 @@
     var dyn = document.getElementById('mm-sum-dynamic');
     if (dyn) dyn.innerHTML = renderSummaryDynamic(state);
 
-    var nudgeSlot = document.getElementById('mm-nudge-slot');
-    if (nudgeSlot) nudgeSlot.innerHTML = renderShippingNudge(state);
+    /* nudge slot intentionally left empty — shipping info handled by drawer */
 
     /* CTA disabled se vazio */
     var cta = document.querySelector('.mm-cta');

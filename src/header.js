@@ -5,6 +5,11 @@
    ============================================= */
 
 (function(){
+  // Don't inject the full navigation header on checkout pages — checkout has
+  // its own header (mm-checkout-header with logo + stepper). Showing both is
+  // a conversion killer: menu/search/cart distract from completing the order.
+  if (/^\/checkout\//.test(location.pathname)) return;
+
   if (document.getElementById('mm-header')) return;
 
   function init() {
@@ -1228,14 +1233,26 @@
     }
 
     if (cartLink) {
-      // Desktop: our #mm-h-cart button opens the drawer via click.
-      // Mobile: Magazord's native tabbar (.header-bottom) has its own cart
-      // button that opens the drawer via React's built-in handler — we
-      // re-show .header-bottom on mobile via CSS so that continues to work.
       cartLink.addEventListener('click', function (e) {
         e.preventDefault();
         openCartDrawer();
       });
+    }
+
+    // Mobile: intercept Magazord's native tabbar (.header-bottom) cart button.
+    // It's an <a> to /checkout/cart — we hijack it to open the drawer instead.
+    // Uses delegated listener on .header-bottom because the tabbar may be
+    // React-rendered after our script runs.
+    var headerBottom = document.querySelector('header.ra-header > .header-bottom');
+    if (headerBottom) {
+      headerBottom.addEventListener('click', function (e) {
+        var link = e.target.closest('a[href*="carrinho"], a[href*="/checkout/cart"], [class*="carrinho"]');
+        if (link) {
+          e.preventDefault();
+          e.stopPropagation();
+          openCartDrawer();
+        }
+      }, true);
     }
 
     // Esc closes cart drawer (separate listener, doesn't conflict with search/mega-menu)
