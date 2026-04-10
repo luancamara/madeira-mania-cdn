@@ -107,18 +107,56 @@ figure { border-radius: 10% !important; }
   }
 }
 
-/* Back-to-top — visual, preservar animação do Magazord (right transition) */
-.back-to-top.opened {
+/* Back-to-top — complete override of Magazord native styling */
+.back-to-top {
+  width: 44px !important;
+  height: 44px !important;
   border-radius: 50% !important;
   background: #ffffff !important;
   border: 1.5px solid #dbe1db !important;
-  opacity: 1 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-  width: 44px !important;
-  height: 44px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  transition: opacity 200ms, transform 200ms, right 300ms !important;
+}
+.back-to-top:not(.opened) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(8px) !important;
+}
+.back-to-top.opened {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+.back-to-top:hover {
+  border-color: #4b664a !important;
+  box-shadow: 0 4px 12px rgba(75, 102, 74, 0.15) !important;
+}
+/* Force .icon to fill the button and suppress any Magazord content */
+.back-to-top .icon {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 0 !important; /* hide any text nodes from Magazord */
+  line-height: 0 !important;
+}
+/* Hide any Magazord pseudo-elements or extra icons inside */
+.back-to-top .icon::before,
+.back-to-top .icon::after {
+  display: none !important;
+}
+.back-to-top .icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
 }
 
 
@@ -577,6 +615,14 @@ header.ra-header > .header-middle .carrinho-rapido-ctn svg * {
 .carrinho-rapido-ctn {
   position: fixed !important;
   z-index: 200 !important;
+  /* Default: off-screen. Magazord's React adds .open-cart on add-to-cart
+     which normally shows the drawer — we override that to stay hidden.
+     Only our .mm-drawer-open class (added by openCartDrawer JS) shows it. */
+  transform: translateX(110%) !important;
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.carrinho-rapido-ctn.mm-drawer-open {
+  transform: translateX(0) !important;
 }
 
 header.ra-header {
@@ -592,9 +638,12 @@ header.ra-header {
   box-shadow: none !important;
   pointer-events: none !important; /* prevent Magazord React from intercepting taps */
 }
-/* Cart drawer inside ra-header still needs pointer events */
-header.ra-header .carrinho-rapido-ctn,
-header.ra-header .carrinho-rapido-ctn * {
+/* Cart drawer pointer events — ONLY when we've explicitly opened it.
+   Without this guard, the off-screen drawer (transform:translateX(110%))
+   still intercepts clicks because Tailwind sets position:fixed + inset-y-0
+   and our old rule forced pointer-events:auto always. */
+header.ra-header .carrinho-rapido-ctn.mm-drawer-open,
+header.ra-header .carrinho-rapido-ctn.mm-drawer-open * {
   pointer-events: auto !important;
 }
 
@@ -713,6 +762,161 @@ body {
 }
 
 /* =============================================
+   ADD-TO-CART POPUP — redesign Magazord's SweetAlert2
+   Classes: .container-popup-add-carrinho (backdrop)
+            .popup-adicionado-ao-carrinho (popup card)
+   ============================================= */
+.container-popup-add-carrinho {
+  z-index: 999 !important; /* above header (100) but below drawer (200) */
+}
+.popup-adicionado-ao-carrinho.swal2-popup {
+  border-radius: 20px !important;
+  padding: 32px 28px 24px !important;
+  max-width: 380px !important;
+  width: calc(100% - 32px) !important;
+  box-shadow:
+    0 20px 50px -12px rgba(15, 23, 42, 0.25),
+    0 8px 20px -8px rgba(15, 23, 42, 0.1) !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  animation: mm-swal-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+@keyframes mm-swal-pop {
+  0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* Success icon — use olive brand color instead of generic green */
+.popup-adicionado-ao-carrinho .swal2-icon.swal2-success {
+  border-color: #4b664a !important;
+  color: #4b664a !important;
+  width: 56px !important;
+  height: 56px !important;
+  margin: 0 auto 16px !important;
+}
+.popup-adicionado-ao-carrinho .swal2-success-ring {
+  border-color: rgba(75, 102, 74, 0.25) !important;
+}
+.popup-adicionado-ao-carrinho .swal2-success-line-tip,
+.popup-adicionado-ao-carrinho .swal2-success-line-long {
+  background-color: #4b664a !important;
+}
+/* Title */
+.popup-adicionado-ao-carrinho .swal2-title,
+.popup-adicionado-ao-carrinho h2 {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 0 4px !important;
+  padding: 0 !important;
+}
+/* Subtitle */
+.popup-adicionado-ao-carrinho .swal2-html-container {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  color: #6B7280 !important;
+  margin: 0 0 20px !important;
+  padding: 0 !important;
+}
+/* Buttons row */
+.popup-adicionado-ao-carrinho .swal2-actions {
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  flex-wrap: nowrap !important;
+}
+/* Both buttons — pill shape */
+.popup-adicionado-ao-carrinho .swal2-actions button {
+  flex: 1 !important;
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 12px 20px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 180ms, box-shadow 180ms, transform 150ms !important;
+}
+.popup-adicionado-ao-carrinho .swal2-actions button:active {
+  transform: scale(0.97) !important;
+}
+/* "Continuar comprando" — secondary */
+.popup-adicionado-ao-carrinho .swal2-cancel,
+.popup-adicionado-ao-carrinho .swal2-actions button:first-child {
+  background: #F3F4F6 !important;
+  color: #121212 !important;
+  border: 1px solid #E5E7EB !important;
+}
+.popup-adicionado-ao-carrinho .swal2-cancel:hover,
+.popup-adicionado-ao-carrinho .swal2-actions button:first-child:hover {
+  background: #E5E7EB !important;
+}
+/* "Finalizar compra" — primary olive CTA */
+.popup-adicionado-ao-carrinho .swal2-confirm,
+.popup-adicionado-ao-carrinho .swal2-actions button:last-child {
+  background: #1b7a45 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.25) !important;
+}
+.popup-adicionado-ao-carrinho .swal2-confirm:hover,
+.popup-adicionado-ao-carrinho .swal2-actions button:last-child:hover {
+  background: #155a33 !important;
+  box-shadow: 0 6px 16px rgba(27, 122, 69, 0.3) !important;
+}
+/* Close X — minimal */
+.popup-adicionado-ao-carrinho .swal2-close {
+  color: #9CA3AF !important;
+  font-size: 24px !important;
+  top: 12px !important;
+  right: 16px !important;
+}
+.popup-adicionado-ao-carrinho .swal2-close:hover {
+  color: #121212 !important;
+}
+
+/* =============================================
+   SWIPER NAVIGATION — minimal elegant arrows
+   Replaces the default Swiper.js prev/next buttons with subtle,
+   semi-transparent pill arrows that don't compete with content.
+   ============================================= */
+.swiper-button-prev,
+.swiper-button-next {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  color: #333 !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  transition: opacity 200ms, background 200ms, box-shadow 200ms !important;
+  opacity: 0 !important;
+}
+/* Show on hover of the parent swiper */
+.swiper:hover .swiper-button-prev,
+.swiper:hover .swiper-button-next,
+.swiper-container:hover .swiper-button-prev,
+.swiper-container:hover .swiper-button-next {
+  opacity: 1 !important;
+}
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+/* Replace the Swiper icon font with clean chevron SVGs */
+.swiper-button-prev::after,
+.swiper-button-next::after {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* =============================================
    TRUST BAR — informativos-desktop-3 (componente dynamic-banner)
    Imagem deve ir full-bleed (de cabo a rabo) no desktop.
    Estrutura real (probed 2026-04-09):
@@ -732,6 +936,7 @@ body {
   max-width: 100vw !important;
   margin-left: calc(50% - 50vw) !important;
   margin-right: calc(50% - 50vw) !important;
+  margin-top: 0 !important;
   padding: 0 !important;
 }
 /* The inner swiper with .container + dynamic-banner class has hard-coded max-width 1240 and margin 100px */

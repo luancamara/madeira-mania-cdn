@@ -1084,10 +1084,12 @@
         return;
       }
 
-      // Only INJECT enhancement when BOTH count is 0 AND native empty box is
-      // visible. In any ambiguous state (count=6 but no DOM items, or count=0
-      // but empty box not yet rendered), do nothing and wait for mutations.
-      if (!isCartReallyEmpty(content)) return;
+      // Inject enhancement when cart appears empty. Two valid triggers:
+      //   1. isCartReallyEmpty: count === 0 AND .box-empty-cart visible (Magazord rendered)
+      //   2. No .cart-item in DOM AND count === 0 (our custom delete removed
+      //      items directly — Magazord React hasn't rendered .box-empty-cart yet)
+      var noItemsInDom = content.querySelectorAll('.cart-item').length === 0;
+      if (!isCartReallyEmpty(content) && !(noItemsInDom && getCartCountFromSources() === 0)) return;
 
       // Already enhanced — don't duplicate
       if (content.querySelector(':scope > .mm-cart-empty-wrapper')) return;
@@ -1205,9 +1207,9 @@
         });
         observer.observe(content, { childList: true, subtree: true, attributes: false });
       }
-      // Force transform via inline style (bypasses Tailwind class system)
-      drawer.style.transform = 'translateX(0)';
-      drawer.style.transition = 'transform 320ms cubic-bezier(0.16, 1, 0.3, 1)';
+      // Show drawer via CSS class (global.css controls the transform via
+      // !important so Magazord's .open-cart class can't show it without us)
+      drawer.classList.add('mm-drawer-open');
       // Scrim — z-index 150 (between header 100 and drawer 200)
       if (!cartScrim) {
         cartScrim = document.createElement('div');
@@ -1222,7 +1224,7 @@
     }
     function closeCartDrawer() {
       var drawer = findDrawer();
-      if (drawer) drawer.style.transform = 'translateX(110%)';
+      if (drawer) drawer.classList.remove('mm-drawer-open');
       if (cartScrim) {
         cartScrim.style.opacity = '0';
         var s = cartScrim;

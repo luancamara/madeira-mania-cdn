@@ -1109,25 +1109,65 @@
   }
 
   // Direct delete — fires POST, animates out, then recomputes total.
+  // Handles empty-cart edge case: skips shipping recalc, updates badge,
+  // and dispatches reactItemAddedToCart so header badge + empty state sync.
   function mmDeleteItem(cartItem, dataId) {
     if (!cartItem || !dataId) return;
     var drawer = cartItem.closest('.carrinho-rapido-ctn');
-    // Capture ratio before we mark the item for removal (items with
-    // .mm-removing are excluded from sum in mmRecomputeDrawerTotal).
     mmCaptureTotalRatio(drawer);
-    // Mark pending BEFORE recompute
-    if (mmReadCep()) drawer.dataset.mmShipPendingFetch = '1';
     var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var delay = prefersReduced ? 0 : 360;
     if (!prefersReduced) cartItem.classList.add('mm-removing');
     setTimeout(function () {
       if (cartItem.parentNode) cartItem.parentNode.removeChild(cartItem);
-      mmRecomputeDrawerTotal(drawer);
-      if (mmReadCep()) mmShowShippingLoading(drawer);
+      // Count remaining real items (exclude our empty wrapper)
+      var remaining = drawer ? drawer.querySelectorAll('.cart-item:not(.mm-removing)') : [];
+      var isEmpty = remaining.length === 0;
+      if (isEmpty) {
+        // Cart is now empty — don't recalculate shipping, just clean up
+        drawer.dataset.mmShipPendingFetch = '';
+        var shipBlock = drawer.querySelector('.mm-cart-ship');
+        if (shipBlock) shipBlock.remove();
+        // Hide the footer (total + CTA) since cart is empty
+        var footer = drawer.querySelector('.box-total-btn, .area-finalizar-compra');
+        if (footer) footer.style.display = 'none';
+        // Force empty state — don't wait for Magazord React to render
+        // .box-empty-cart (it won't after our custom delete). Dispatch
+        // an event that header.js enhanceEmptyCart() will pick up via
+        // the MutationObserver on .content-cart.
+        // Also keep the drawer OPEN so the user sees the suggestions.
+      } else {
+        mmRecomputeDrawerTotal(drawer);
+        if (mmReadCep()) mmShowShippingLoading(drawer);
+      }
+      // Update header badge DIRECTLY with DOM count — Zord.get('cart.size')
+      // is stale after our POST and would show the old count.
+      var badge = document.getElementById('mm-h-cart-count');
+      var cartAction = document.getElementById('mm-h-cart');
+      var count = remaining.length;
+      if (badge) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.hidden = count === 0;
+      }
+      if (cartAction) {
+        cartAction.setAttribute('aria-label', 'Carrinho, ' + count + ' ' + (count === 1 ? 'item' : 'itens'));
+      }
     }, delay);
     mmPostCartOp('deleteItem', dataId).catch(function () {}).then(function () {
+      // After server confirms, update badge again with authoritative DOM count
+      var remaining = drawer ? drawer.querySelectorAll('.cart-item:not(.mm-removing)') : [];
+      var badge2 = document.getElementById('mm-h-cart-count');
+      if (badge2) {
+        badge2.textContent = remaining.length > 99 ? '99+' : String(remaining.length);
+        badge2.hidden = remaining.length === 0;
+      }
+      if (remaining.length === 0) {
+        drawer.dataset.mmShipPendingFetch = '';
+        return; // empty — no shipping to recalculate
+      }
       var cep = mmReadCep();
       if (cep) {
+        drawer.dataset.mmShipPendingFetch = '1';
         mmShowShippingLoading(drawer);
         mmFetchShipping(cep, true).then(function (data) {
           drawer.dataset.mmShipPendingFetch = '';

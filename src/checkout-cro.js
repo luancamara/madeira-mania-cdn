@@ -3287,6 +3287,10 @@
             numero: parseInt(ourSelect.options[1].value, 10) || 1,
             label: ourSelect.options[1].textContent
           };
+          /* CRITICAL: also sync the value back to the native select.
+             Without this, pag-cartao-parcela stays empty → form submission
+             silently fails at Magazord because parcela is required. */
+          syncMagazordInstallments(ourSelect.options[1].value);
         }
       }
 
@@ -3363,8 +3367,17 @@
       /* Overlay fullscreen (reusa o do F3) */
       showSubmitOverlay('Finalizando seu pedido...');
 
-      /* Delay pra garantir que todos os inputs sincronizaram + Zord processou */
-      setTimeout(function() {
+      /* Re-sync installments BEFORE submit — user may not have touched our
+         custom select, so watchMagazordInstallments() auto-selected but
+         the native select might still be empty. */
+      if (forma === 'cartao') {
+        var ourInstSel = document.getElementById('mm-pay-card-installments');
+        if (ourInstSel && ourInstSel.value) {
+          syncMagazordInstallments(ourInstSel.value);
+        }
+      }
+
+      function doSubmit() {
         /* Aceita termos bcash se cartão */
         if (forma === 'cartao') {
           var terms = document.getElementById('aceito-termos-bcash-one-card');
@@ -3380,9 +3393,6 @@
                    : 'form-pag-cartao';
         var form = document.getElementById(formId);
 
-        /* Fallback: alguns submits precisam do click no botão nativo (eventos
-           delegados pelo Magazord JS). Tentamos requestSubmit primeiro, e
-           se não funcionar em 1s, clicamos no botão visível. */
         if (form && typeof form.requestSubmit === 'function') {
           try { form.requestSubmit(); }
           catch (e) {
@@ -3400,7 +3410,34 @@
           mainArea.classList.remove('mm-shadow-mode');
           if (layout) layout.style.display = 'none';
         }, 400);
-      }, 500);
+      }
+
+      /* Para cartão: espera o token do MercadoPago ficar pronto.
+         O input #pag-cartao-token-mp começa com "loading..." e só recebe
+         o valor real após a tokenização async do MP (~1-3 seg após digitar).
+         Submeter antes causa falha silenciosa (MP rejeita token inválido). */
+      if (forma === 'cartao') {
+        var tokenStart = Date.now();
+        var TOKEN_MAX_WAIT = 12000; // 12 seg max
+        (function waitForToken() {
+          var tokenEl = document.getElementById('pag-cartao-token-mp');
+          var tokenVal = tokenEl ? (tokenEl.value || '').trim() : '';
+          var tokenReady = tokenVal && tokenVal !== 'loading...' && tokenVal.length > 10;
+          if (tokenReady) {
+            doSubmit();
+            return;
+          }
+          if (Date.now() - tokenStart >= TOKEN_MAX_WAIT) {
+            // Timeout — try submit anyway (Magazord may recover) or surface error
+            console.warn('[mm-checkout] Token MP timeout, submitting anyway');
+            doSubmit();
+            return;
+          }
+          setTimeout(waitForToken, 200);
+        })();
+      } else {
+        setTimeout(doSubmit, 500);
+      }
     }
   }
 
