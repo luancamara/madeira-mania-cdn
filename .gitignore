@@ -1,0 +1,9 @@
+# Visual companion do brainstorming (mockups salvos durante sessões)
+.superpowers/
+
+# Node
+node_modules/
+
+# Temporary files
+*.log
+.DS_Store

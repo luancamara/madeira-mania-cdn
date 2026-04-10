@@ -508,55 +508,103 @@
   position: fixed !important;
   inset: 0 !important;
   z-index: 99999 !important;
-  background: rgba(0,0,0,0.4) !important;
+  background: rgba(15, 23, 42, 0.55) !important;
   display: flex !important;
-  align-items: flex-end !important;
+  align-items: center !important;
   justify-content: center !important;
-  animation: mmConfirmIn 0.2s ease !important;
-  -webkit-backdrop-filter: blur(4px) !important;
-  backdrop-filter: blur(4px) !important;
+  padding: 24px !important;
+  animation: mmConfirmIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  backdrop-filter: blur(6px) !important;
 }
 @keyframes mmConfirmIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes mmSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes mmConfirmPop {
+  0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
 
 .mm-confirm-card {
   background: #FFFFFF !important;
-  border-radius: 24px 24px 0 0 !important;
-  padding: 28px 24px !important;
-  padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+  border-radius: 20px !important;
+  padding: 28px 28px 24px !important;
   width: 100% !important;
   max-width: 420px !important;
-  animation: mmSlideUp 0.25s ease !important;
+  box-shadow:
+    0 20px 50px -12px rgba(15, 23, 42, 0.28),
+    0 8px 20px -8px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(15, 23, 42, 0.04) !important;
+  animation: mmConfirmPop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+  text-align: center !important;
+}
+/* Warning icon circle above the title */
+.mm-confirm-card::before {
+  content: '' !important;
+  display: block !important;
+  width: 56px !important;
+  height: 56px !important;
+  margin: 0 auto 16px !important;
+  border-radius: 50% !important;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6M14 11v6'/><path d='M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2'/></svg>") center/26px 26px no-repeat,
+    #FEE2E2 !important;
 }
 .mm-confirm-title {
   font-family: 'Libre Baskerville', Georgia, serif !important;
-  font-size: 17px !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
   color: #121212 !important;
-  margin: 0 0 6px !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 0 8px !important;
+  line-height: 1.25 !important;
 }
 .mm-confirm-desc {
   font-family: 'Poppins', system-ui, sans-serif !important;
   font-size: 14px !important;
   color: #4B5563 !important;
-  margin: 0 0 20px !important;
-  line-height: 1.4 !important;
+  margin: 0 0 24px !important;
+  line-height: 1.5 !important;
 }
-.mm-confirm-actions { display: flex !important; gap: 10px !important; }
+.mm-confirm-actions {
+  display: flex !important;
+  flex-direction: row-reverse !important; /* primary action (Remover) visually leads on the right */
+  gap: 12px !important;
+}
 .mm-confirm-btn {
   flex: 1 !important;
-  height: 48px !important;
+  min-height: 48px !important;
+  padding: 12px 20px !important;
   border: none !important;
-  border-radius: 14px !important;
+  border-radius: 999px !important; /* pill to match Finalizar button */
   font-family: 'Poppins', system-ui, sans-serif !important;
   font-size: 15px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   -webkit-tap-highlight-color: transparent !important;
+  transition: background-color 180ms ease, transform 150ms ease, box-shadow 180ms ease !important;
 }
 .mm-confirm-btn:active { transform: scale(0.97) !important; }
-.mm-confirm-btn-cancel { background: #F3F4F6 !important; color: #121212 !important; }
-.mm-confirm-btn-delete { background: #EF4444 !important; color: #FFFFFF !important; }
+.mm-confirm-btn:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
+}
+.mm-confirm-btn-cancel {
+  background: #F3F4F6 !important;
+  color: #121212 !important;
+  border: 1px solid #E5E7EB !important;
+}
+.mm-confirm-btn-cancel:hover {
+  background: #E5E7EB !important;
+}
+.mm-confirm-btn-delete {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+}
+.mm-confirm-btn-delete:hover {
+  background: #B91C1C !important;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.32) !important;
+}
 
 /* ==========================================================================
    DESKTOP: drawer .carrinho-rapido-ctn tem estrutura diferente do mobile
@@ -621,6 +669,11 @@
     width: 14px !important;
     height: 14px !important;
     fill: #121212 !important;
+    transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom:hover svg {
+    transform: rotate(90deg) !important;
+    fill: #4B664A !important;
   }
   .carrinho-rapido-ctn .top-carrinho .icon-arrow-bottom svg path {
     fill: #121212 !important;
@@ -634,42 +687,73 @@
     max-height: calc(100vh - 340px) !important;
   }
 
-  /* CARD do item */
+  /* CARD do item — mirror /checkout/cart .mm-item grid layout so fonts,
+     gaps and thumbnail sizes match the rest of the site. */
   .carrinho-rapido-ctn .content-cart .cart-item {
     background: #FFFFFF !important;
     border: 1px solid #E7E7E7 !important;
     border-radius: 14px !important;
     margin: 8px 0 !important;
-    padding: 14px !important;
-    min-height: 100px !important;
+    padding: 16px !important;
+    min-height: 112px !important;
     box-shadow: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
   }
 
   .carrinho-rapido-ctn .content-cart .cart-item .prod-img {
-    width: 76px !important;
-    height: 76px !important;
-    min-width: 76px !important;
+    width: 96px !important;
+    height: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
     border-radius: 10px !important;
     border: 1px solid #F0F0F0 !important;
+    flex-shrink: 0 !important;
   }
 
+  /* prod-info fills the remaining space so name and qty controls breathe */
+  .carrinho-rapido-ctn .content-cart .cart-item .prod-info {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding-left: 0 !important; /* gap on cart-item handles spacing */
+  }
+
+  .carrinho-rapido-ctn .content-cart .cart-item .prod-nome,
   .carrinho-rapido-ctn .content-cart .cart-item .prod-nome a {
     font-family: 'Poppins', system-ui, sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
     color: #121212 !important;
+    line-height: 1.35 !important;
     text-decoration: none !important;
+    letter-spacing: -0.005em !important;
   }
 
   /* Derivacao escondida globalmente (.content-cart .cart-item .derivacao no
      bloco base) — Madeira Mania não usa sistema de variantes nativo, então
      "Único: Único" é ruído visual. */
 
-  .carrinho-rapido-ctn .content-cart .cart-item .valor {
+  .carrinho-rapido-ctn .content-cart .cart-item .valor,
+  .carrinho-rapido-ctn .content-cart .cart-item .valor span,
+  .carrinho-rapido-ctn .content-cart .cart-item .valor strong {
     font-family: 'Poppins', system-ui, sans-serif !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
     color: #121212 !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -0.005em !important;
+    white-space: nowrap !important;
+  }
+  .carrinho-rapido-ctn .content-cart .cart-item .valor .mm-cents {
+    font-size: 0.55em !important;
+    font-weight: 600 !important;
+    color: #9CA3AF !important;
+    vertical-align: baseline !important;
   }
 
   /* FOOTER — seção branca com radius top */
@@ -909,6 +993,607 @@
   font-size: 14px;
   font-weight: 600;
   color: #4b664a;
+}
+
+/* ==========================================================================
+   POST-AJAX STRUCTURE — mirror the original SSR design exactly.
+   Magazord's atualizaPreview AJAX replaces .top-carrinho → .header-cart and
+   .area-finalizar-compra → .box-total-btn, so the existing desktop rules
+   (lines ~567+) stop applying. These rules mirror the SAME look.design:
+     • grey drawer (#F2F2F2)
+     • header with Libre Baskerville 18px 700 title + 44x44 white circle close
+     • item cards with 8px margin
+     • WHITE footer card with top-radius + shadow up
+     • olive pill CTA (#1b7a45) Poppins 15px 600
+   ========================================================================== */
+
+/* Drawer + sections keep grey bg (was overridden to white by earlier draft) */
+.carrinho-rapido-ctn.open-cart,
+.carrinho-rapido-ctn.open-cart .carrinho-rapido {
+  background: #F2F2F2 !important;
+}
+
+/* HEADER — .header-cart (post-AJAX) mirrors .top-carrinho styling */
+.carrinho-rapido-ctn .header-cart {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 18px 22px !important;
+  background: #F2F2F2 !important;
+  border-bottom: none !important;
+  flex: 0 0 auto !important;
+  gap: 12px !important;
+}
+.carrinho-rapido-ctn .header-cart > a {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  color: #121212 !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  pointer-events: none !important;
+  cursor: default !important;
+  flex: 1 1 auto !important;
+}
+
+/* Close X — .close-car-fast (post-AJAX) mirrors .icon-arrow-bottom styling */
+.carrinho-rapido-ctn .close-car-fast {
+  position: relative !important;
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E7E7E7 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  color: #121212 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: border-color 150ms, box-shadow 150ms, transform 150ms !important;
+}
+.carrinho-rapido-ctn .close-car-fast:hover {
+  border-color: #4B664A !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+.carrinho-rapido-ctn .close-car-fast:active {
+  transform: scale(0.94) !important;
+}
+.carrinho-rapido-ctn .close-car-fast:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
+}
+.carrinho-rapido-ctn .close-car-fast svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: #121212 !important;
+  fill: none !important;
+  stroke-width: 2.2 !important;
+  pointer-events: none !important;
+  transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.carrinho-rapido-ctn .close-car-fast:hover svg {
+  transform: rotate(90deg) !important;
+  stroke: #4B664A !important;
+}
+
+/* Content area — flex column so cart-items scrolls and box-total-btn sticks */
+.carrinho-rapido-ctn .content-cart {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  background: #F2F2F2 !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+.carrinho-rapido-ctn .content-cart > .cart-items {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 8px 12px !important;
+  display: block !important; /* keep legacy 8px margins between cards */
+  background: #F2F2F2 !important;
+  max-height: none !important; /* override legacy calc(100vh - 340px) cap */
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Footer .box-total-btn — compact white card with top-radius + shadow-up */
+.carrinho-rapido-ctn .box-total-btn {
+  flex: 0 0 auto !important;
+  background: #FFFFFF !important;
+  border-top: 1px solid #E7E7E7 !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding: 12px 20px 14px !important;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.04) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+/* ==========================================================================
+   SHIPPING BLOCK — minimalist, mirrors .mm-total pattern.
+   Type system locked to Poppins (labels + body) and Libre Baskerville is
+   reserved only for the .box-total-btn total value (site-wide convention).
+   Psychology applied through copy + goal-gradient progress bar, NOT via
+   colored card backgrounds or decorative icons.
+   ========================================================================== */
+.carrinho-rapido-ctn .mm-cart-ship {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  animation: mm-cart-ship-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+@keyframes mm-cart-ship-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- Shared mini label (mirrors .mm-total-label) ---- */
+.carrinho-rapido-ctn .mm-cart-ship-label {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #6B7280 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+/* ---- Location section (CEP + city + delivery date + edit) ---- */
+.carrinho-rapido-ctn .mm-cart-ship-location {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  padding-bottom: 8px !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-location-value {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #121212 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: 0 !important;
+  min-height: 20px !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-location-value > span:first-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-deadline {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #6B7280 !important;
+  line-height: 1.3 !important;
+}
+
+/* ---- Edit CEP action (text link, extended touch area) ---- */
+.carrinho-rapido-ctn .mm-cart-ship-edit {
+  flex: 0 0 auto !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 4px 0 !important;
+  min-height: 28px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #4B664A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: color 160ms ease !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-edit:hover {
+  color: #3D4733 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-edit:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
+  border-radius: 2px !important;
+}
+
+/* ---- Inline CEP edit form ---- */
+.carrinho-rapido-ctn .mm-cart-ship-cep-form {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 999px !important;
+  background: #FFFFFF !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #121212 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: 0.02em !important;
+  transition: border-color 180ms ease, box-shadow 180ms ease !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-input::placeholder {
+  color: #9CA3AF !important;
+  font-weight: 500 !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-input:focus {
+  outline: none !important;
+  border-color: #4B664A !important;
+  box-shadow: 0 0 0 3px rgba(75, 102, 74, 0.14) !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-input.is-invalid {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-save {
+  flex: 0 0 auto !important;
+  background: #4B664A !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 999px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+  transition: background-color 180ms ease !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-save:hover { background: #3D4733 !important; }
+.carrinho-rapido-ctn .mm-cart-ship-cep-save:focus-visible {
+  outline: 2px solid #4B664A !important;
+  outline-offset: 2px !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-cancel {
+  flex: 0 0 auto !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #6B7280 !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: background-color 160ms ease, color 160ms ease !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-cancel:hover {
+  background: #F3F4F6 !important;
+  color: #121212 !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-cep-cancel svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* ---- Progress + nudge group (no separate FRETE row — shipping is folded into total) ---- */
+.carrinho-rapido-ctn .mm-cart-ship-progress {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid #EFEFEF !important;
+}
+
+/* ---- Minimal progress bar (2px thin line, olive fill) ---- */
+.carrinho-rapido-ctn .mm-cart-ship-bar {
+  height: 2px !important;
+  width: 100% !important;
+  background: #EFEFEF !important;
+  border-radius: 1px !important;
+  overflow: hidden !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-bar-fill {
+  height: 100% !important;
+  background: #4B664A !important;
+  border-radius: 1px !important;
+  transition: width 520ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ---- Nudge text (loss aversion / free confirmation) ---- */
+.carrinho-rapido-ctn .mm-cart-ship-nudge {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #6B7280 !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-nudge strong {
+  color: #121212 !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-nudge.is-free {
+  color: #4B664A !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship-nudge.is-free svg {
+  flex-shrink: 0 !important;
+}
+
+/* Total block — itemized breakdown + big serif total + No PIX inline right */
+.carrinho-rapido-ctn .box-total-btn > .total {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+}
+
+/* Cents (",36") rendered smaller, sitting on the same text baseline as
+   the main digits — NOT floating/centered vertically. */
+.carrinho-rapido-ctn .mm-cents {
+  font-size: 0.5em !important;
+  font-weight: inherit !important;
+  font-family: inherit !important;
+  color: inherit !important;
+  letter-spacing: 0 !important;
+  vertical-align: baseline !important;
+  margin-left: 1px !important;
+}
+
+/* Free-shipping unlock celebration — applied for ~1.4s when crossing threshold */
+.carrinho-rapido-ctn .mm-cart-ship.mm-just-unlocked {
+  animation: mm-cart-ship-celebrate 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+@keyframes mm-cart-ship-celebrate {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
+.carrinho-rapido-ctn .mm-cart-ship.mm-just-unlocked .mm-cart-ship-nudge {
+  animation: mm-cart-pop 720ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+.carrinho-rapido-ctn .mm-cart-ship.mm-just-unlocked .mm-cart-ship-bar-fill {
+  animation: mm-cart-ship-fill-flash 900ms ease-out both !important;
+}
+@keyframes mm-cart-ship-fill-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(75, 102, 74, 0.5); }
+  60%  { box-shadow: 0 0 0 4px rgba(75, 102, 74, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(75, 102, 74, 0); }
+}
+
+/* "Você economiza R$ X com PIX" — single subtle line, sits between
+   .linha-total and .valor-final.card */
+.carrinho-rapido-ctn .mm-cart-savings {
+  display: block !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #4B664A !important;
+  font-variant-numeric: tabular-nums !important;
+  margin-top: 2px !important;
+  line-height: 1.3 !important;
+}
+/* Frete value strong inline in deadline line */
+.carrinho-rapido-ctn .mm-cart-ship-deadline strong {
+  color: #121212 !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+/* Inline shipping spinner (ring-resize style) — replaces the frete value
+   text during re-fetch. */
+.carrinho-rapido-ctn .mm-cart-ship-spinner {
+  display: inline-block !important;
+  vertical-align: -2px !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Subtle pulse on the total value during shipping re-fetch */
+.carrinho-rapido-ctn .box-total-btn.mm-ship-loading .linha-total .valor-final {
+  animation: mm-total-pulse 1.2s ease-in-out infinite !important;
+}
+@keyframes mm-total-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.65; }
+}
+
+/* ---- linha-total: TOTAL label on top, value+No PIX inline below ---- */
+.carrinho-rapido-ctn .box-total-btn .linha-total {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0 !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+.carrinho-rapido-ctn .box-total-btn .linha-total h5 {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #6B7280 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin: 0 0 6px !important;
+  line-height: 1 !important;
+}
+/* Value + "No PIX" side by side (was column) */
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final > .valor,
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final > .valor > strong,
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final > strong {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.05 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final > .valor {
+  display: inline-flex !important;
+  align-items: baseline !important;
+}
+/* "No PIX" inline right of the value, same baseline */
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final .tipo-pagto {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #4B664A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin: 0 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* 12x installments row (.valor-final.card) — muted parcela subtitle */
+.carrinho-rapido-ctn .box-total-btn .valor-final.card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding: 0 !important;
+  background: transparent !important;
+  margin-top: 1px !important;
+}
+.carrinho-rapido-ctn .box-total-btn .valor-final.card > span {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #6B7280 !important;
+  line-height: 1.3 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.carrinho-rapido-ctn .box-total-btn .valor-final.card strong {
+  font-weight: 700 !important;
+  color: #121212 !important;
+}
+
+/* ------------------------------------------------------------------
+   Animations: item add/remove + total pop
+   Keyframes mirror checkout-cro.css (@mm-pop bounce).
+   ------------------------------------------------------------------ */
+@keyframes mm-cart-pop {
+  0%   { transform: scale(0.96); opacity: 0.55; }
+  55%  { transform: scale(1.035); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes mm-cart-item-add {
+  0%   { opacity: 0; transform: translateX(24px); max-height: 0; margin-top: 0; margin-bottom: 0; }
+  40%  { opacity: 1; max-height: 240px; margin-top: 8px; margin-bottom: 8px; }
+  100% { opacity: 1; transform: translateX(0); max-height: 240px; }
+}
+@keyframes mm-cart-item-remove {
+  0%   { opacity: 1; transform: translateX(0) scale(1); max-height: 240px; margin-top: 8px; margin-bottom: 8px; padding-top: 14px; padding-bottom: 14px; border-width: 1px; }
+  50%  { opacity: 0; transform: translateX(-36px) scale(0.96); max-height: 240px; }
+  100% { opacity: 0; transform: translateX(-36px) scale(0.96); max-height: 0; margin-top: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-width: 0; }
+}
+
+/* When we trigger the "pop" class on the total value */
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final.mm-pop > .valor,
+.carrinho-rapido-ctn .box-total-btn .linha-total .valor-final.mm-pop strong {
+  animation: mm-cart-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+.carrinho-rapido-ctn .content-cart .cart-item.mm-added {
+  animation: mm-cart-item-add 420ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+.carrinho-rapido-ctn .content-cart .cart-item.mm-removing {
+  animation: mm-cart-item-remove 360ms cubic-bezier(0.55, 0, 0.67, 0.2) forwards !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Finalizar CTA — compact olive pill */
+.carrinho-rapido-ctn .box-total-btn .checkout {
+  width: 100% !important;
+  margin-top: 6px !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout > a {
+  display: block !important;
+  text-decoration: none !important;
+  width: 100% !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout .button.button-darken,
+.carrinho-rapido-ctn .box-total-btn .checkout .button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 12px 20px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #1b7a45 !important;
+  color: #FFFFFF !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  cursor: pointer !important;
+  transition: background-color 200ms, box-shadow 200ms, transform 150ms !important;
+  box-shadow: 0 4px 12px rgba(27, 122, 69, 0.22) !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout .button:hover {
+  background: #155a33 !important;
+  box-shadow: 0 6px 16px rgba(27, 122, 69, 0.28) !important;
+  transform: translateY(-1px) !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout .button:active {
+  transform: translateY(0) !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout .button .arrow-right {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  order: 2 !important;
+  transition: transform 180ms ease !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout .button:hover .arrow-right {
+  transform: translateX(3px) !important;
+}
+.carrinho-rapido-ctn .box-total-btn .checkout .button .arrow-right svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: #FFFFFF !important;
+  fill: none !important;
+}
+
+/* ==========================================================================
+   MOBILE: cart drawer full-width
+   ========================================================================== */
+@media (max-width: 767px) {
+  .carrinho-rapido-ctn {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 }
 
 /* ==========================================================================

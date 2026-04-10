@@ -184,21 +184,28 @@
 }
 #mm-header .mm-h-cart-badge {
   position: absolute;
-  top: -6px;
-  right: -8px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: -5px;
+  right: -10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  min-height: 18px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
   background: var(--c-brand);
   color: #FFFFFF;
+  font-family: 'Poppins', system-ui, sans-serif;
   font-size: 10px;
-  font-weight: 600;
-  line-height: 16px;
+  font-weight: 700;
+  line-height: 1;
   text-align: center;
-  border-radius: 9999px;
-  border: 2px solid var(--c-header-bg);
-  box-sizing: content-box;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-header-bg);
+  box-sizing: border-box;
   letter-spacing: 0;
+  pointer-events: none;
 }
 
 /* Focus-visible (a11y) */
@@ -252,11 +259,15 @@
     height: auto;
   }
 
-  /* Show burger, hide desktop-only actions */
+  /* Show burger, hide desktop-only actions + text labels */
   #mm-header .mm-h-burger { display: inline-flex; }
   #mm-header .mm-h-action#mm-h-buscar { display: none; }
   #mm-header .mm-h-main-right .mm-h-action[href="/wishlist"],
   #mm-header .mm-h-main-right .mm-h-action[href="/login"] { display: none; }
+  /* Hide "Carrinho" text label — only keep the bag icon + badge */
+  #mm-header #mm-h-cart > span:not(.mm-h-cart-icon) { display: none; }
+  /* Tighten cart button padding (icon-only) */
+  #mm-header #mm-h-cart { padding: 8px; gap: 0; }
 }
 
 @media (max-width: 479px) {
@@ -676,6 +687,127 @@
   color: var(--c-brand);
 }
 
+/* ------------------------------------------------------------------
+   Live product results — 2-col grid of cards with thumbnails
+   ------------------------------------------------------------------ */
+#mm-header .mm-h-search-products-section {
+  margin-top: 20px;
+  animation: mm-fade-in 240ms ease both;
+}
+#mm-header .mm-h-search-products-section .mm-h-search-sug-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--ls-loose, 0.08em);
+  text-transform: uppercase;
+  color: var(--c-text-muted, #666);
+}
+#mm-header .mm-h-search-products-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+#mm-header .mm-h-search-product {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+#mm-header .mm-h-search-product:hover,
+#mm-header .mm-h-search-product:focus-visible {
+  border-color: #4b664a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px -6px rgba(75, 102, 74, 0.2);
+  outline: none;
+}
+#mm-header .mm-h-search-product-thumb {
+  position: relative;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  background: #fafafa;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#mm-header .mm-h-search-product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#mm-header .mm-h-search-product-noimg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f3f3f3, #e8e8e8);
+}
+#mm-header .mm-h-search-product-discount {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 2px 5px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+#mm-header .mm-h-search-product-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#mm-header .mm-h-search-product-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+#mm-header .mm-h-search-product-prices {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+#mm-header .mm-h-search-product-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4b664a;
+}
+#mm-header .mm-h-search-product-oldprice {
+  font-size: 11px;
+  color: #999;
+  text-decoration: line-through;
+}
+/* Skeleton loading state */
+#mm-header .mm-h-search-product-skel {
+  height: 86px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f3f3f3 0%, #ececec 50%, #f3f3f3 100%);
+  background-size: 200% 100%;
+  animation: mm-skel-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes mm-skel-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 #mm-header .mm-h-search-hint {
   margin-top: 24px;
   font-size: 12px;
@@ -763,7 +895,7 @@
   position: absolute;
   inset: 0;
   background: var(--c-scrim);
-  animation: mm-fade-in var(--t-base) ease-out;
+  animation: mm-fade-in 320ms ease-out both;
 }
 #mm-header .mm-h-drawer-panel {
   position: absolute;
@@ -773,16 +905,33 @@
   width: 86%;
   max-width: 380px;
   background: var(--c-header-bg);
-  overflow-y: auto;
+  overflow: hidden; /* nav area handles its own scroll */
   display: flex;
   flex-direction: column;
-  animation: mm-slide-right var(--t-base) ease-out;
+  animation: mm-slide-right 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Exit animations — triggered by .mm-h-drawer-closing class */
+#mm-header .mm-h-drawer.mm-h-drawer-closing .mm-h-drawer-panel {
+  animation: mm-slide-left 300ms cubic-bezier(0.55, 0, 0.67, 0.2) forwards;
+}
+#mm-header .mm-h-drawer.mm-h-drawer-closing .mm-h-drawer-backdrop {
+  animation: mm-fade-out 300ms ease-in forwards;
+}
+@keyframes mm-slide-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+@keyframes mm-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 #mm-header .mm-h-drawer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0; /* never compress when nav sections expand */
   padding: 16px 20px;
   border-bottom: 1px solid var(--c-border);
   min-height: 64px;
@@ -814,6 +963,7 @@
 #mm-header .mm-h-drawer-search {
   padding: 16px 20px;
   border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0; /* never compress when nav sections expand */
 }
 #mm-header .mm-h-drawer-search input {
   width: 100%;
@@ -833,6 +983,8 @@
 #mm-header .mm-h-drawer-nav {
   padding: 8px 0;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* allow flex child to shrink below content size for overflow */
 }
 #mm-header .mm-h-drawer-section {
   border-bottom: 1px solid var(--c-border);
@@ -858,10 +1010,12 @@
   font-size: 20px;
   font-weight: 400;
   color: var(--c-text-muted);
-  transition: transform var(--t-fast);
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms ease;
 }
 #mm-header .mm-h-drawer-section[open] summary::after {
   content: '−';
+  transform: rotate(180deg);
+  color: var(--c-brand);
 }
 #mm-header .mm-h-drawer-section[open] summary {
   color: var(--c-brand);
@@ -870,9 +1024,31 @@
   list-style: none;
   margin: 0;
   padding: 0 20px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: max-height 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease;
 }
 #mm-header .mm-h-drawer-section li {
   padding: 0;
+}
+/* "Ver todos →" — pushed to last position + styled as olive CTA link */
+#mm-header .mm-h-drawer-section li.mm-h-drawer-viewall {
+  order: 99;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--c-border);
+}
+#mm-header .mm-h-drawer-section li.mm-h-drawer-viewall a {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--c-brand) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+#mm-header .mm-h-drawer-section li.mm-h-drawer-viewall a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 #mm-header .mm-h-drawer-section li a {
   display: block;
