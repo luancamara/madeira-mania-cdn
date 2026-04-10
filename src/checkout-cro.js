@@ -3377,7 +3377,17 @@
         }
       }
 
+      /* DEBUG LOGGING — exposed via window.__mmCheckoutDebug for user inspection */
+      window.__mmCheckoutDebug = window.__mmCheckoutDebug || [];
+      function dbg(msg, data) {
+        var entry = { t: new Date().toISOString(), msg: msg, data: data };
+        window.__mmCheckoutDebug.push(entry);
+        console.log('[mm-checkout]', msg, data || '');
+      }
+
       function doSubmit() {
+        dbg('doSubmit() called', { forma: forma });
+
         /* Aceita termos bcash se cartão */
         if (forma === 'cartao') {
           var terms = document.getElementById('aceito-termos-bcash-one-card');
@@ -3385,6 +3395,7 @@
             terms.checked = true;
             terms.dispatchEvent(new Event('change', { bubbles: true }));
           }
+          dbg('terms', { checked: terms?.checked });
         }
 
         /* Pega o form nativo correto por ID */
@@ -3392,44 +3403,86 @@
                    : forma === 'boleto' ? 'form-pag-boleto'
                    : 'form-pag-cartao';
         var form = document.getElementById(formId);
-
-        if (form && typeof form.requestSubmit === 'function') {
-          try { form.requestSubmit(); }
-          catch (e) {
-            var btnNative = form.querySelector('button.button-success, button[type="submit"], input[type="submit"]');
-            if (btnNative) btnNative.click();
-          }
-        } else if (form) {
-          var btnFallback = form.querySelector('button.button-success, button[type="submit"], input[type="submit"]');
-          if (btnFallback) btnFallback.click();
-          else form.submit();
+        if (!form) {
+          dbg('ERROR: form not found', { formId: formId });
+          alert('Erro interno: formulário de pagamento não encontrado. Recarregue a página.');
+          state.submitting = false;
+          btn.classList.remove('is-loading');
+          var ov = document.getElementById('mm-op-overlay');
+          if (ov) ov.remove();
+          return;
         }
 
-        /* Tenta esconder nosso layout pra Magazord assumir (processing page) */
+        /* Log critical field state before submit */
+        if (forma === 'cartao') {
+          dbg('pre-submit cartao state', {
+            numero: document.getElementById('pag-cartao-numero')?.value,
+            bandeira: document.getElementById('pag-cartao-bandeira')?.value,
+            parcela: document.getElementById('pag-cartao-parcela')?.value,
+            titular: document.getElementById('pag-cartao-titular')?.value,
+            mes: document.getElementById('pag-cartao-mes-validade')?.value,
+            ano: document.getElementById('pag-cartao-ano-validade')?.value,
+            cvv: document.getElementById('pag-cartao-vericacao')?.value?.length,
+            cpf: document.getElementById('pag-cartao-cpf')?.value,
+            tokenMp: document.getElementById('pag-cartao-token-mp')?.value?.substring(0, 20),
+          });
+        }
+
+        /* Click the native button DIRECTLY — this triggers Magazord's
+           full native flow (validation + AJAX + redirect). requestSubmit()
+           bypasses the button's click handlers which Magazord relies on. */
+        var btnNative = form.querySelector('button.button-success, button[type="submit"], input[type="submit"]');
+        if (btnNative) {
+          dbg('clicking native button', { text: btnNative.textContent?.trim() });
+          btnNative.click();
+        } else if (typeof form.requestSubmit === 'function') {
+          dbg('no native btn, using requestSubmit');
+          try { form.requestSubmit(); } catch(e) { dbg('requestSubmit error', e.message); form.submit(); }
+        } else {
+          dbg('no native btn, using form.submit()');
+          form.submit();
+        }
+
+        /* Failsafe: if we're still here after 8s, something is wrong.
+           Remove the overlay and let the user see what's happening. */
+        setTimeout(function() {
+          if (state.submitting && location.pathname.indexOf('/onepage') !== -1) {
+            dbg('8s failsafe: still on /onepage, removing overlay');
+            state.submitting = false;
+            btn.classList.remove('is-loading');
+            var ov = document.getElementById('mm-op-overlay');
+            if (ov) ov.remove();
+            // Reveal native Magazord UI in case it has error messages
+            mainArea.classList.remove('mm-shadow-mode');
+            if (layout) layout.style.display = 'none';
+          }
+        }, 8000);
+
+        /* After a short delay, hide our layout so the native processing
+           page takes over visually (if submit triggered a redirect). */
         setTimeout(function() {
           mainArea.classList.remove('mm-shadow-mode');
           if (layout) layout.style.display = 'none';
-        }, 400);
+        }, 600);
       }
 
       /* Para cartão: espera o token do MercadoPago ficar pronto.
-         O input #pag-cartao-token-mp começa com "loading..." e só recebe
-         o valor real após a tokenização async do MP (~1-3 seg após digitar).
-         Submeter antes causa falha silenciosa (MP rejeita token inválido). */
+         MP SDK tokeniza async (~1-3 seg após digitar). Submeter antes
+         causa rejeição silenciosa. */
       if (forma === 'cartao') {
         var tokenStart = Date.now();
-        var TOKEN_MAX_WAIT = 12000; // 12 seg max
+        var TOKEN_MAX_WAIT = 10000;
         (function waitForToken() {
           var tokenEl = document.getElementById('pag-cartao-token-mp');
           var tokenVal = tokenEl ? (tokenEl.value || '').trim() : '';
           var tokenReady = tokenVal && tokenVal !== 'loading...' && tokenVal.length > 10;
           if (tokenReady) {
+            dbg('token ready', { length: tokenVal.length });
             doSubmit();
             return;
           }
           if (Date.now() - tokenStart >= TOKEN_MAX_WAIT) {
-            // Timeout — try submit anyway (Magazord may recover) or surface error
-            console.warn('[mm-checkout] Token MP timeout, submitting anyway');
+            dbg('token timeout, submitting anyway', { lastVal: tokenVal });
             doSubmit();
             return;
           }

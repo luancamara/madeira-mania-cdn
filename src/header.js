@@ -876,7 +876,15 @@
     var cartScrim = null;
 
     function findDrawer() {
-      return document.querySelector('.carrinho-rapido-ctn');
+      // Desktop: .carrinho-rapido-ctn inside header.ra-header > .header-middle
+      var desktop = document.querySelector('.carrinho-rapido-ctn');
+      if (desktop) return desktop;
+      // Mobile: #cart-preview-area > div with z-[9999] and translate-x class
+      // (Magazord React-rendered overlay, completely different DOM)
+      return document.querySelector('#cart-preview-area > div.z-\\[9999\\], #cart-preview-area > div[class*="z-[9999]"]');
+    }
+    function isMobileDrawer(drawer) {
+      return !!(drawer && drawer.className && drawer.className.indexOf('z-[9999]') !== -1);
     }
     // Inline SVG X used for the close button. Kept small so it inherits
     // currentColor from the .mm-close-x wrapper for theming.
@@ -1141,6 +1149,9 @@
     // completes, the response handler finds 0 elements and the drawer stays
     // empty. So we must wait for the preview HTML to land before lifting.
     function loadCartPreview(drawer, done) {
+      // Mobile drawer doesn't need atualizaPreview — Magazord React renders
+      // items automatically via the cart-preview-area component hydration.
+      if (isMobileDrawer(drawer)) { done(); return; }
       try {
         if (typeof Zord === 'undefined' || !Zord.checkout || typeof Zord.checkout.atualizaPreview !== 'function') {
           done();
@@ -1148,11 +1159,8 @@
         }
         var count = getCartCountFromSources();
         if (count === 0) { done(); return; }
-        // If items already rendered, skip reload
         if (drawer.querySelector('.cart-item')) { done(); return; }
-        // Force reload (no-arg form sets a=true inside Magazord's fn)
         Zord.checkout.atualizaPreview();
-        // Poll for .cart-item to appear (AJAX is async, ~200-800ms typical)
         var start = Date.now();
         var MAX_WAIT = 2000;
         (function poll() {
@@ -1189,16 +1197,12 @@
     }
 
     function continueOpenDrawer(drawer) {
-      liftDrawer(drawer);
-      // Re-hydrate close X icon in case AJAX re-rendered the header since
-      // last open (wireCloseButtons is one-time but hydrateCloseFast must
-      // run whenever .close-car-fast is freshly empty).
-      hydrateCloseFast(drawer);
-      // Try to enhance empty state — runs every open so if React re-renders
-      // the drawer contents between opens, we re-inject.
+      var isMobile = isMobileDrawer(drawer);
+      if (!isMobile) {
+        liftDrawer(drawer);
+        hydrateCloseFast(drawer);
+      }
       enhanceEmptyCart(drawer);
-      // Also observe changes to .content-cart so adding an item removes the
-      // empty enhancement and vice-versa (self-healing)
       var content = drawer.querySelector('.content-cart');
       if (content && !content.dataset.mmObserved) {
         content.dataset.mmObserved = '1';
@@ -1207,24 +1211,45 @@
         });
         observer.observe(content, { childList: true, subtree: true, attributes: false });
       }
-      // Show drawer via CSS class (global.css controls the transform via
-      // !important so Magazord's .open-cart class can't show it without us)
-      drawer.classList.add('mm-drawer-open');
-      // Scrim — z-index 150 (between header 100 and drawer 200)
-      if (!cartScrim) {
+      if (isMobile) {
+        // Mobile: Magazord uses Tailwind translate-x classes
+        drawer.classList.remove('translate-x-[100%]');
+        drawer.classList.add('translate-x-[0]');
+        // Wire Magazord's native "Fechar" button
+        var fecharBtn = drawer.querySelector('.group.cursor-pointer, [class*="text-error-700"]');
+        if (fecharBtn && !fecharBtn.dataset.mmWired) {
+          fecharBtn.dataset.mmWired = '1';
+          fecharBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeCartDrawer();
+          }, true);
+        }
+      } else {
+        // Desktop: use our CSS class (blocks Magazord's .open-cart)
+        drawer.classList.add('mm-drawer-open');
+      }
+      // Scrim (desktop only — mobile drawer is full-screen, no scrim needed)
+      if (!isMobile && !cartScrim) {
         cartScrim = document.createElement('div');
         cartScrim.id = 'mm-h-cart-scrim';
         cartScrim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:150;opacity:0;transition:opacity 320ms;';
         cartScrim.addEventListener('click', closeCartDrawer);
         document.body.appendChild(cartScrim);
-        // Trigger transition
         requestAnimationFrame(function () { cartScrim.style.opacity = '1'; });
       }
       document.body.style.overflow = 'hidden';
     }
     function closeCartDrawer() {
       var drawer = findDrawer();
-      if (drawer) drawer.classList.remove('mm-drawer-open');
+      if (drawer) {
+        if (isMobileDrawer(drawer)) {
+          drawer.classList.remove('translate-x-[0]');
+          drawer.classList.add('translate-x-[100%]');
+        } else {
+          drawer.classList.remove('mm-drawer-open');
+        }
+      }
       if (cartScrim) {
         cartScrim.style.opacity = '0';
         var s = cartScrim;
@@ -1241,10 +1266,20 @@
       });
     }
 
-    // Mobile: intercept Magazord's native tabbar (.header-bottom) cart button.
-    // It's an <a> to /checkout/cart — we hijack it to open the drawer instead.
-    // Uses delegated listener on .header-bottom because the tabbar may be
-    // React-rendered after our script runs.
+    // Intercept Magazord's native cart links (both .header-bottom tabbar and
+    // #cart-preview-area mobile icon). Both are <a href="/checkout/cart">
+    // which navigates instead of opening the drawer — we hijack them.
+    // Use document-level delegation since these elements may be re-rendered
+    // by React after our script runs.
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('#cart-preview-area a.link-cart, header.ra-header > .header-bottom a[href*="/checkout/cart"], header.ra-header > .header-bottom a[href*="carrinho"]');
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        openCartDrawer();
+      }
+    }, true);
+    // Keep the old headerBottom listener for backwards compat
     var headerBottom = document.querySelector('header.ra-header > .header-bottom');
     if (headerBottom) {
       headerBottom.addEventListener('click', function (e) {
