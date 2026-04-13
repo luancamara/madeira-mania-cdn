@@ -5,10 +5,11 @@
     // PAGE GUARD — script é específico pra PDP (páginas de produto).
     // Checkout/cart/home/etc não precisam e rodar aqui causa
     // loops de "Aguardando dataProduct..." poluindo o console.
+    // Detection: #produto-react-app OU #pagina-produto-react-app no DOM
+    // (URL patterns /produto/ e /p/ são unreliable — Magazord usa clean
+    // slugs como /rack-atenas-cor-naturalle-largura-180-cm sem prefixo).
     // ============================================
-    var _mmPath = location.pathname;
-    var _isProductPage = /\/produto\//i.test(_mmPath) || /\/p\//i.test(_mmPath);
-    if (!_isProductPage) return;
+    if (!document.getElementById('produto-react-app') && !document.getElementById('pagina-produto-react-app')) return;
 
     // ============================================
     // PROTEÇÃO CONTRA MÚLTIPLAS EXECUÇÕES

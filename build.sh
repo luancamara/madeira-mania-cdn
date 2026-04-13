@@ -21,7 +21,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # rely on a cached package index that takes hours to refresh. The only
 # reliable approach: create a NEW tag per deploy and update this line.
 # After deploy: create tag, push tag, purge jsDelivr, update Magazord CA.
-CDN_VERSION="v2.0.7"
+CDN_VERSION="v2.0.8"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 
