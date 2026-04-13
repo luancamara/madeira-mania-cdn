@@ -262,8 +262,13 @@
       try {
         var script = Array.from(document.scripts).find(function (s) { return s.src && s.src.indexOf('madeira-mania.js') !== -1; });
         if (script && script.src.indexOf('localhost') !== -1) return 'http://localhost:8080/assets/mega-hero/';
-        return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/assets/mega-hero/';
-      } catch (e) { return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/assets/mega-hero/'; }
+        // Extract version tag from the loaded script URL (e.g. @v2.0.8)
+        if (script) {
+          var m = script.src.match(/@([^/]+)/);
+          if (m) return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@' + m[1] + '/dist/assets/mega-hero/';
+        }
+        return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@main/dist/assets/mega-hero/';
+      } catch (e) { return 'https://cdn.jsdelivr.net/gh/luancamara/madeira-mania-cdn@main/dist/assets/mega-hero/'; }
     })();
 
     var heroLabels = {
