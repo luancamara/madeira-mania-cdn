@@ -21,7 +21,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # rely on a cached package index that takes hours to refresh. The only
 # reliable approach: create a NEW tag per deploy and update this line.
 # After deploy: create tag, push tag, purge jsDelivr, update Magazord CA.
-CDN_VERSION="v2.0.9"
+CDN_VERSION="v2.0.10"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 
@@ -94,18 +94,23 @@ echo "Gerando bundle único..."
   echo "     SEÇÃO 3: EXTERNAL SCRIPT LOADERS"
   echo "     ============================================= */"
   echo ""
-  echo "  /* === contentsquare-loader.js === */"
-  sed 's/^/  /' "$SRC/contentsquare-loader.js"
-  echo ""
+  # TEMPORARIAMENTE DESATIVADO (2026-04-14) — evitar duplicação no GAds.
+  # Contentsquare é session replay (não duplica), mas removido junto com
+  # tracking.js / fb-purchase.js a pedido do usuário. Reativar descomentando.
+  # echo "  /* === contentsquare-loader.js === */"
+  # sed 's/^/  /' "$SRC/contentsquare-loader.js"
+  # echo ""
 
   # --- 4. Core JS (all pages) ---
   echo "  /* ============================================="
   echo "     SEÇÃO 4: GLOBAL JS (todas as páginas)"
   echo "     ============================================= */"
   echo ""
-  echo "  /* === tracking.js === */"
-  sed 's/^/  /' "$SRC/tracking.js"
-  echo ""
+  # TEMPORARIAMENTE DESATIVADO — tracking.js despacha gtag/fbq/dataLayer,
+  # duplicando eventos que o Magazord já dispara nativamente.
+  # echo "  /* === tracking.js === */"
+  # sed 's/^/  /' "$SRC/tracking.js"
+  # echo ""
   echo "  /* === global.js === */"
   sed 's/^/  /' "$SRC/global.js"
   echo ""
@@ -115,9 +120,11 @@ echo "Gerando bundle único..."
   echo "  /* === schema-organization.js === */"
   sed 's/^/  /' "$SRC/schema-organization.js"
   echo ""
-  echo "  /* === fb-purchase.js === */"
-  sed 's/^/  /' "$SRC/fb-purchase.js"
-  echo ""
+  # TEMPORARIAMENTE DESATIVADO — fb-purchase.js dispara fbq('track','Purchase')
+  # duplicando o evento que o Magazord já dispara em /checkout/done.
+  # echo "  /* === fb-purchase.js === */"
+  # sed 's/^/  /' "$SRC/fb-purchase.js"
+  # echo ""
 
   # --- 5. PDP JS (product pages - guarded by #produto-react-app check) ---
   echo "  /* ============================================="
