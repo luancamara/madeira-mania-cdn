@@ -405,18 +405,21 @@
     var info = app.querySelector('.informacoes-compra-produto');
     if (!info || document.getElementById('mm-stock-indicator')) return;
 
-    /* Extrair qtde_estoque dos scripts inline */
+    /* Extrair qtde_estoque dos scripts inline.
+       Magazord soma estoque virtual (sempre 10) ao real, então
+       real = qtde_estoque - 10. qtde_estoque <= 10 significa sem estoque. */
+    var VIRTUAL_STOCK = 10;
     var scripts = document.querySelectorAll('script:not([src])');
-    var stock = -1;
+    var raw = -1;
     for (var i = 0; i < scripts.length; i++) {
       var txt = scripts[i].textContent;
-      /* Buscar qtde_estoque como número (não boolean) */
       var match = txt.match(/"qtde_estoque"\s*:\s*(\d+)/);
       if (match) {
-        stock = parseInt(match[1], 10);
+        raw = parseInt(match[1], 10);
         break;
       }
     }
+    var stock = raw - VIRTUAL_STOCK;
 
     /* Só mostrar se estoque real entre 1 e 9 */
     if (stock < 1 || stock > 9) return;
@@ -675,27 +678,38 @@
     /* Formatar CEP: 12345-678 */
     var formatted = saved.substring(0, 5) + '-' + saved.substring(5);
 
-    /* Simular digitação (React controlled input) */
-    var nativeSet = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype, 'value'
-    ).set;
-    nativeSet.call(cepInput, formatted);
-    cepInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-    /* Aguardar o React processar o input e habilitar o botão */
-    function tryClickCalc(attempts) {
-      if (attempts <= 0) return;
-      var calcBtn = cepInput.closest('.area-calculo');
-      if (calcBtn) {
-        var b = calcBtn.querySelector('button');
-        if (b && !b.disabled) {
-          b.click();
-        } else {
-          setTimeout(function() { tryClickCalc(attempts - 1); }, 500);
-        }
-      }
+    /* Simular digitação real via execCommand('insertText').
+       Gera beforeinput + input eventos idênticos à digitação do usuário,
+       o que aciona o onChange do Magazord que auto-calcula frete quando
+       o CEP atinge 8 dígitos. Manipular .value direto não dispara isso:
+       o React (controlled input) ignora mudanças fora do ciclo de render. */
+    function simulateType(input, value) {
+      input.focus();
+      try { input.setSelectionRange(0, (input.value || '').length); } catch (e) {}
+      try { document.execCommand('delete'); } catch (e) {}
+      try { document.execCommand('insertText', false, value); } catch (e) {}
     }
-    setTimeout(function() { tryClickCalc(6); }, 500);
+
+    function hasFreteResult() {
+      var f = cepInput.closest('.calculo-frete');
+      return !!(f && /R\$\s*\d/.test(f.innerText));
+    }
+
+    function tryAutofill(attempts) {
+      if (attempts <= 0 || hasFreteResult()) return;
+      simulateType(cepInput, formatted);
+      /* Fallback: se em 2.5s não renderizou resultado, clicar no botão Buscar */
+      setTimeout(function() {
+        if (hasFreteResult()) return;
+        var area = cepInput.closest('.area-calculo');
+        var btn = area && area.querySelector('button:not([disabled])');
+        if (btn) btn.click();
+        setTimeout(function() {
+          if (!hasFreteResult()) tryAutofill(attempts - 1);
+        }, 2000);
+      }, 2500);
+    }
+    setTimeout(function() { tryAutofill(3); }, 600);
   })();
 
 
