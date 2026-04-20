@@ -579,6 +579,17 @@ header.ra-header > .header-middle {
     visibility: visible !important;
     pointer-events: auto !important;
   }
+  /* SVGs têm cascade próprio de visibility e escapam do visibility:hidden
+     do pai (esses ícones apareciam clipados em x=-12 no canto top-left:
+     lupa + sacola da tabbar nativa). display:none força esconder. */
+  header.ra-header > :has(#cart-preview-area) svg {
+    display: none !important;
+  }
+  /* Re-habilita SVGs dentro do drawer do carrinho (check, close, qty etc.) */
+  header.ra-header #cart-preview-area > [class*="z-[9999]"] svg {
+    display: initial !important;
+    visibility: visible !important;
+  }
 }
 
 /* .header-middle can't use display:none because the native cart drawer
