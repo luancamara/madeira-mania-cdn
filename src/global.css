@@ -551,6 +551,32 @@ header.ra-header > .header-middle {
     display: block !important;
     pointer-events: auto !important;
   }
+  /* Magazord mobile template (header-04): o drawer do carrinho é filho direto
+     de <header.ra-header> (não de .header-middle). Existem 2 containers que
+     PRECISAM renderizar pro drawer abrir:
+     1) `div.fixed.bottom-0.z-40...` — tabbar flutuante que contém
+        #cart-preview-area (alguns builds colocam o drawer aqui dentro)
+     2) `div.z-[9999]...` — o próprio drawer do carrinho, direct child
+     Nossa regra `header.ra-header > * { display:none }` matava ambos.
+     Trazemos de volta com `:has(#cart-preview-area)` e `[class*="z-[9999]"]`,
+     strippados do layout via position:absolute 0×0 + visibility:hidden —
+     mesma estratégia de .header-middle (permite que o drawer position:fixed
+     dentro deles ainda pinte e receba eventos). */
+  header.ra-header > :has(#cart-preview-area),
+  header.ra-header > [class*="z-[9999]"] {
+    display: block !important;
+    position: fixed !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  /* Opt-in pro drawer e seu conteúdo real */
+  header.ra-header #cart-preview-area,
+  header.ra-header #cart-preview-area *,
+  header.ra-header > [class*="z-[9999]"],
+  header.ra-header > [class*="z-[9999]"] * {
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
 }
 
 /* .header-middle can't use display:none because the native cart drawer
