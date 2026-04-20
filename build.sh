@@ -21,7 +21,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # rely on a cached package index that takes hours to refresh. The only
 # reliable approach: create a NEW tag per deploy and update this line.
 # After deploy: create tag, push tag, purge jsDelivr, update Magazord CA.
-CDN_VERSION="v2.0.15"
+CDN_VERSION="v2.0.16"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 
@@ -204,7 +204,13 @@ echo "Gerando loader..."
   # Cobre qualquer /checkout/* exceto /done (que é a única etapa que não reescrevemos).
   # Mais robusto que listar explicitamente (cart|identify|onepage) — pega /payment,
   # rotas futuras, e variações. /done fica de fora pro Magazord exibir a confirmação nativa.
-  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading")}document.documentElement.classList.add("mm-footer-loading")})();'
+  # Failsafe: o bundle normalmente remove mm-cart-loading via checkout-cro.js
+  # quando buildLayout completa. Se o bundle falhar em carregar (jsDelivr 404,
+  # rede instável, adblocker), OU o IIFE fizer early-return antes de chegar no
+  # failsafe interno, a classe fica travada → loading infinito. Esse timeout
+  # no loader SEMPRE roda (independente do bundle) e garante que após 6s o
+  # Magazord nativo aparece pelo menos (melhor que spinner eterno).
+  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},6000)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},6000)})();'
   echo '</script>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"
