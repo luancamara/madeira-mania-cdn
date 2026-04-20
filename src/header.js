@@ -1189,11 +1189,17 @@
       if (window.innerWidth <= 767) {
         var tabbarLink = document.querySelector('#cart-preview-area a.link-cart, #cart-preview-area a[href*="/checkout/cart"]');
         if (tabbarLink) {
+          // Marca no HTML root que abertura é autorizada — o observer que
+          // bloqueia aberturas espúrias (shipping calc, add-to-cart) checa
+          // essa flag pra saber se deve permitir ou forçar fechar.
+          document.documentElement.dataset.mmCartOpening = '1';
           // Marca o evento pra nosso document-level listener NÃO interceptar
           // (senão cairíamos de volta no preventDefault + nosso openCartDrawer).
           tabbarLink.dataset.mmBypass = '1';
           tabbarLink.click();
           delete tabbarLink.dataset.mmBypass;
+          // Clear flag após 400ms — tempo suficiente pro React abrir o drawer
+          setTimeout(function() { delete document.documentElement.dataset.mmCartOpening; }, 400);
           return;
         }
         // Fallback: sem link nativo, vai pra página de carrinho direto
@@ -1289,6 +1295,30 @@
         e.preventDefault();
         openCartDrawer();
       });
+    }
+
+    // Bloqueia aberturas espúrias do drawer mobile (Magazord auto-abre em
+    // shipping calc, add-to-cart e outros side-effects React-driven). Só
+    // permite abrir se veio do nosso mm-h-cart (flag html[data-mm-cart-opening]).
+    if (window.innerWidth <= 767) {
+      (function wireSpuriousOpenGuard() {
+        var mobileDrawer = document.querySelector('#cart-preview-area > [class*="z-[9999]"]');
+        if (!mobileDrawer) {
+          // React pode ainda não ter renderizado — tenta de novo
+          setTimeout(wireSpuriousOpenGuard, 500);
+          return;
+        }
+        if (mobileDrawer.dataset.mmGuardWired) return;
+        mobileDrawer.dataset.mmGuardWired = '1';
+        var obs = new MutationObserver(function () {
+          if (mobileDrawer.className.indexOf('translate-x-[0]') === -1) return;
+          if (document.documentElement.dataset.mmCartOpening) return; // abertura autorizada
+          // Abertura espúria — reverter
+          mobileDrawer.classList.remove('translate-x-[0]');
+          mobileDrawer.classList.add('translate-x-[100%]');
+        });
+        obs.observe(mobileDrawer, { attributes: true, attributeFilter: ['class'] });
+      })();
     }
 
     // Intercept Magazord's native cart links (both .header-bottom tabbar and

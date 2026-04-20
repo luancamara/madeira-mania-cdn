@@ -1597,6 +1597,109 @@
   }
 }
 
+/* Telas pequenas (iPhone SE, 320px e similares) — layout cart-item compactado.
+   Sem estes overrides, thumbnail 80px + padding 16px + gap 16px + controles
+   empurravam o preço pra fora do viewport. */
+@media (max-width: 360px) {
+  /* Box-sizing + min-width:0 em todos os descendentes pra permitir shrink.
+     Tailwind padrão do Magazord (gap-space-16, w-full, etc) não encolhe
+     sozinho em viewports < 360px e estora preço + controles pra fora. */
+  .content-cart .cart-item,
+  .content-cart .cart-item * {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .content-cart .cart-item {
+    padding: 10px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  /* Linha principal (image + content) — gap menor pra sobrar espaço */
+  .content-cart .cart-item > div.flex.items-center {
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .content-cart .cart-item .prod-img,
+  .content-cart .cart-item .prod-img.size-\[80px\] {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+    flex-shrink: 0 !important;
+  }
+  .content-cart .cart-item .prod-img img,
+  .content-cart .cart-item .prod-img figure {
+    width: 64px !important;
+    height: 64px !important;
+    max-height: 64px !important;
+  }
+  .content-cart .cart-item .prod-nome,
+  .content-cart .cart-item .prod-nome a {
+    font-size: 13px !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+  .content-cart .cart-item .valor,
+  .content-cart .cart-item .valor span {
+    font-size: 13px !important;
+  }
+  /* Remove min-w-[65px] do preço pra ele shrinkar se precisar */
+  .content-cart .cart-item .valor[class*="min-w-"] {
+    min-width: 0 !important;
+  }
+  /* Qty pill menor pra sobrar espaço pro preço (que é prioridade visual) */
+  .content-cart .cart-item .mm-qty-wrap {
+    padding: 1px !important;
+    gap: 2px !important;
+  }
+  .content-cart .cart-item .mm-qty-wrap button {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+  }
+  .content-cart .cart-item .mm-qty-wrap .qty-display {
+    min-width: 20px !important;
+    font-size: 13px !important;
+  }
+  /* Preço em 12px pra caber folgado */
+  .content-cart .cart-item .valor,
+  .content-cart .cart-item .valor span {
+    font-size: 12px !important;
+  }
+  /* Esconde "Qtde: N" redundante — já vemos o número no qty-wrap */
+  .content-cart .cart-item .qtd-value > span:not(.cart-remove-item):not(.mm-qty-wrap) {
+    display: none !important;
+  }
+  /* min-width:0 apenas no container do texto (não nos botões/svgs dos
+     controles, que precisam manter tamanho fixo) */
+  .content-cart .cart-item .prod-nome,
+  .content-cart .cart-item .valor,
+  .content-cart .cart-item .flex-1,
+  .content-cart .cart-item .flex-col {
+    min-width: 0 !important;
+  }
+  /* Qty wrap mantém tamanho fixo — não encolhe */
+  .content-cart .cart-item .mm-qty-wrap,
+  .content-cart .cart-item .mm-qty-wrap button,
+  .content-cart .cart-item .cart-remove-item {
+    flex-shrink: 0 !important;
+  }
+  /* Footer compacto */
+  #cart-preview-area .valor-pix,
+  #cart-preview-area .valor-pix span {
+    font-size: 20px !important;
+  }
+  #cart-preview-area .border-t.border-solid {
+    padding: 16px !important;
+  }
+  #cart-preview-area .finalizar-compra {
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+  }
+}
+
 /* ==========================================================================
    REDUCED MOTION: respeita preferência de sistema
    ========================================================================== */
