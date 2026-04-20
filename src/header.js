@@ -1154,9 +1154,10 @@
     // completes, the response handler finds 0 elements and the drawer stays
     // empty. So we must wait for the preview HTML to land before lifting.
     function loadCartPreview(drawer, done) {
-      // Mobile drawer doesn't need atualizaPreview — Magazord React renders
-      // items automatically via the cart-preview-area component hydration.
-      if (isMobileDrawer(drawer)) { done(); return; }
+      // Desktop E mobile precisam chamar atualizaPreview — sem isso o drawer
+      // mobile fica com template SSR "Seu carrinho está vazio" mesmo quando
+      // Zord.cart.size > 0 (React do Magazord não hidrata o cart-preview
+      // até que atualizaPreview seja chamado explicitamente).
       try {
         if (typeof Zord === 'undefined' || !Zord.checkout || typeof Zord.checkout.atualizaPreview !== 'function') {
           done();
@@ -1179,13 +1180,22 @@
     }
 
     function openCartDrawer() {
+      // Mobile: navegar direto pra /checkout/cart. O drawer nativo do Magazord
+      // mobile (.content-cart dentro de #cart-preview-area > div.z-[9999]) é um
+      // React component separado que não hidrata via atualizaPreview (essa só
+      // alimenta .carrinho-rapido usada no desktop). Tentar abrir o drawer
+      // mobile resulta em "Seu carrinho está vazio" mesmo com items. A página
+      // /checkout/cart tem nosso layout completo (mm-layout) e funciona bem.
+      if (window.innerWidth <= 767) {
+        window.location.href = '/checkout/cart';
+        return;
+      }
       var drawer = findDrawer();
       if (drawer) {
         loadCartPreview(drawer, function () { continueOpenDrawer(drawer); });
         return;
       }
-      // Retry — React may not have rendered .carrinho-rapido-ctn yet
-      // (common on mobile where hydration can be slower)
+      // Desktop retry — React may not have rendered .carrinho-rapido-ctn yet
       var retries = 0;
       var maxRetries = 5;
       (function retry() {
