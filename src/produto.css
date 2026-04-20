@@ -26,13 +26,11 @@
   }
 
 
-  /* ==========================================
-     0b. ABSORVIDO DE CA-6 (Remove padding produto)
-     ========================================== */
-
-  .ra-produto {
-    padding-left: 0px !important;
-  }
+  /* 0b. Removido: `.ra-produto { padding-left: 0 }` deixava o título e
+     outros textos colados na borda esquerda (assimétrico com o padding
+     direito de 8px). Gallery edge-to-edge já funciona via #block-imagem
+     margin-left: -8 + width: calc(100% + 16px), mantendo padding simétrico
+     do container (8/8) e estendendo a imagem pros dois lados da viewport. */
 
   /* ==========================================
      0c. ABSORVIDO DE CA-9 (Arredonda img produto)
