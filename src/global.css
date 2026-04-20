@@ -570,6 +570,9 @@ header.ra-header > .header-middle {
     overflow: visible !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    /* z-index 200 > #mm-header (z-100) pra drawer interno (z-9999 dentro
+       desta stacking context) aparecer SOBRE o header quando aberto */
+    z-index: 200 !important;
   }
   /* Opt-in pro drawer do carrinho. Seletor específico (filho direto de
      #cart-preview-area com classe z-[9999]) pra NÃO pegar drawers de

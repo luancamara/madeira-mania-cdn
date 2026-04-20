@@ -116,8 +116,18 @@
   display: none !important;
 }
 #cart-preview-area .border-b.border-solid > div svg {
-  width: 14px !important;
-  height: 14px !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: #121212 !important;
+  fill: #121212 !important;
+}
+#cart-preview-area .border-b.border-solid > div svg path {
+  fill: #121212 !important;
+}
+#cart-preview-area .border-b.border-solid > div:hover svg,
+#cart-preview-area .border-b.border-solid > div:hover svg path {
+  color: #4B664A !important;
+  fill: #4B664A !important;
 }
 
 /* ==========================================================================
