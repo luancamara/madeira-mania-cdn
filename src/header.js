@@ -1180,13 +1180,23 @@
     }
 
     function openCartDrawer() {
-      // Mobile: navegar direto pra /checkout/cart. O drawer nativo do Magazord
-      // mobile (.content-cart dentro de #cart-preview-area > div.z-[9999]) é um
-      // React component separado que não hidrata via atualizaPreview (essa só
-      // alimenta .carrinho-rapido usada no desktop). Tentar abrir o drawer
-      // mobile resulta em "Seu carrinho está vazio" mesmo com items. A página
-      // /checkout/cart tem nosso layout completo (mm-layout) e funciona bem.
+      // Mobile: delegar pro link nativo da tabbar do Magazord. O drawer
+      // mobile (.content-cart dentro de #cart-preview-area > div.z-[9999])
+      // é um React component que SÓ hidrata quando o próprio React recebe
+      // o click event no link — toggle programático de classes deixa o
+      // drawer vazio. Fazemos um .click() sintético no link nativo pra
+      // que o handler React rode e popule os items corretamente.
       if (window.innerWidth <= 767) {
+        var tabbarLink = document.querySelector('#cart-preview-area a.link-cart, #cart-preview-area a[href*="/checkout/cart"]');
+        if (tabbarLink) {
+          // Marca o evento pra nosso document-level listener NÃO interceptar
+          // (senão cairíamos de volta no preventDefault + nosso openCartDrawer).
+          tabbarLink.dataset.mmBypass = '1';
+          tabbarLink.click();
+          delete tabbarLink.dataset.mmBypass;
+          return;
+        }
+        // Fallback: sem link nativo, vai pra página de carrinho direto
         window.location.href = '/checkout/cart';
         return;
       }
@@ -1286,9 +1296,13 @@
     // which navigates instead of opening the drawer — we hijack them.
     // Use document-level delegation since these elements may be re-rendered
     // by React after our script runs.
+    // EXCEÇÃO: quando nosso mm-h-cart delega programaticamente pro link
+    // (marca dataset.mmBypass), não interceptamos — deixamos o React do
+    // Magazord abrir e popular o drawer mobile.
     document.addEventListener('click', function (e) {
       var link = e.target.closest('#cart-preview-area a.link-cart, header.ra-header > .header-bottom a[href*="/checkout/cart"], header.ra-header > .header-bottom a[href*="carrinho"]');
       if (link) {
+        if (link.dataset.mmBypass) return; // delegação do mm-h-cart
         e.preventDefault();
         e.stopPropagation();
         openCartDrawer();

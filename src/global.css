@@ -551,10 +551,34 @@ header.ra-header > .header-middle {
     display: block !important;
     pointer-events: auto !important;
   }
-  /* Mobile não usa o drawer nativo do Magazord — nosso mm-h-cart click
-     navega direto pra /checkout/cart (header.js openCartDrawer). Portanto
-     deixamos a tabbar nativa + seu drawer simplesmente hidden pela regra
-     geral `header.ra-header > * { display: none }`. */
+  /* Mobile usa o drawer nativo do Magazord — nosso mm-h-cart delega pro
+     link da tabbar via programmatic click, o React do Magazord popula o
+     drawer. Pra isso funcionar, o container da tabbar (`div.fixed.bottom-0`
+     que contém `#cart-preview-area`) PRECISA estar renderizado no DOM
+     (não display:none). Mantemos em layout via position:fixed 0×0,
+     mas VISUALMENTE invisível via visibility:hidden — o drawer interno
+     (position:fixed full-screen) recebe opt-in específico pra ficar
+     visível quando abrir. Os ícones da tabbar continuam hidden pelo
+     cascade de visibility. */
+  header.ra-header > :has(#cart-preview-area) {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  /* Opt-in pro drawer do carrinho. Seletor específico (filho direto de
+     #cart-preview-area com classe z-[9999]) pra NÃO pegar drawers de
+     favoritos/busca que são irmãos em outros paths do header. */
+  header.ra-header #cart-preview-area > [class*="z-[9999]"],
+  header.ra-header #cart-preview-area > [class*="z-[9999]"] * {
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
 }
 
 /* .header-middle can't use display:none because the native cart drawer
