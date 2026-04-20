@@ -150,10 +150,23 @@
   padding: 14px !important;
   box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04) !important;
   position: relative !important;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
   transition:
     box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 260ms cubic-bezier(0.16, 1, 0.3, 1) !important;
   animation: mm-cart-item-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+/* Força a coluna de conteúdo (título + qty + preço) a respeitar bounds do
+   item. Sem min-width:0, o flex-1 não encolhe e o conteúdo vaza pra fora
+   da borda direita. box-sizing garante que padding count inside o width. */
+.content-cart .cart-item > div.flex.items-center,
+.content-cart .cart-item .flex-col.flex-1,
+.content-cart .cart-item > div.flex > div.flex-col,
+.content-cart .cart-item .prod-nome {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
 }
 .content-cart .cart-item:hover {
   border-color: #E0E0E0 !important;
@@ -267,11 +280,13 @@
   letter-spacing: 0.06em !important;
 }
 
-/* Valor total — Libre Baskerville serif + tabular-nums */
+/* Valor total — Poppins sans pra casar com resto do drawer (antes era Libre
+   Baskerville 24px, destoava de tudo e parecia "pra fora" do balanço visual).
+   Desktop reserva serif só pro título "Meu Carrinho". */
 #cart-preview-area .valor-pix,
 #cart-preview-area .valor-pix span {
-  font-family: 'Libre Baskerville', Georgia, serif !important;
-  font-size: 24px !important;
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
   color: #121212 !important;
   letter-spacing: -0.01em !important;
