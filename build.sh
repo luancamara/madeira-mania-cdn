@@ -172,6 +172,22 @@ echo "  dist/js/madeira-mania.js (${SIZE} bytes)"
 echo ""
 echo "Gerando loader..."
 {
+  # ---- Open Graph: dimensões da imagem (fix preview WhatsApp Web/Desktop) ----
+  # O Magazord renderiza og:image (?ims=400x400) nas PDPs SEM og:image:width/height.
+  # WhatsApp Web/Desktop só gera a miniatura do preview quando as dimensões são
+  # conhecidas (o app mobile detecta sozinho; o Web/Desktop não) -> preview some
+  # no desktop. Estas tags estáticas (server-side via este CA) suprem as dimensões.
+  # ims=400x400 entrega SEMPRE 400x400 exato (crop quadrado), constante em todos
+  # os produtos (verificado: rack/buffet/camarim). og:image só existe em PDPs; nas
+  # demais páginas (home/categoria/marca/busca) estas tags ficam órfãs e o parser
+  # as ignora (sem efeito colateral). O CA é injetado no <head> DEPOIS da og:image
+  # do Magazord, então a associação da propriedade estruturada é válida (OGP spec).
+  # Obs: substitui a ideia de "og-tags-static.html" citada em src/og-tags-product.js
+  # (arquivo que nunca existiu); tags OG via JS não funcionam p/ crawlers sociais.
+  echo '<meta property="og:image:width" content="400" />'
+  echo '<meta property="og:image:height" content="400" />'
+  echo '<meta property="og:image:type" content="image/jpeg" />'
+  echo ''
   echo '<style>'
   echo '/* Anti-flicker: esconder elementos que o JS modifica */'
   echo '#produto-react-app .salvar-favoritos,'
