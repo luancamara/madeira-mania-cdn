@@ -21,9 +21,12 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # rely on a cached package index that takes hours to refresh. The only
 # reliable approach: create a NEW tag per deploy and update this line.
 # After deploy: create tag, push tag, purge jsDelivr, update Magazord CA.
-CDN_VERSION="v2.0.20"
+CDN_VERSION="v2.0.21"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
+
+# Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
+RAW_BUNDLE="$(mktemp /tmp/mm-bundle.raw.XXXXXX.js)"
 
 echo "=== Build Madeira Mania CDN ==="
 echo ""
@@ -94,12 +97,19 @@ echo "Gerando bundle único..."
   echo "     SEÇÃO 3: EXTERNAL SCRIPT LOADERS"
   echo "     ============================================= */"
   echo ""
-  # TEMPORARIAMENTE DESATIVADO (2026-04-14) — evitar duplicação no GAds.
-  # Contentsquare é session replay (não duplica), mas removido junto com
-  # tracking.js / fb-purchase.js a pedido do usuário. Reativar descomentando.
-  # echo "  /* === contentsquare-loader.js === */"
-  # sed 's/^/  /' "$SRC/contentsquare-loader.js"
-  # echo ""
+  # Contentsquare (REATIVADO 2026-06-19) — session replay puro, NÃO duplica
+  # conversão. Foi desligado por engano junto do tracking.js em c34fae7.
+  # Já tem guard próprio: pula /checkout/* (bug de recursão hkINP) e opt-out.
+  echo "  /* === contentsquare-loader.js === */"
+  sed 's/^/  /' "$SRC/contentsquare-loader.js"
+  echo ""
+
+  # Microsoft Clarity (REATIVADO 2026-06-19) — heatmap/session-replay puro,
+  # NÃO empurra eventos pro dataLayer/GA4/Ads/Meta, então NÃO duplica conversão.
+  # Saiu por engano junto do tracking.js em c34fae7. Agora isolado e idle-loaded.
+  echo "  /* === clarity-loader.js === */"
+  sed 's/^/  /' "$SRC/clarity-loader.js"
+  echo ""
 
   # --- 4. Core JS (all pages) ---
   echo "  /* ============================================="
@@ -163,9 +173,38 @@ echo "Gerando bundle único..."
   echo ""
 
   echo "})();"
-} > "$DIST/js/madeira-mania.js"
+} > "$RAW_BUNDLE"
 
-SIZE=$(wc -c < "$DIST/js/madeira-mania.js")
+# ---- Minify (esbuild) ----
+# Default ON quando o esbuild estiver disponível. Pula (mantém cru) se:
+#   - MM_NO_MINIFY=1 (dev loop usa isso pra debugar legível), ou
+#   - esbuild não instalado (rode `npm install` — node_modules é gitignored).
+# Falha do esbuild NUNCA quebra o build: cai pro bundle cru.
+OUT="$DIST/js/madeira-mania.js"
+RAWSIZE=$(wc -c < "$RAW_BUNDLE")
+ESBUILD=""
+if [ -x "$SCRIPT_DIR/node_modules/.bin/esbuild" ]; then ESBUILD="$SCRIPT_DIR/node_modules/.bin/esbuild";
+elif command -v esbuild >/dev/null 2>&1; then ESBUILD="esbuild"; fi
+
+if [ "$MM_NO_MINIFY" = "1" ]; then
+  mv "$RAW_BUNDLE" "$OUT"
+  echo "  minify: PULADO (MM_NO_MINIFY=1) — bundle não-minificado p/ dev"
+elif [ -n "$ESBUILD" ]; then
+  if "$ESBUILD" "$RAW_BUNDLE" --minify --legal-comments=none --charset=utf8 --outfile="$OUT.tmp" 2>/tmp/mm-esbuild.err; then
+    mv "$OUT.tmp" "$OUT"; rm -f "$RAW_BUNDLE"
+    SIZE=$(wc -c < "$OUT")
+    PCT=$(node -e "console.log(((1-$SIZE/$RAWSIZE)*100).toFixed(1))" 2>/dev/null || echo "?")
+    echo "  minify: OK (esbuild) — ${SIZE} bytes (de ${RAWSIZE} cru, -${PCT}%)"
+  else
+    echo "  minify: esbuild FALHOU ($(head -1 /tmp/mm-esbuild.err)) — usando cru"
+    mv "$RAW_BUNDLE" "$OUT"; rm -f "$OUT.tmp"
+  fi
+else
+  mv "$RAW_BUNDLE" "$OUT"
+  echo "  minify: PULADO (esbuild não encontrado — rode 'npm install') — bundle não-minificado"
+fi
+
+SIZE=$(wc -c < "$OUT")
 echo "  dist/js/madeira-mania.js (${SIZE} bytes)"
 
 # ---- Loader (para Magazord head) ----
@@ -221,12 +260,13 @@ echo "Gerando loader..."
   # Mais robusto que listar explicitamente (cart|identify|onepage) — pega /payment,
   # rotas futuras, e variações. /done fica de fora pro Magazord exibir a confirmação nativa.
   # Failsafe: o bundle normalmente remove mm-cart-loading via checkout-cro.js
-  # quando buildLayout completa. Se o bundle falhar em carregar (jsDelivr 404,
-  # rede instável, adblocker), OU o IIFE fizer early-return antes de chegar no
-  # failsafe interno, a classe fica travada → loading infinito. Esse timeout
-  # no loader SEMPRE roda (independente do bundle) e garante que após 6s o
-  # Magazord nativo aparece pelo menos (melhor que spinner eterno).
-  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},6000)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},6000)})();'
+  # quando buildLayout completa (failsafe interno ~2s). Se o bundle falhar em
+  # carregar (jsDelivr 404, rede instável, adblocker), o s.onerror do loader
+  # (abaixo) já remove as classes na hora. Este timeout cego é a última rede:
+  # cobre o caso "bundle carregou mas travou/early-return antes do failsafe
+  # interno". Reduzido de 6s → 3.5s (alinhado ao failsafe interno de 2s) pra
+  # não deixar o usuário olhando spinner/tela escondida em conexão lenta.
+  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},3500)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},3500)})();'
   echo '</script>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"
@@ -269,6 +309,14 @@ echo "Gerando loader..."
       var f = document.createElement('script');
       f.src = PROD; f.async = true;
       document.head.appendChild(f);
+    };
+  } else {
+    // Caminho PROD: se o bundle falhar (404/bloqueado/offline), revela o
+    // Magazord nativo IMEDIATAMENTE em vez de esperar o timeout cego de 3.5s.
+    s.onerror = function(){
+      doc.classList.remove('mm-cart-loading');
+      doc.classList.remove('mm-footer-loading');
+      console.warn('[mm] bundle falhou ao carregar:', PROD);
     };
   }
 

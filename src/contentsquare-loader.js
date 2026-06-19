@@ -10,8 +10,29 @@
   if (/^\/checkout\//i.test(p)) return;
   /* Opt-out: modo teste pula Contentsquare (session replay) */
   try { if (localStorage.getItem('mm_no_tracking') === '1') return; } catch(e) {}
-  var s = document.createElement("script");
-  s.src = "https://t.contentsquare.net/uxa/7126f355c4bb8.js";
-  s.async = true;
-  document.head.appendChild(s);
+  /* Idempotência: não injetar 2x */
+  if (window._uxa || document.querySelector('script[src*="contentsquare.net"]')) return;
+
+  function loadCS() {
+    if (window._uxa || document.querySelector('script[src*="contentsquare.net"]')) return;
+    var s = document.createElement("script");
+    s.src = "https://t.contentsquare.net/uxa/7126f355c4bb8.js";
+    s.async = true;
+    document.head.appendChild(s);
+  }
+
+  /* Defer pro idle: visitor.js é pesado, não competir com LCP/parse do bundle */
+  function schedule() {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadCS, { timeout: 5000 });
+    } else {
+      setTimeout(loadCS, 2500);
+    }
+  }
+
+  if (document.readyState === 'complete') {
+    schedule();
+  } else {
+    window.addEventListener('load', schedule, { once: true });
+  }
 })();

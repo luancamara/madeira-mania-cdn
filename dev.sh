@@ -28,6 +28,11 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Dev loop serve bundle NÃO-minificado pra debug legível. O deploy
+# (bash ./build.sh direto) minifica normalmente. Herdado por todos os
+# rebuilds abaixo, inclusive o spawnSync do watcher Node.
+export MM_NO_MINIFY=1
+
 PORT=${MM_DEV_PORT:-8080}
 SERVER_PID=""
 WATCHER_PID=""
