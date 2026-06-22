@@ -279,6 +279,10 @@
       '</div>'
     ].join('\n');
     document.body.insertBefore(header, document.body.firstChild);
+    // Anti-flicker: #mm-header está no DOM — libera o header nativo escondido
+    // pelo mm-header-loading (a partir daqui o mm-global-css mantém o nativo
+    // colapsado, então a transição é sem flash).
+    document.documentElement.classList.remove('mm-header-loading');
 
     // Mega-menu hero image swap on hover
     // Detect if running in dev mode (loaded from localhost) vs production (jsDelivr)

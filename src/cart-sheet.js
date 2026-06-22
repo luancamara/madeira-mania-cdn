@@ -597,6 +597,12 @@
     if (!drawer) return;
     var boxTotal = drawer.querySelector('.box-total-btn');
     if (!boxTotal) return;
+    // INVARIANTE: esta função (e mmRecomputeDrawerTotal) só pode MUTAR
+    // descendentes do .box-total-btn — NUNCA recriar/substituir o próprio
+    // .box-total-btn. O gate de re-enhancement (diffAndAnimate) usa um marcador
+    // dataset NESTE elemento pra distinguir nossa mutação (marcador sobrevive)
+    // de um re-render do Magazord (substitui o elemento → marcador some). Recriar
+    // o .box-total-btn aqui apagaria o marcador e causaria loop no MutationObserver.
 
     var cep = mmReadCep();
     var snap = mmReadCartSnapshot();
@@ -1078,7 +1084,11 @@
     var op = delta > 0 ? 'adicionaItem' : 'removeItem';
     // Mark pending BEFORE recompute so mmRecomputeDrawerTotal keeps the
     // old shipping in the total instead of dropping to items-only.
-    if (mmReadCep()) drawer.dataset.mmShipPendingFetch = '1';
+    // Guard `drawer`: em .content-cart (página /checkout/cart) e no drawer mobile,
+    // closest('.carrinho-rapido-ctn') é null — sem o guard, este deref lançava
+    // TypeError ANTES do POST (quando havia CEP), e a mudança de qtd nunca ia pro
+    // servidor ("mexo e não reflete"). Agora o POST sempre dispara.
+    if (mmReadCep() && drawer) drawer.dataset.mmShipPendingFetch = '1';
     // Recompute (sees pendingFetch → retains old shipping)
     mmRecomputeDrawerTotal(drawer);
     // Now show the spinner on the rendered frete value + TOTAL label
@@ -1088,21 +1098,21 @@
         numDisplay.textContent = currentQty;
         cartItem.setAttribute('data-item-quantity', currentQty);
         if (valorEl) valorEl.innerHTML = formatBrlHtml(unitPrice * currentQty);
-        drawer.dataset.mmShipPendingFetch = '';
+        if (drawer) drawer.dataset.mmShipPendingFetch = '';
         mmRecomputeDrawerTotal(drawer);
       })
       .then(function () {
         btnMinus.disabled = false;
         btnPlus.disabled = false;
         var cep = mmReadCep();
-        if (cep) {
+        if (cep && drawer) {
           mmShowShippingLoading(drawer);
           mmFetchShipping(cep, true).then(function (data) {
             drawer.dataset.mmShipPendingFetch = '';
             if (data) mmApplyShippingFetch(drawer, cep, data);
             else mmHideShippingLoading(drawer);
           });
-        } else {
+        } else if (drawer) {
           drawer.dataset.mmShipPendingFetch = '';
         }
       });
@@ -1124,13 +1134,17 @@
       var remaining = drawer ? drawer.querySelectorAll('.cart-item:not(.mm-removing)') : [];
       var isEmpty = remaining.length === 0;
       if (isEmpty) {
-        // Cart is now empty — don't recalculate shipping, just clean up
-        drawer.dataset.mmShipPendingFetch = '';
-        var shipBlock = drawer.querySelector('.mm-cart-ship');
-        if (shipBlock) shipBlock.remove();
-        // Hide the footer (total + CTA) since cart is empty
-        var footer = drawer.querySelector('.box-total-btn, .area-finalizar-compra');
-        if (footer) footer.style.display = 'none';
+        // Cart is now empty — don't recalculate shipping, just clean up.
+        // Guard `drawer`: no drawer mobile, closest('.carrinho-rapido-ctn') é
+        // null — sem o guard, deletar o último item lançava TypeError aqui.
+        if (drawer) {
+          drawer.dataset.mmShipPendingFetch = '';
+          var shipBlock = drawer.querySelector('.mm-cart-ship');
+          if (shipBlock) shipBlock.remove();
+          // Hide the footer (total + CTA) since cart is empty
+          var footer = drawer.querySelector('.box-total-btn, .area-finalizar-compra');
+          if (footer) footer.style.display = 'none';
+        }
         // Force empty state — don't wait for Magazord React to render
         // .box-empty-cart (it won't after our custom delete). Dispatch
         // an event that header.js enhanceEmptyCart() will pick up via
@@ -1162,11 +1176,11 @@
         badge2.hidden = remaining.length === 0;
       }
       if (remaining.length === 0) {
-        drawer.dataset.mmShipPendingFetch = '';
+        if (drawer) drawer.dataset.mmShipPendingFetch = '';
         return; // empty — no shipping to recalculate
       }
       var cep = mmReadCep();
-      if (cep) {
+      if (cep && drawer) {
         drawer.dataset.mmShipPendingFetch = '1';
         mmShowShippingLoading(drawer);
         mmFetchShipping(cep, true).then(function (data) {
@@ -1174,7 +1188,7 @@
           if (data) mmApplyShippingFetch(drawer, cep, data);
           else mmHideShippingLoading(drawer);
         });
-      } else {
+      } else if (drawer) {
         drawer.dataset.mmShipPendingFetch = '';
       }
     });
@@ -1268,12 +1282,23 @@
     // capture the total ratio and recompute the total + shipping block
     // ONCE so the initial render reflects shipping inclusion. Subsequent
     // updates go through mmRecomputeDrawerTotal from the +/- / delete handlers.
-    if (!drawer.dataset.mmShipRendered) {
-      var items = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
-      if (items.length > 0) {
+    // Re-enhancement gate. O Magazord (atualizaPreview) re-renderiza o innerHTML
+    // de .carrinho-rapido async (após add-to-cart, +/- ou polling próprio),
+    // substituindo o .box-total-btn por um total CRU. O guard ANTIGO usava
+    // drawer.dataset.mmShipRendered no .carrinho-rapido-ctn EXTERNO, que persiste
+    // — então nosso total/frete NUNCA era reaplicado pós-render e o carrinho cru
+    // "sobrescrevia o nosso". Agora gateamos por um marcador no .box-total-btn
+    // INTERNO (que o Magazord substitui a cada re-render): nossas próprias mutações
+    // mantêm o marcador setado (sem loop no MutationObserver — atributo não é
+    // observado), e um re-render real do Magazord apaga o marcador → reaplicamos.
+    var liveItems = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
+    if (liveItems.length > 0) {
+      var boxTotal = drawer.querySelector('.box-total-btn');
+      if (boxTotal && boxTotal.dataset.mmTotalEnhanced !== '1') {
         mmCaptureTotalRatio(drawer); // capture pre-mutation ratio (uses line totals)
         mmNormalizeItemValores(drawer); // .valor → line total (price × qty)
         mmRecomputeDrawerTotal(drawer); // includes mmRenderShipping + shipping fold-in
+        boxTotal.dataset.mmTotalEnhanced = '1';
         drawer.dataset.mmShipRendered = '1';
         mmMaybeFetchShipping(drawer);
       }

@@ -21,7 +21,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # rely on a cached package index that takes hours to refresh. The only
 # reliable approach: create a NEW tag per deploy and update this line.
 # After deploy: create tag, push tag, purge jsDelivr, update Magazord CA.
-CDN_VERSION="v2.0.21"
+CDN_VERSION="v2.0.22"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 
@@ -245,6 +245,11 @@ echo "Gerando loader..."
   echo '@keyframes mm-load-spin{to{transform:rotate(360deg)}}'
   echo '/* Anti-flicker footer global: esconde Magazord footer enquanto bundle injeta o nosso */'
   echo 'html.mm-footer-loading #footer-react-app,html.mm-footer-loading .ra-footer,html.mm-footer-loading .footer-04,html.mm-footer-loading .footer-top,html.mm-footer-loading .footer-middle,html.mm-footer-loading .footer-about,html.mm-footer-loading .footer-bottom,html.mm-footer-loading .footer-checkout-info,html.mm-footer-loading .magazord-logo-container{display:none!important}'
+  echo '/* Anti-flicker HEADER: replica o estado FINAL do bundle (header nativo .ra-header colapsado/invisivel + body padding-top reservado) ANTES do bundle async rodar. Sem isso, o first paint mostra o header/menu ANTIGO do Magazord e o bundle o substitui depois -> flicker + reflow. visibility:hidden (nao display:none) preserva o #cart-preview-area React no DOM (gotcha #5). Removido por header.js apos injetar #mm-header, ou pelo failsafe (timeout 3.5s / s.onerror). NAO cobre /checkout/* (header.js da early-return la). */'
+  echo 'html.mm-header-loading header.ra-header{visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;padding:0!important;margin:0!important;border:none!important;box-shadow:none!important;overflow:visible!important}'
+  echo 'html.mm-header-loading #tickerBar,html.mm-header-loading .ticker-bar{display:none!important}'
+  echo 'html.mm-header-loading body{padding-top:var(--mm-header-total,168px)}'
+  echo '@media(max-width:767px){html.mm-header-loading body{padding-top:var(--mm-header-total-mobile,92px)}}'
   echo '/* DEV mode indicators — 3 estados possíveis:'
   echo '   .mm-dev-pending  = localStorage setado, ainda carregando (cinza)'
   echo '   .mm-dev-mode     = bundle local carregou OK (verde — dev real)'
@@ -266,7 +271,7 @@ echo "Gerando loader..."
   # cobre o caso "bundle carregou mas travou/early-return antes do failsafe
   # interno". Reduzido de 6s → 3.5s (alinhado ao failsafe interno de 2s) pra
   # não deixar o usuário olhando spinner/tela escondida em conexão lenta.
-  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},3500)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},3500)})();'
+  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){document.documentElement.classList.add("mm-header-loading");setTimeout(function(){document.documentElement.classList.remove("mm-header-loading")},3500)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},3500)})();'
   echo '</script>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"
@@ -316,6 +321,7 @@ echo "Gerando loader..."
     s.onerror = function(){
       doc.classList.remove('mm-cart-loading');
       doc.classList.remove('mm-footer-loading');
+      doc.classList.remove('mm-header-loading');
       console.warn('[mm] bundle falhou ao carregar:', PROD);
     };
   }

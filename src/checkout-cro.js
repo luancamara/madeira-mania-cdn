@@ -193,6 +193,11 @@
           nativeSet.call(el, d[ids[i]]);
         } catch (e) { el.value = d[ids[i]]; }
         el.dispatchEvent(new Event('input', { bubbles: true }));
+        /* Endereço restaurado do draft veio (originalmente) de um CEP — marca a
+           flag DEPOIS do dispatch (que a limparia) pra que, após um reload, um
+           CEP novo ainda atualize cidade/UF. Sem isto, o reload reintroduzia o
+           bug de cidade/estado travados. Edição manual posterior limpa a flag. */
+        if (/^mm-op-(rua|bairro|cidade|uf)$/.test(ids[i])) el.dataset.mmCepFill = '1';
         restored++;
       }
     }
@@ -2093,6 +2098,11 @@
     layout.addEventListener('input', function(e) {
       var t = e.target;
       if (!t) return;
+      /* Edição manual de um campo auto-preenchido por CEP remove a flag, pra
+         que um CEP futuro não sobrescreva a correção do usuário. Atribuição
+         programática de .value (o auto-fill) NÃO dispara 'input', então a flag
+         só cai em digitação real. */
+      if (t.dataset && t.dataset.mmCepFill === '1') delete t.dataset.mmCepFill;
       if (t.id === 'mm-op-cpf') {
         t.value = maskCPF(t.value);
       } else if (t.id === 'mm-op-tel') {
@@ -2163,7 +2173,13 @@
           statusEl.innerHTML = '';
         }, 1800);
       }
-      /* Auto-fill */
+      /* Auto-fill — AUTORITATIVO para campos vindos de CEP.
+         Bug anterior: o guard `!el.value` só preenchia campo VAZIO. Ao trocar
+         pra um CEP NOVO, cidade/UF (já preenchidos pelo CEP anterior) eram
+         descartados → cidade/estado travavam no 1º CEP e iam errados pro submit.
+         Agora: sobrescreve se o campo está vazio OU se o valor atual veio de um
+         CEP anterior (flag data-mm-cep-fill). Edição manual do usuário remove a
+         flag (ver handler de input) e passa a ser respeitada. */
       var fields = [
         ['mm-op-rua', data.logradouro],
         ['mm-op-bairro', data.bairro],
@@ -2172,7 +2188,11 @@
       ];
       fields.forEach(function(pair) {
         var el = document.getElementById(pair[0]);
-        if (el && pair[1] && !el.value) el.value = pair[1];
+        if (!el || !pair[1]) return;
+        if (!el.value || el.dataset.mmCepFill === '1') {
+          el.value = pair[1];
+          el.dataset.mmCepFill = '1';
+        }
       });
       /* Foca no número (próximo campo lógico) */
       var num = document.getElementById('mm-op-num');

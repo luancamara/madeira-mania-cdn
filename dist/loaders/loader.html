@@ -20,6 +20,11 @@ html.mm-cart-loading #checkout-main-area::before{content:"";position:absolute;to
 @keyframes mm-load-spin{to{transform:rotate(360deg)}}
 /* Anti-flicker footer global: esconde Magazord footer enquanto bundle injeta o nosso */
 html.mm-footer-loading #footer-react-app,html.mm-footer-loading .ra-footer,html.mm-footer-loading .footer-04,html.mm-footer-loading .footer-top,html.mm-footer-loading .footer-middle,html.mm-footer-loading .footer-about,html.mm-footer-loading .footer-bottom,html.mm-footer-loading .footer-checkout-info,html.mm-footer-loading .magazord-logo-container{display:none!important}
+/* Anti-flicker HEADER: replica o estado FINAL do bundle (header nativo .ra-header colapsado/invisivel + body padding-top reservado) ANTES do bundle async rodar. Sem isso, o first paint mostra o header/menu ANTIGO do Magazord e o bundle o substitui depois -> flicker + reflow. visibility:hidden (nao display:none) preserva o #cart-preview-area React no DOM (gotcha #5). Removido por header.js apos injetar #mm-header, ou pelo failsafe (timeout 3.5s / s.onerror). NAO cobre /checkout/* (header.js da early-return la). */
+html.mm-header-loading header.ra-header{visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;padding:0!important;margin:0!important;border:none!important;box-shadow:none!important;overflow:visible!important}
+html.mm-header-loading #tickerBar,html.mm-header-loading .ticker-bar{display:none!important}
+html.mm-header-loading body{padding-top:var(--mm-header-total,168px)}
+@media(max-width:767px){html.mm-header-loading body{padding-top:var(--mm-header-total-mobile,92px)}}
 /* DEV mode indicators — 3 estados possíveis:
    .mm-dev-pending  = localStorage setado, ainda carregando (cinza)
    .mm-dev-mode     = bundle local carregou OK (verde — dev real)
@@ -31,7 +36,7 @@ html.mm-dev-pending::before,html.mm-dev-mode::before,html.mm-dev-fallback::befor
 html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-top:20px !important}
 </style>
 <script>
-(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},3500)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},3500)})();
+(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){document.documentElement.classList.add("mm-header-loading");setTimeout(function(){document.documentElement.classList.remove("mm-header-loading")},3500)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},3500)})();
 </script>
 
 <script type="application/ld+json">
@@ -79,7 +84,7 @@ html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-
   // ===== Madeira Mania CDN loader =====
   // Pra trocar a versão servida sem rebuild, edita só a linha abaixo.
   // Aceita semver range (@^2), tag exata (@v2.1.3), ou branch (@main).
-  var VERSION = 'v2.0.21';
+  var VERSION = 'v2.0.22';
   var REPO    = 'gh/luancamara/madeira-mania-cdn';
 
   var PROD = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
@@ -116,6 +121,7 @@ html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-
     s.onerror = function(){
       doc.classList.remove('mm-cart-loading');
       doc.classList.remove('mm-footer-loading');
+      doc.classList.remove('mm-header-loading');
       console.warn('[mm] bundle falhou ao carregar:', PROD);
     };
   }
