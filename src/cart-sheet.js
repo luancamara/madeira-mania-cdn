@@ -1071,6 +1071,23 @@
     if (!items.length) return;
     var sumLines = mmComputeLineSum(items); // Σ(data-item-price × qtd) = total CARTÃO
     if (!(sumLines > 0)) return;
+    // Normaliza o valor de CADA item pro TOTAL DA LINHA (preço × qtd), igual à
+    // página /checkout/cart e ao drawer desktop. Sem isto, quando a qtd sobe via
+    // ADD da vitrine (não pelos nossos botões +/-), o item mostra o preço UNITÁRIO
+    // (ex.: qtd 2 mas "R$ 1.939,27" em vez de "R$ 3.878,54"). Atualiza o <span>
+    // interno pra preservar o bold; idempotente (só escreve quando o valor muda).
+    Array.prototype.forEach.call(items, function (it) {
+      var up = parseFloat(it.getAttribute('data-item-price')) || 0;
+      if (!(up > 0)) return;
+      var q = parseInt(it.getAttribute('data-item-quantity'));
+      if (!q || isNaN(q)) { var qd = it.querySelector('.qty-display'); q = qd ? (parseInt(qd.textContent) || 1) : 1; }
+      var valorEl = it.querySelector('.valor');
+      if (!valorEl) return;
+      var lineTotal = up * q;
+      var target = valorEl.querySelector('span') || valorEl;
+      var cur = parseBrlFromText(target.textContent);
+      if (isNaN(cur) || Math.abs(cur - lineTotal) > 0.005) target.textContent = formatBrlNum(lineTotal);
+    });
     // Razão PIX capturada 1x do valor nativo inicial (PIX / sumLines ≈ 0,95).
     var pixWrap = drawer.querySelector('.valor-pix');
     var pixValueEl = pixWrap ? (pixWrap.querySelector('span') || pixWrap) : null;

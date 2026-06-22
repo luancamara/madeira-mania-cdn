@@ -818,6 +818,14 @@ body {
   width: calc(100% - 32px) !important;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
   font-family: 'Poppins', system-ui, sans-serif !important;
+}
+/* Animação de ENTRADA — escopada a :not(.swal2-hide) pra NÃO sobrescrever a
+   animação de SAÍDA do SweetAlert2. O override anterior (animation !important no
+   popup, sempre) bloqueava o @keyframes swal2-hide: o animationend de fechar
+   nunca disparava, então ao clicar fora o backdrop sumia (swal2-backdrop-hide)
+   mas o popup ficava órfão na tela. Com o :not(.swal2-hide), no fechamento o
+   swal2-hide assume e o swal2 remove o popup normalmente. */
+.popup-adicionado-ao-carrinho.swal2-popup:not(.swal2-hide) {
   animation: mm-swal-pop 200ms ease-out both !important;
 }
 @keyframes mm-swal-pop {
