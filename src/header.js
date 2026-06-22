@@ -1221,7 +1221,10 @@
       // drawer vazio. Fazemos um .click() sintético no link nativo pra
       // que o handler React rode e popule os items corretamente.
       if (window.innerWidth <= 767) {
-        var tabbarLink = document.querySelector('#cart-preview-area a.link-cart, #cart-preview-area a[href*="/checkout/cart"]');
+        // Prefere o gatilho da tabbar (.link-cart) explicitamente; só cai no
+        // link genérico de carrinho se .link-cart não existir.
+        var tabbarLink = document.querySelector('#cart-preview-area a.link-cart') ||
+                         document.querySelector('#cart-preview-area a[href*="/checkout/cart"]');
         if (tabbarLink) {
           // Marca no HTML root que abertura é autorizada — o observer que
           // bloqueia aberturas espúrias (shipping calc, add-to-cart) checa
@@ -1230,10 +1233,33 @@
           // Marca o evento pra nosso document-level listener NÃO interceptar
           // (senão cairíamos de volta no preventDefault + nosso openCartDrawer).
           tabbarLink.dataset.mmBypass = '1';
-          tabbarLink.click();
+          tabbarLink.click(); // popula a overlay via React
           delete tabbarLink.dataset.mmBypass;
-          // Clear flag após 400ms — tempo suficiente pro React abrir o drawer
-          setTimeout(function() { delete document.documentElement.dataset.mmCartOpening; }, 400);
+          // FIX (vitrine): depois de adicionar pela vitrine, o Magazord deixa o
+          // preview num estado INTERNO "aberto" (link .active) mas a overlay
+          // visualmente FECHADA — nosso guard de abertura espúria reverteu o
+          // translate. Aí o .click() acima TOGGLA pra fechado e o carrinho não
+          // abre (precisava de 2 toques). Forçamos a overlay pro estado ABERTO
+          // após o click (já populado) — determinístico e IDEMPOTENTE. Marca
+          // mmUserOpened na overlay pra o guard NUNCA reverter uma abertura
+          // legítima (mesmo após re-render tardio do React, sem depender de
+          // janela temporal). No fluxo normal (parity correta) o re-open é no-op.
+          // Múltiplos ticks cobrem React lento que aplica o translate só depois.
+          function mmForceOpenMobileDrawer() {
+            var ov = document.querySelector('#cart-preview-area > div[class*="z-[9999]"]');
+            if (!ov) return;
+            ov.dataset.mmUserOpened = '1';
+            if (ov.className.indexOf('translate-x-[0]') === -1) {
+              ov.classList.remove('translate-x-[100%]');
+              ov.classList.add('translate-x-[0]');
+            }
+          }
+          setTimeout(mmForceOpenMobileDrawer, 120);
+          setTimeout(mmForceOpenMobileDrawer, 380);
+          setTimeout(mmForceOpenMobileDrawer, 700);
+          // Clear flag após 800ms — cobre o click + os re-opens + settle. O guard
+          // passa a confiar em mmUserOpened (na overlay) após esta janela.
+          setTimeout(function() { delete document.documentElement.dataset.mmCartOpening; }, 800);
           return;
         }
         // Fallback: sem link nativo, vai pra página de carrinho direto
@@ -1345,8 +1371,14 @@
         if (mobileDrawer.dataset.mmGuardWired) return;
         mobileDrawer.dataset.mmGuardWired = '1';
         var obs = new MutationObserver(function () {
-          if (mobileDrawer.className.indexOf('translate-x-[0]') === -1) return;
-          if (document.documentElement.dataset.mmCartOpening) return; // abertura autorizada
+          if (mobileDrawer.className.indexOf('translate-x-[0]') === -1) {
+            // Overlay fechada: limpa o marcador de abertura-pelo-usuário pra o
+            // guard voltar a reverter aberturas espúrias no próximo ciclo.
+            delete mobileDrawer.dataset.mmUserOpened;
+            return;
+          }
+          if (document.documentElement.dataset.mmCartOpening) return; // abertura autorizada (janela inicial)
+          if (mobileDrawer.dataset.mmUserOpened) return; // aberta pelo usuário — NÃO reverter (cobre re-render tardio do React)
           // Abertura espúria — reverter
           mobileDrawer.classList.remove('translate-x-[0]');
           mobileDrawer.classList.add('translate-x-[100%]');
