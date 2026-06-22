@@ -1039,6 +1039,69 @@
     } catch (e) {}
   }
 
+  // ---- Mini-carrinho MOBILE (DOM diferente do desktop) ----
+  // O drawer mobile (#cart-preview-area > div.z-[9999]) NÃO tem
+  // .box-total-btn/.linha-total/.valor-final — usa .valor-pix (total PIX) e o
+  // nosso .installment-total (12x). Logo mmRecomputeDrawerTotal não o alcança, e o
+  // atualizaPreview do Magazord é gated (não roda com o drawer aberto), então o
+  // total ficava preso no valor de 1 item ao mudar a quantidade. Aqui recalculamos
+  // o total PIX + 12x a partir do Σ(preço×qtd) e atualizamos o badge. No desktop
+  // esse drawer não existe → no-op (mmFindMobileDrawer retorna null).
+  function mmFindMobileDrawer() {
+    return document.querySelector('#cart-preview-area > div[class*="z-[9999]"]');
+  }
+  function mmRecomputeMobileTotal(drawer) {
+    drawer = drawer || mmFindMobileDrawer();
+    if (!drawer) return;
+    var items = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
+    // Badge: usa CONTAGEM DE ITENS (items.length), espelhando getCartCountFromSources
+    // do header (que conta .cart-item) pra NÃO brigar com ele. E NUNCA esconde a
+    // partir daqui — espelha a regra "não confie no 0 stale" (header.js:1053-1055):
+    // com a gaveta FECHADA o overlay mobile pode estar vazio enquanto o carrinho tem
+    // itens (usuário recorrente). Então só atualiza pra cima quando há itens; quando
+    // vazio, deixa o header decidir (senão o setInterval esconderia o badge correto).
+    var count = items.length;
+    var badge = document.getElementById('mm-h-cart-count');
+    if (badge && count > 0) {
+      var btxt = count > 99 ? '99+' : String(count);
+      // Só escreve quando muda (espelha o padrão idempotente do PIX/12x abaixo) —
+      // evita rewrite redundante a cada tick de 800ms.
+      if (badge.textContent !== btxt || badge.hidden) { badge.textContent = btxt; badge.hidden = false; }
+    }
+    if (!items.length) return;
+    var sumLines = mmComputeLineSum(items); // Σ(data-item-price × qtd) = total CARTÃO
+    if (!(sumLines > 0)) return;
+    // Razão PIX capturada 1x do valor nativo inicial (PIX / sumLines ≈ 0,95).
+    var pixWrap = drawer.querySelector('.valor-pix');
+    var pixValueEl = pixWrap ? (pixWrap.querySelector('span') || pixWrap) : null;
+    if (!drawer.dataset.mmMobileRatio && pixValueEl) {
+      var initialPix = parseBrlFromText(pixValueEl.textContent);
+      if (!isNaN(initialPix) && initialPix > 0) {
+        var rr = initialPix / sumLines;
+        // Guard apertado (0.80–1.0): desconto PIX real é ~5–15% (razão ~0,85–0,95).
+        // Rejeita capturas de estado stale (ex.: PIX nativo de 1 item sobre sumLines
+        // de 2+ itens dá razão << 0,80) → cai no fallback 0,95.
+        if (rr > 0.80 && rr <= 1.0001) drawer.dataset.mmMobileRatio = String(rr);
+      }
+    }
+    var ratio = parseFloat(drawer.dataset.mmMobileRatio || '0.95');
+    if (!(ratio > 0.80 && ratio <= 1.0001)) ratio = 0.95;
+    // Total PIX = sumLines × ratio. Atualiza só o <span> interno (preserva " no PIX").
+    // Escreve apenas quando o valor muda → converge sem loop no MutationObserver.
+    if (pixValueEl) {
+      var targetPix = sumLines * ratio;
+      var curPix = parseBrlFromText(pixValueEl.textContent);
+      if (isNaN(curPix) || Math.abs(curPix - targetPix) > 0.005) pixValueEl.textContent = formatBrlNum(targetPix);
+    }
+    // 12x = total CARTÃO (sem desconto PIX) / 12.
+    var inst = drawer.querySelector('.installment-total');
+    if (inst) {
+      var targetParc = sumLines / 12;
+      var curParc = parseBrlFromText(inst.textContent);
+      if (isNaN(curParc) || Math.abs(curParc - targetParc) > 0.005) inst.textContent = 'ou 12x de ' + formatBrlNum(targetParc);
+    }
+  }
+
   function mmTweenTotal(el, from, to) {
     if (!el || isNaN(from) || isNaN(to)) return;
     var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1091,6 +1154,10 @@
     if (mmReadCep() && drawer) drawer.dataset.mmShipPendingFetch = '1';
     // Recompute (sees pendingFetch → retains old shipping)
     mmRecomputeDrawerTotal(drawer);
+    // Mobile: o drawer (desktop) é null aqui. O MutationObserver do
+    // #cart-preview-area só observa childList (não a mudança de texto da qtd),
+    // então recalculamos o total do mini-carrinho mobile explicitamente.
+    mmRecomputeMobileTotal();
     // Now show the spinner on the rendered frete value + TOTAL label
     if (mmReadCep()) mmShowShippingLoading(drawer);
     mmPostCartOp(op, dataId)
@@ -1100,6 +1167,7 @@
         if (valorEl) valorEl.innerHTML = formatBrlHtml(unitPrice * currentQty);
         if (drawer) drawer.dataset.mmShipPendingFetch = '';
         mmRecomputeDrawerTotal(drawer);
+        mmRecomputeMobileTotal();
       })
       .then(function () {
         btnMinus.disabled = false;
@@ -1166,6 +1234,8 @@
       if (cartAction) {
         cartAction.setAttribute('aria-label', 'Carrinho, ' + count + ' ' + (count === 1 ? 'item' : 'itens'));
       }
+      // Mobile: recalcula total PIX/12x do mini-carrinho após remover item.
+      mmRecomputeMobileTotal();
     }, delay);
     mmPostCartOp('deleteItem', dataId).catch(function () {}).then(function () {
       // After server confirms, update badge again with authoritative DOM count
@@ -1343,14 +1413,20 @@
       var obs = new MutationObserver(function() {
         setTimeout(criarControlesQtd, 100);
         setTimeout(observeDrawerForAnimations, 150);
+        // Mobile: após o Magazord popular/re-renderizar o drawer (add, abrir,
+        // atualizaPreview), recalcula o total PIX/12x + badge. Roda DEPOIS do
+        // criarControlesQtd (que cria o .installment-total). No-op no desktop.
+        setTimeout(mmRecomputeMobileTotal, 180);
       });
       obs.observe(alvo, { childList: true, subtree: true });
     }
     // Fallback: executar periodicamente
     setInterval(criarControlesQtd, 800);
     setInterval(observeDrawerForAnimations, 800);
+    setInterval(mmRecomputeMobileTotal, 800);
     criarControlesQtd();
     observeDrawerForAnimations();
+    mmRecomputeMobileTotal();
   }
 
   // Aguardar DOM pronto
