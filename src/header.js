@@ -1271,16 +1271,39 @@
         loadCartPreview(drawer, function () { continueOpenDrawer(drawer); });
         return;
       }
-      // Desktop retry — React may not have rendered .carrinho-rapido-ctn yet
+      // Desktop: .carrinho-rapido-ctn pode estar ausente porque o Magazord
+      // re-renderiza o cart-preview (React) após um add pela vitrine e remove o
+      // nó temporariamente. O fallback antigo (5×150ms = 750ms → navega pra
+      // /checkout/cart) era curto demais e mandava o usuário pra página de
+      // carrinho em vez de abrir o drawer (bug reportado: open→close→comprar
+      // vitrine→clicar carrinho ia pra /checkout/cart).
+      //
+      // FIX: na ausência do drawer, FORÇA o Magazord a recriar o preview
+      // (atualizaPreview) e espera bem mais (≈2.8s) o nó reaparecer. Só navega
+      // como último recurso absoluto — aí a página de carrinho é o fallback
+      // correto. No fluxo normal (drawer presente) nada disso roda.
       var retries = 0;
-      var maxRetries = 5;
+      var maxRetries = 14; // ~2.8s @ 200ms
+      var forcedPreview = false;
       (function retry() {
         retries++;
         drawer = findDrawer();
         if (drawer) {
           loadCartPreview(drawer, function () { continueOpenDrawer(drawer); });
-        } else if (retries < maxRetries) {
-          setTimeout(retry, 150);
+          return;
+        }
+        // 2ª tentativa: cutuca o Magazord pra re-renderizar o cart-preview, o
+        // que recria a .carrinho-rapido-ctn quando ela some pós-add da vitrine.
+        if (!forcedPreview && retries >= 2) {
+          forcedPreview = true;
+          try {
+            if (typeof Zord !== 'undefined' && Zord.checkout && typeof Zord.checkout.atualizaPreview === 'function') {
+              Zord.checkout.atualizaPreview();
+            }
+          } catch (e) {}
+        }
+        if (retries < maxRetries) {
+          setTimeout(retry, 200);
         } else {
           window.location.href = '/checkout/cart';
         }
@@ -1482,6 +1505,44 @@
     attachCountObserver();
     setTimeout(attachCountObserver, 1000);
     setTimeout(attachCountObserver, 3000);
+
+    // ROBUSTEZ (bug: badge não atualizava após "Comprar" pela vitrine):
+    // o add da vitrine mostra o swal "Adicionado ao carrinho!" mas NÃO dispara
+    // reactItemAddedToCart, não muta .item-ctn e não bate em checkout/cart via
+    // ajaxComplete — então nenhum dos hooks acima rodava e o badge ficava
+    // defasado. Duas redes de segurança:
+    //
+    // 1) Observer no popup swal do Magazord — sync imediato quando o usuário
+    //    adiciona algo (cobre vitrine, PDP, qualquer fluxo que use esse popup).
+    var mmAddPopupObserver = new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var added = muts[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          var n = added[j];
+          if (n.nodeType !== 1) continue;
+          var isPopup = (n.classList && n.classList.contains('popup-adicionado-ao-carrinho')) ||
+                        (n.querySelector && n.querySelector('.popup-adicionado-ao-carrinho'));
+          if (isPopup) {
+            setTimeout(updateCartCount, 120);
+            setTimeout(updateCartCount, 700);
+            return;
+          }
+        }
+      }
+    });
+    mmAddPopupObserver.observe(document.body, { childList: true, subtree: true });
+
+    // 2) Poller canônico — compara o cart.size (getCartCountFromSources lê
+    //    Zord.get('cart.size') primeiro, que SEMPRE reflete o add) e sincroniza
+    //    o badge em até ~1s mesmo nos fluxos que não emitem nenhum evento.
+    var mmLastKnownCount = -1;
+    setInterval(function () {
+      var c = getCartCountFromSources();
+      if (c !== mmLastKnownCount) {
+        mmLastKnownCount = c;
+        updateCartCount();
+      }
+    }, 1000);
 
     // Sticky compact state (scroll-direction sticky)
     var lastScrollY = 0;
