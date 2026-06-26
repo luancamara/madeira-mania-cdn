@@ -1020,3 +1020,37 @@ body {
   padding: 0 !important;
   object-fit: cover;
 }
+
+/* =============================================
+   "NOSSAS CATEGORIAS" — componente-id-CbvCGKvalN (swiper de círculos)
+   Bug NATIVO do Magazord (reproduz com bundle bloqueado): o Swiper mede a
+   altura dos slides cedo demais (antes das imagens) e trava .swiper-wrapper /
+   .swiper-slide em ~73px (altura do label de texto). Como o slide é flex, o
+   <a> estica pra 73px e a <figure>/<img> de 224px transbordam e são cortadas.
+   Fix: forçar altura auto na cadeia swiper→wrapper→slide→a pra caber o círculo.
+   Probed 2026-06-26: img 224px, slide/wrapper colapsados em 73px.
+   ============================================= */
+.componente-id-CbvCGKvalN .swiper,
+.componente-id-CbvCGKvalN .swiper-initialized,
+.componente-id-CbvCGKvalN .swiper-wrapper,
+.componente-id-CbvCGKvalN .swiper-slide,
+.componente-id-CbvCGKvalN .swiper-slide > a {
+  height: auto !important;
+}
+/* Quebra a corrente de flex-stretch: wrapper e slide param de esticar os
+   filhos pra altura colapsada (73px), deixando cada slide com a altura do
+   próprio conteúdo (círculo + label) — responsivo, sem hardcode. */
+.componente-id-CbvCGKvalN .swiper-wrapper,
+.componente-id-CbvCGKvalN .swiper-slide {
+  align-items: flex-start !important;
+}
+/* Rede de segurança contra a corrida lazy-load x Swiper recalc no desktop:
+   piso de altura que impede o colapso em 73px (círculo ~224 + label ~29). */
+@media (min-width: 769px) {
+  .componente-id-CbvCGKvalN .swiper,
+  .componente-id-CbvCGKvalN .swiper-wrapper,
+  .componente-id-CbvCGKvalN .swiper-slide,
+  .componente-id-CbvCGKvalN .swiper-slide > a {
+    min-height: 253px !important;
+  }
+}
