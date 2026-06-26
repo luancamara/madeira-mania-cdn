@@ -569,7 +569,10 @@
       var n = parseBrlFromText(v.textContent);
       if (!isNaN(n)) sumRaw += n;
     });
-    mmRecomputeDrawerTotal(drawer);
+    // Roteia pra EXATAMENTE um recompute conforme a estrutura — evita render duplo do
+    // bloco de frete (flicker) quando ambos rodariam na estrutura-B.
+    if (drawer.querySelector('.box-total-btn')) mmRecomputeDrawerTotal(drawer); // estrutura A
+    else mmRecomputeMobileTotal(drawer);                                        // estrutura B
   }
 
   // Trigger a shipping fetch + re-render if we have CEP but no fresh snapshot.
@@ -593,10 +596,46 @@
     });
   }
 
+  // Generaliza o container onde o bloco .mm-cart-ship vive, entre o drawer desktop
+  // (.box-total-btn) e o overlay mobile (#cart-preview-area, que NÃO tem .box-total-btn —
+  // usa um footer com .finalizar-compra). Retorna { host, before } onde `host` é o
+  // container e `before` é o nó-âncora pra inserir o bloco ACIMA dos totais.
+  function mmShipHost(drawer) {
+    if (!drawer) return null;
+    var box = drawer.querySelector('.box-total-btn');
+    if (box) return { host: box, before: box.querySelector('.total') };
+    // Estrutura B — mini-drawer desktop da home: footer .area-finalizar-compra
+    // (div com os totais + link de checkout). Insere acima do bloco de totais.
+    var area = drawer.querySelector('.area-finalizar-compra');
+    if (area) return { host: area, before: area.firstElementChild };
+    // Estrutura B — overlay mobile: o inner do footer é o pai do .finalizar-compra.
+    var fin = drawer.querySelector('.finalizar-compra');
+    if (fin && fin.parentElement) {
+      var inner = fin.parentElement;
+      return { host: inner, before: inner.firstElementChild };
+    }
+    return null;
+  }
+
+  // Acha o drawer (desktop OU overlay mobile) a partir de um nó interno. Os handlers
+  // do form de CEP antes assumiam só .carrinho-rapido-ctn, o que retornava null no
+  // overlay mobile e quebrava o salvar do CEP.
+  function mmClosestDrawer(el) {
+    if (!el) return null;
+    var d = el.closest('.carrinho-rapido-ctn');
+    if (d) return d;
+    if (el.closest('#cart-preview-area')) return mmFindMobileDrawer();
+    return null;
+  }
+
   function mmRenderShipping(drawer, subtotal, shippingAmount, hasShipping) {
     if (!drawer) return;
-    var boxTotal = drawer.querySelector('.box-total-btn');
-    if (!boxTotal) return;
+    var shipHost = mmShipHost(drawer);
+    if (!shipHost) return;
+    var boxTotal = shipHost.host;
+    // Marca o drawer como escopo do bloco de frete pro CSS (.mm-ship-scope .mm-cart-ship*)
+    // aplicar igual em desktop (.carrinho-rapido-ctn) e mobile (#cart-preview-area).
+    drawer.classList.add('mm-ship-scope');
     // INVARIANTE: esta função (e mmRecomputeDrawerTotal) só pode MUTAR
     // descendentes do .box-total-btn — NUNCA recriar/substituir o próprio
     // .box-total-btn. O gate de re-enhancement (diffAndAnimate) usa um marcador
@@ -624,8 +663,8 @@
       // Semantic region label for screen readers
       block.setAttribute('role', 'group');
       block.setAttribute('aria-label', 'Informações de frete');
-      var totalEl = boxTotal.querySelector('.total');
-      if (totalEl) boxTotal.insertBefore(block, totalEl);
+      var anchor = shipHost.before;
+      if (anchor && anchor.parentNode === boxTotal) boxTotal.insertBefore(block, anchor);
       else boxTotal.insertBefore(block, boxTotal.firstChild);
     }
     block.classList.toggle('is-free', isFree);
@@ -742,13 +781,13 @@
         loc.appendChild(span);
       }
     }
-    var box = drawer.querySelector('.box-total-btn');
-    if (box) box.classList.add('mm-ship-loading');
+    var sh = mmShipHost(drawer);
+    if (sh) sh.host.classList.add('mm-ship-loading');
   }
   function mmHideShippingLoading(drawer) {
     if (!drawer) return;
-    var box = drawer.querySelector('.box-total-btn');
-    if (box) box.classList.remove('mm-ship-loading');
+    var sh = mmShipHost(drawer);
+    if (sh) sh.host.classList.remove('mm-ship-loading');
   }
 
   // ---- CEP edit flow (inline, no modal) ----
@@ -816,7 +855,7 @@
 
   function mmExitCepEdit(block) {
     block.dataset.mmEditing = '';
-    var drawer = block.closest('.carrinho-rapido-ctn');
+    var drawer = mmClosestDrawer(block);
     if (!drawer) return;
     var items = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
     var sumRaw = 0;
@@ -842,7 +881,7 @@
     // Show loading state on the save button while we fetch
     var saveBtn = block.querySelector('.mm-cart-ship-cep-save');
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '...'; }
-    var drawer = block.closest('.carrinho-rapido-ctn');
+    var drawer = mmClosestDrawer(block);
     // Invalidate the snapshot's CEP match before re-rendering so the user
     // sees the new CEP immediately (without stale shipping data)
     try {
@@ -1047,12 +1086,47 @@
   // total ficava preso no valor de 1 item ao mudar a quantidade. Aqui recalculamos
   // o total PIX + 12x a partir do Σ(preço×qtd) e atualizamos o badge. No desktop
   // esse drawer não existe → no-op (mmFindMobileDrawer retorna null).
+  // Acha um drawer "estrutura B" (footer .area-finalizar-compra/.valor-pix, SEM
+  // .box-total-btn). Isso cobre DOIS casos que o Magazord renderiza igual:
+  //   1) overlay mobile  #cart-preview-area > div.z-[9999]
+  //   2) mini-drawer desktop da home/vitrine  .carrinho-rapido-ctn SEM .box-total-btn
+  // O drawer da /checkout/cart (estrutura A, com .box-total-btn) é tratado pelo
+  // diffAndAnimate/mmRecomputeDrawerTotal e é IGNORADO aqui.
   function mmFindMobileDrawer() {
-    return document.querySelector('#cart-preview-area > div[class*="z-[9999]"]');
+    var ov = document.querySelector('#cart-preview-area > div[class*="z-[9999]"]');
+    if (ov) return ov;
+    // Marcador POSITIVO de estrutura-B: tem .valor-pix E não tem .box-total-btn. Exigir
+    // .valor-pix (e não só ausência de box-total-btn) evita pegar um drawer estrutura-A
+    // que perca .box-total-btn transitoriamente num re-render do Magazord (ele não tem
+    // .valor-pix) — senão a normalização .valor plana corromperia o span .mm-cents.
+    var ctn = document.querySelector('.carrinho-rapido-ctn');
+    if (ctn && !ctn.querySelector('.box-total-btn') && ctn.querySelector('.valor-pix')) return ctn;
+    return null;
   }
+  function mmInjectMobileSavings(drawer, pixDiscount) {
+    var inst = drawer.querySelector('.installment-total');
+    if (!inst || !inst.parentElement) return;
+    var anchor = inst.parentElement;
+    var existing = anchor.querySelector('.mm-cart-savings-mobile');
+    if (!pixDiscount || pixDiscount < 0.01) { if (existing) existing.remove(); return; }
+    var txt = 'Você economiza ' + formatBrlNum(pixDiscount) + ' com PIX';
+    if (existing) { if (existing.textContent !== txt) existing.textContent = txt; return; }
+    var el = document.createElement('span');
+    el.className = 'mm-cart-savings-mobile';
+    el.textContent = txt;
+    if (inst.nextSibling) anchor.insertBefore(el, inst.nextSibling);
+    else anchor.appendChild(el);
+  }
+
   function mmRecomputeMobileTotal(drawer) {
     drawer = drawer || mmFindMobileDrawer();
-    if (!drawer) return;
+    // Só atua em drawers "estrutura B": marcador POSITIVO = tem .valor-pix E NÃO tem
+    // .box-total-btn (overlay mobile + mini-drawer desktop da home). O drawer da
+    // /checkout/cart (estrutura A) é tratado por mmRecomputeDrawerTotal. Exigir
+    // .valor-pix fecha a corrida em que um drawer estrutura-A perde .box-total-btn
+    // num re-render mas mantém itens .mm-cents — rodar a normalização .valor plana
+    // ali corromperia o span de centavos.
+    if (!drawer || drawer.querySelector('.box-total-btn') || !drawer.querySelector('.valor-pix')) return;
     var items = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
     // Badge: usa CONTAGEM DE ITENS (items.length), espelhando getCartCountFromSources
     // do header (que conta .cart-item) pra NÃO brigar com ele. E NUNCA esconde a
@@ -1117,6 +1191,25 @@
       var curParc = parseBrlFromText(inst.textContent);
       if (isNaN(curParc) || Math.abs(curParc - targetParc) > 0.005) inst.textContent = 'ou 12x de ' + formatBrlNum(targetParc);
     }
+    // ---- Frete: porta a barra de frete (ENVIO PARA / frete grátis / delivery) pro
+    // overlay mobile, que não tem .box-total-btn. Espelha a derivação do desktop
+    // (mmRecomputeDrawerTotal): hasShipping/shippingAmount vêm do snapshot quando o CEP
+    // bate. Re-renderiza só quando a assinatura muda OU o bloco sumiu (re-render do
+    // Magazord) — evita churn de innerHTML a cada tick. Pula durante edição de CEP.
+    var mCep = mmReadCep();
+    var mSnap = mmReadCartSnapshot();
+    var mSnapCepMatches = mSnap && mSnap.cepValue && mSnap.cepValue.replace(/\D/g, '') === mCep;
+    var mHasShipping = !!(mCep && mSnap && mSnapCepMatches && mSnap.shipping != null && !isNaN(mSnap.shipping));
+    var mShipAmount = mHasShipping ? parseFloat(mSnap.shipping) : 0;
+    var shipSig = (mCep || '') + '|' + sumLines.toFixed(2) + '|' + (mHasShipping ? 1 : 0) + '|' + mShipAmount;
+    var existingBlock = drawer.querySelector('.mm-cart-ship');
+    var editing = existingBlock && existingBlock.dataset.mmEditing === '1';
+    if (!editing && (!existingBlock || drawer.dataset.mmMobShipSig !== shipSig)) {
+      drawer.dataset.mmMobShipSig = shipSig;
+      mmRenderShipping(drawer, sumLines, mShipAmount, mHasShipping);
+    }
+    mmMaybeFetchShipping(drawer); // dedupe + rate-limit internos protegem contra spam
+    mmInjectMobileSavings(drawer, sumLines - sumLines * ratio);
   }
 
   function mmTweenTotal(el, from, to) {
@@ -1390,6 +1483,12 @@
         mmMaybeFetchShipping(drawer);
       }
     }
+
+    // Estrutura B (.carrinho-rapido-ctn da home/vitrine, SEM .box-total-btn): o
+    // enhancement de total/frete vai pelo caminho "mini" (mmRecomputeMobileTotal),
+    // não pelo box-total-btn. Sem isto, o mini-drawer desktop abria CRU (Image #1) —
+    // o interval de 800ms só pegaria com atraso visível.
+    if (!drawer.querySelector('.box-total-btn')) mmRecomputeMobileTotal(drawer);
 
     // Mark new items with .mm-added for entrance animation
     var items = drawer.querySelectorAll('.cart-item');
