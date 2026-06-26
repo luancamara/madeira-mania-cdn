@@ -1324,9 +1324,16 @@
           if (footer) footer.style.display = 'none';
         }
         // Force empty state — don't wait for Magazord React to render
-        // .box-empty-cart (it won't after our custom delete). Dispatch
-        // an event that header.js enhanceEmptyCart() will pick up via
-        // the MutationObserver on .content-cart.
+        // .box-empty-cart (it won't after our custom delete). O observer de
+        // .content-cart no header.js chama enhanceEmptyCart, MAS sozinho ele
+        // falha: o contador nativo .item-ctn fica estale (não-zero) após nosso
+        // POST, então getCartCountFromSources() retorna não-zero e o estado
+        // vazio NÃO injeta (bug: corpo cinza em branco, sem "carrinho vazio").
+        // forceEmptyCartState zera o .item-ctn e re-dispara enhanceEmptyCart —
+        // determinístico. Validado live (.item-ctn "2" → "0" → wrapper injeta).
+        if (typeof window.__mmForceEmptyCartState === 'function') {
+          window.__mmForceEmptyCartState(drawer);
+        }
         // Also keep the drawer OPEN so the user sees the suggestions.
       } else {
         mmRecomputeDrawerTotal(drawer);

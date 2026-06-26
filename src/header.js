@@ -1173,6 +1173,25 @@
       content.appendChild(wrap);
     }
 
+    // Força o estado de carrinho vazio após uma remoção otimista nossa.
+    // ROOT CAUSE (validado live): depois do nosso delete via POST, o contador
+    // nativo .item-ctn fica ESTALE (continua mostrando a contagem antiga, ex:
+    // "2"). getCartCountFromSources() lê esse .item-ctn (Source 2) e retorna
+    // não-zero, então enhanceEmptyCart() acha que ainda há itens e NÃO injeta
+    // o estado vazio → drawer fica com corpo cinza em branco, sem "carrinho
+    // vazio". Fix: zera o .item-ctn (todas as fontes concordam em 0) e dispara
+    // enhanceEmptyCart de novo — aí a contagem é 0 e o estado vazio injeta.
+    // Exposto no window pra o cart-sheet.js (mmDeleteItem) chamar.
+    function forceEmptyCartState(drawer) {
+      try {
+        document
+          .querySelectorAll('#cart-preview-area .item-ctn, .carrinho-container .item-ctn, .item-ctn')
+          .forEach(function (el) { el.textContent = '0'; });
+      } catch (e) {}
+      if (drawer) enhanceEmptyCart(drawer);
+    }
+    window.__mmForceEmptyCartState = forceEmptyCartState;
+
     // Trigger Magazord's native preview loader. Source (inspected via
     // Zord.checkout.atualizaPreview.toString()):
     //   if (!Zord.get("cart.preview") && 0 < Zord.get("cart.size") || forced) {

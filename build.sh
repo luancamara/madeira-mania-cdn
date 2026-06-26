@@ -20,8 +20,9 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # force-moving tags does NOT invalidate it. Semver ranges (^2) also
 # rely on a cached package index that takes hours to refresh. The only
 # reliable approach: create a NEW tag per deploy and update this line.
-# After deploy: create tag, push tag, purge jsDelivr, update Magazord CA.
-CDN_VERSION="v2.0.28"
+# After deploy: create tag, push tag, update Magazord CA.
+# NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
+CDN_VERSION="v2.0.29"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 

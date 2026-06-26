@@ -42,6 +42,24 @@
 }
 
 /* ==========================================================================
+   TOPBAR MARQUEE acima do drawer (BUG: barra "ENTREGA EM ATÉ 72H" por cima)
+
+   O Magazord renderiza a marquee promocional como `.topbar-marquee` com
+   `position:fixed; z-index:9999`. Nosso drawer desktop fica em z-index 200 e
+   o scrim em 150 — logo a marquee (9999) PINTA POR CIMA do drawer aberto.
+   No mobile a overlay React também é z-[9999] (empate resolvido por ordem DOM).
+
+   Fix reativo via :has() — sem mexer em nenhum z-index nosso (zero risco de
+   cascata): enquanto QUALQUER drawer (desktop .mm-drawer-open OU overlay mobile
+   .translate-x-[0]) estiver aberto, escondemos a marquee. Ela reaparece sozinha
+   ao fechar. Validado live: marquee some ao abrir, volta ao fechar.
+   ========================================================================== */
+html:has(.carrinho-rapido-ctn.mm-drawer-open) .topbar-marquee,
+html:has(#cart-preview-area > div[class*="z-[9999]"].translate-x-\[0\]) .topbar-marquee {
+  display: none !important;
+}
+
+/* ==========================================================================
    DRAWER / SHEET: background cinza checkout
 
    IMPORTANTE: não usar selector `#cart-preview-area > div` porque existem
@@ -886,6 +904,17 @@
 }
 .content-cart.mm-cart-has-empty-enhancement > .box-empty-cart,
 .content-cart.mm-cart-has-empty-enhancement > .empty-cart {
+  display: none !important;
+}
+/* Carrinho vazio: esconde o rodapé (total/CTA) DETERMINÍSTICO via CSS.
+   O mmDeleteItem já faz display:none inline, mas remoções por outros caminhos
+   (qty-stepper até 0, re-render do Magazord) podiam deixar o rodapé com TOTAL
+   ESTALE visível (bug reportado: "R$ 1.081,79 + Finalizar Compra" no vazio).
+   Enquanto a empty-enhancement estiver ativa, o rodapé fica escondido. */
+.content-cart.mm-cart-has-empty-enhancement > .area-finalizar-compra,
+.content-cart.mm-cart-has-empty-enhancement > .box-total-btn,
+.content-cart.mm-cart-has-empty-enhancement .area-finalizar-compra,
+.content-cart.mm-cart-has-empty-enhancement .box-total-btn {
   display: none !important;
 }
 .mm-cart-empty-wrapper {
