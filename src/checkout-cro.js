@@ -42,9 +42,30 @@
   initCheckoutCRO._retries = (initCheckoutCRO._retries || 0) + 1;
   var mainArea = document.querySelector('#checkout-main-area');
   if (!mainArea) {
+    /* RECOVERY de sessão expirada / página crua (bug: /onepage do fluxo guest
+       às vezes vem como a tela de erro da Magazord "ficou muito tempo inativo /
+       Realize login novamente", que NÃO tem #checkout-main-area — nosso layout
+       nunca monta e o usuário fica preso na tela feia). Em vez disso, redireciona
+       UMA vez pro carrinho (re-estabelece a sessão e mostra nosso cart). Dois
+       gatilhos: (a) texto de sessão expirada na página → rápido; (b) timeout do
+       retry (~16s, #checkout-main-area nunca apareceu) → fallback. Guard em
+       sessionStorage evita loop de redirect; só atua em onepage/identify. */
+    try {
+      var bodyTxt = (document.body && document.body.textContent) || '';
+      var sessionExpired = /muito tempo inativo|realize login novamente/i.test(bodyTxt);
+      if ((isOnepage || isIdentify) && (sessionExpired || initCheckoutCRO._retries >= 40) &&
+          !sessionStorage.getItem('mm_checkout_recovery')) {
+        sessionStorage.setItem('mm_checkout_recovery', '1');
+        location.href = '/checkout/cart';
+        return;
+      }
+    } catch (e) {}
     if (initCheckoutCRO._retries < 40) setTimeout(initCheckoutCRO, 400);
     return;
   }
+  /* Chegou num checkout válido — limpa o guard pra permitir nova recuperação
+     se a sessão cair de novo numa navegação futura. */
+  try { sessionStorage.removeItem('mm_checkout_recovery'); } catch (e) {}
 
 
   /* =============================================
@@ -3669,10 +3690,20 @@
       /* Restaura draft salvo (campos que o user já tinha digitado antes do reload) */
       var draft = restoreOnepageDraft();
 
-      /* Render inicial do frete a partir do snapshot do cart — Magazord
-         onepage não expõe modalidades (.servico-frete), só o valor final.
-         O snapshot tem nome+prazo+opções porque foi salvo no cart. */
-      if (snap && snap.shipping !== null && snap.shipping !== undefined) {
+      /* Frete no mount: a API (por CEP+valor) é a FONTE DE VERDADE. NÃO confiamos
+         no snapshot.shipping herdado — em especial NUNCA pintamos "Grátis" stale.
+         Bug: frete grátis vindo do /identify (snapshot.shipping=0) era mostrado
+         indevidamente no onepage e ficava "mantido". Agora:
+           - se há CEP salvo → vamos recalcular logo abaixo (handleCepComplete →
+             calcFreteOnepage), então mostramos "Calculando..." e deixamos a API
+             definir o valor real (grátis OU pago);
+           - se NÃO há CEP → só mostramos um valor PAGO do snapshot como dica
+             (nunca "Grátis"); fica vazio até o usuário informar o CEP. */
+      var savedCepFrete = STORAGE.get(CEP_KEY);
+      var willRecalcFrete = savedCepFrete && String(savedCepFrete).replace(/\D/g, '').length === 8;
+      if (willRecalcFrete) {
+        renderFreteResult('loading');
+      } else if (snap && typeof snap.shipping === 'number' && snap.shipping > 0) {
         renderFreteResult({
           value: snap.shipping,
           name: snap.shippingName || '',

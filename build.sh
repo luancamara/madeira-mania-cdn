@@ -22,7 +22,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # reliable approach: create a NEW tag per deploy and update this line.
 # After deploy: create tag, push tag, update Magazord CA.
 # NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
-CDN_VERSION="v2.0.30"
+CDN_VERSION="v2.0.31"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 

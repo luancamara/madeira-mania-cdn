@@ -1264,6 +1264,38 @@
           // legítima (mesmo após re-render tardio do React, sem depender de
           // janela temporal). No fluxo normal (parity correta) o re-open é no-op.
           // Múltiplos ticks cobrem React lento que aplica o translate só depois.
+          // BUG "Fechar 2x" (mobile, após add pela vitrine): como abrimos a overlay
+          // mexendo nas classes direto (force-open), o estado INTERNO do React fica
+          // "fechado" (dessincronizado do DOM). O botão "Fechar" nativo é um toggle:
+          // o 1º tap só re-sincroniza o React pra "aberto" (sem mudança visual) e só
+          // o 2º tap fecha de fato. Fix: handler nosso de CAPTURE na overlay que
+          // fecha o DOM deterministicamente no 1º tap e impede o toggle do React
+          // (stopImmediatePropagation). O "Fechar" da Magazord é um DIV/SPAN com
+          // texto "Fechar" e classe text-error-700.
+          function mmWireMobileCloseDeterministic(ov) {
+            if (!ov || ov.dataset.mmCloseWired) return;
+            ov.dataset.mmCloseWired = '1';
+            ov.addEventListener('click', function (e) {
+              var t = e.target;
+              if (!t || !t.closest) return;
+              var closeEl = t.closest('[class*="text-error-700"]');
+              if (!closeEl) {
+                // fallback por texto: sobe até 4 níveis procurando um "Fechar"
+                var el = t;
+                for (var i = 0; i < 4 && el && el !== ov; i++) {
+                  if ((el.textContent || '').trim() === 'Fechar') { closeEl = el; break; }
+                  el = el.parentElement;
+                }
+              }
+              if (!closeEl) return;
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              ov.classList.remove('translate-x-[0]');
+              ov.classList.add('translate-x-[100%]');
+              delete ov.dataset.mmUserOpened;
+              document.body.style.overflow = '';
+            }, true);
+          }
           function mmForceOpenMobileDrawer() {
             var ov = document.querySelector('#cart-preview-area > div[class*="z-[9999]"]');
             if (!ov) return;
@@ -1272,6 +1304,7 @@
               ov.classList.remove('translate-x-[100%]');
               ov.classList.add('translate-x-[0]');
             }
+            mmWireMobileCloseDeterministic(ov);
           }
           setTimeout(mmForceOpenMobileDrawer, 120);
           setTimeout(mmForceOpenMobileDrawer, 380);
