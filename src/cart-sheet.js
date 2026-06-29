@@ -549,13 +549,35 @@
       snap.shippingName = data.shippingName;
       snap.shippingCity = data.city;
       if (data.totalPix != null) snap.subtotalPix = data.totalPix;
-      // Snapshot items must match current drawer items for the signature to match
+      // Snapshot items must match current drawer items for the signature to match.
+      // MERGE em vez de OVERWRITE: preserva os campos ricos (imgSrc/lineTotalPix/
+      // isPix/variant/deposito) que o checkout-cro.js gravou no snapshot, casando
+      // por nome — mas SÓ quando a quantidade não mudou (senão o line total
+      // preservado ficaria stale). Se a qty mudou OU não havia item rico anterior,
+      // grava magro {name, quantity} e deixa o reconcileSummaryFromServer() do
+      // checkout-cro refazer a partir do /checkout/cart autoritativo.
+      // Por quê: o drawer DOM não expõe a imgSrc do produto (só data-item-price),
+      // então NÃO dá pra reconstruir o item rico aqui — preservar o anterior é a
+      // única forma de não corromper o snapshot. Sem isto, o resumo do identify/
+      // onepage pisca "R$ 0,00" + ícone genérico no primeiro paint.
+      var prevItems = (snap.items && snap.items.length) ? snap.items : [];
+      function mmFindPrevItem(nm) {
+        for (var k = 0; k < prevItems.length; k++) {
+          if (prevItems[k] && prevItems[k].name === nm) return prevItems[k];
+        }
+        return null;
+      }
       var drawerItems = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
       snap.items = Array.prototype.map.call(drawerItems, function (it) {
         var nameEl = it.querySelector('.prod-nome a, .prod-nome');
         var name = (nameEl && nameEl.textContent || '').trim();
         var qd = it.querySelector('.qty-display');
         var qty = qd ? parseInt(qd.textContent) : parseInt(it.getAttribute('data-item-quantity')) || 1;
+        var prev = mmFindPrevItem(name);
+        if (prev && prev.quantity === qty &&
+            (prev.lineTotalPix > 0 || prev.lineTotal > 0 || prev.imgSrc)) {
+          return prev; // mantém o item rico (qty inalterada → line total ainda válido)
+        }
         return { name: name, quantity: qty };
       });
       localStorage.setItem(MM_SNAPSHOT_KEY, JSON.stringify(snap));
@@ -993,7 +1015,7 @@
     }
   }
 
-  function mmRecomputeDrawerTotal(drawer) {
+  function mmRecomputeDrawerTotal(drawer, forceDirect) {
     if (!drawer) return;
     // Ensure ratio captured before first update
     mmCaptureTotalRatio(drawer);
@@ -1028,7 +1050,18 @@
 
     if (totalEl) {
       var current = parseBrlFromText(totalEl.textContent);
-      if (!isNaN(current) && Math.abs(targetTotal - current) > 0.005) {
+      // forceDirect: pula o tween e escreve direto. O tween anima por ~420ms;
+      // nesse meio-tempo o Magazord re-renderiza o .box-total-btn (async, ~2s
+      // após a edição) com o total GATED/estale, sobrescrevendo o valor final
+      // do tween. A rede de segurança periódica (mmReconcileDrawerTotalA) chama
+      // com forceDirect pra reafirmar o total correto com UMA escrita atômica
+      // que "gruda" assim que o Magazord assenta. Validado: escrita direta no
+      // strong fresco persiste (o Magazord não reescreve continuamente).
+      if (forceDirect) {
+        if (isNaN(current) || Math.abs(targetTotal - current) > 0.005) {
+          totalEl.innerHTML = formatBrlHtml(targetTotal);
+        }
+      } else if (!isNaN(current) && Math.abs(targetTotal - current) > 0.005) {
         var wrapper = drawer.querySelector('.box-total-btn .linha-total .valor-final');
         if (wrapper) {
           wrapper.classList.remove('mm-pop');
@@ -1078,6 +1111,50 @@
     } catch (e) {}
   }
 
+  // ---- Rede de segurança para a ESTRUTURA A (.box-total-btn) ----
+  // A estrutura B tem recompute periódico (mmRecomputeMobileTotal @800ms); a
+  // estrutura A NÃO tinha. Causa-raiz (confirmada via instrumentação ao vivo):
+  // ao editar in-session (qty +/- nativo do Magazord, ou delete), o
+  // mmRecomputeDrawerTotal calcula o total CORRETO e dispara um tween (~420ms),
+  // MAS o Magazord re-renderiza o .box-total-btn async (~2s depois) com o total
+  // GATED/estale, sobrescrevendo o resultado do tween — e como nada reafirma
+  // depois, o total fica congelado no valor anterior. Validado que o Magazord
+  // ASSENTA (não reescreve continuamente) e que uma escrita DIRETA no strong
+  // fresco persiste. Logo: este reconcile roda @800ms, e quando detecta
+  // divergência reescreve o total com forceDirect (escrita atômica que gruda
+  // assim que o Magazord assenta). Idempotente (no-op quando já correto) e
+  // no-op na estrutura B (sem .box-total-btn).
+  function mmReconcileDrawerTotalA() {
+    var drawer = document.querySelector('.carrinho-rapido-ctn');
+    if (!drawer || !drawer.querySelector('.box-total-btn')) return;
+    var items = drawer.querySelectorAll('.cart-item:not(.mm-removing)');
+    if (!items.length) return; // vazio → o estado-vazio cuida do rodapé
+    var totalEl = drawer.querySelector('.box-total-btn .linha-total .valor-final > .valor > strong') ||
+                  drawer.querySelector('.box-total-btn .linha-total .valor-final strong');
+    if (!totalEl) return;
+    var sumLines = mmComputeLineSum(items);
+    if (!(sumLines > 0.01)) return;
+    var ratio = parseFloat(drawer.dataset.mmTotalRatio || '0.95') || 0.95;
+    // Frete: MESMA derivação do mmRecomputeDrawerTotal (snapshot + CEP), pra que
+    // o expected do pre-check bata com o que a função de fato escreve.
+    var cep = mmReadCep();
+    var snap = mmReadCartSnapshot();
+    var snapCepMatches = snap && snap.cepValue && snap.cepValue.replace(/\D/g, '') === cep;
+    var hasShipping = !!(cep && snap && snapCepMatches && snap.shipping != null && !isNaN(snap.shipping));
+    if (!hasShipping && drawer.dataset.mmShipPendingFetch === '1' && cep && snap && snap.shipping != null) {
+      hasShipping = true;
+    }
+    var shippingAmount = hasShipping ? parseFloat(snap.shipping) : 0;
+    var expected = sumLines * ratio + shippingAmount;
+    var displayed = parseBrlFromText(totalEl.textContent);
+    // Pre-check barato: só recalcula (que reescreve total + economiza + 12x +
+    // frete) quando há divergência real — evita re-render do bloco de frete a
+    // cada tick.
+    if (isNaN(displayed) || Math.abs(expected - displayed) > 0.01) {
+      mmRecomputeDrawerTotal(drawer, true); // forceDirect: escrita atômica
+    }
+  }
+
   // ---- Mini-carrinho MOBILE (DOM diferente do desktop) ----
   // O drawer mobile (#cart-preview-area > div.z-[9999]) NÃO tem
   // .box-total-btn/.linha-total/.valor-final — usa .valor-pix (total PIX) e o
@@ -1116,6 +1193,66 @@
     el.textContent = txt;
     if (inst.nextSibling) anchor.insertBefore(el, inst.nextSibling);
     else anchor.appendChild(el);
+  }
+
+  // BUG "carrinho errado" (PIX/Cartão): após um ADD pela vitrine, o Magazord
+  // re-renderiza o mini-drawer DESKTOP como "estrutura B" (.area-finalizar-compra)
+  // com o rodapé de pagamento em DUAS LINHAS cruas "PIX R$X / Cartão R$Y / 12x".
+  // Isso é visualmente COMPLETAMENTE diferente do carrinho correto (estrutura A
+  // .box-total-btn: "Total R$X No PIX / Você economiza / ou 12x"). O usuário NÃO
+  // quer ver o layout PIX/Cartão de jeito nenhum.
+  //
+  // Não dá pra forçar a estrutura A: o Zord.checkout.atualizaPreview do Magazord
+  // faz .html() num nó React e CRASHA (apaga o #cart-preview-area inteiro —
+  // confirmado live). Então normalizamos a estrutura B: escondemos o bloco de
+  // pagamento nativo (forma-pix/forma-cartao) e renderizamos nosso .mm-cart-total-b
+  // com EXATAMENTE o layout da estrutura A, a partir dos mesmos valores
+  // (sumLines/ratio já computados pelo mmRecomputeMobileTotal). Funciona inclusive
+  // no 1º item adicionado (sem depender de snapshot da estrutura A).
+  //
+  // Escopo: SÓ o mini-drawer desktop (.carrinho-rapido-ctn). O overlay mobile
+  // (#cart-preview-area) mantém seu layout próprio.
+  function mmRenderStructureBTotal(drawer, sumLines, ratio) {
+    if (!drawer || !drawer.classList || !drawer.classList.contains('carrinho-rapido-ctn')) return;
+    if (drawer.querySelector('.box-total-btn')) return; // estrutura A real — não mexe
+    var area = drawer.querySelector('.area-finalizar-compra');
+    if (!area || !(sumLines > 0)) return;
+    var formaPix = area.querySelector('.forma-pix');
+    var nativePay = formaPix ? formaPix.parentElement : null;
+    if (!nativePay) return; // sem o bloco PIX/Cartão nativo não há o que normalizar
+    var pix = sumLines * ratio;
+    var parcela = sumLines / 12;
+    var savings = sumLines - pix;
+    nativePay.classList.add('mm-native-pay-hidden');
+    var block = area.querySelector('.mm-cart-total-b');
+    if (!block) {
+      block = document.createElement('div');
+      block.className = 'mm-cart-total-b';
+      block.innerHTML =
+        '<span class="mm-tb-label">Total</span>' +
+        '<span class="mm-tb-row"><strong class="mm-tb-value"></strong><span class="mm-tb-pix">No PIX</span></span>' +
+        '<span class="mm-tb-savings"></span>' +
+        '<span class="mm-tb-parcela"></span>';
+      // Insere logo após o bloco nativo (que fica escondido), acima do checkout.
+      if (nativePay.nextSibling) area.insertBefore(block, nativePay.nextSibling);
+      else area.appendChild(block);
+    }
+    var valEl = block.querySelector('.mm-tb-value');
+    var nv = formatBrlNum(pix);
+    if (valEl && valEl.textContent !== nv) valEl.textContent = nv;
+    var savEl = block.querySelector('.mm-tb-savings');
+    if (savEl) {
+      if (savings >= 0.01) {
+        var sv = 'Você economiza ' + formatBrlNum(savings) + ' com PIX';
+        if (savEl.textContent !== sv) savEl.textContent = sv;
+        savEl.style.display = '';
+      } else { savEl.style.display = 'none'; }
+    }
+    var parcEl = block.querySelector('.mm-tb-parcela');
+    if (parcEl) {
+      var pv = 'ou em até 12x de ' + formatBrlNum(parcela) + ' no cartão';
+      if (parcEl.textContent !== pv) parcEl.textContent = pv;
+    }
   }
 
   function mmRecomputeMobileTotal(drawer) {
@@ -1210,6 +1347,9 @@
     }
     mmMaybeFetchShipping(drawer); // dedupe + rate-limit internos protegem contra spam
     mmInjectMobileSavings(drawer, sumLines - sumLines * ratio);
+    // Desktop estrutura B: substitui o rodapé cru "PIX/Cartão" pelo layout correto
+    // (estrutura A "Total No PIX / economiza / 12x"). No-op no overlay mobile.
+    mmRenderStructureBTotal(drawer, sumLines, ratio);
   }
 
   function mmTweenTotal(el, from, to) {
@@ -1540,6 +1680,9 @@
         // atualizaPreview), recalcula o total PIX/12x + badge. Roda DEPOIS do
         // criarControlesQtd (que cria o .installment-total). No-op no desktop.
         setTimeout(mmRecomputeMobileTotal, 180);
+        // Estrutura A: reafirma o total correto após o Magazord re-renderizar
+        // com valor gated/estale (qty +/- nativo ou resposta do delete).
+        setTimeout(mmReconcileDrawerTotalA, 220);
       });
       obs.observe(alvo, { childList: true, subtree: true });
     }
@@ -1547,9 +1690,11 @@
     setInterval(criarControlesQtd, 800);
     setInterval(observeDrawerForAnimations, 800);
     setInterval(mmRecomputeMobileTotal, 800);
+    setInterval(mmReconcileDrawerTotalA, 800);
     criarControlesQtd();
     observeDrawerForAnimations();
     mmRecomputeMobileTotal();
+    mmReconcileDrawerTotalA();
   }
 
   // Aguardar DOM pronto

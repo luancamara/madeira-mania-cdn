@@ -1104,15 +1104,36 @@
     var displayItems = snap.items.slice(0, maxThumbs);
     var extraCount = snap.items.length - maxThumbs;
     var thumbsHTML = displayItems.map(function(it) {
-      var img = it.imgSrc
-        ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
-        : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
       /* Qty inline prefix (não badge sobre a imagem):
          padrão Apple/Stripe/Mercado Livre, mais discoverable + acessível.
          Só renderiza quando qty > 1 — qty 1 não precisa de "1×" noise. */
       var qtyPrefix = it.quantity > 1
         ? '<strong class="mm-id-thumb-qty">' + it.quantity + '×</strong> '
         : '';
+      /* Item "magro": snapshot escrito pelo cart-sheet.js no cálculo de frete do
+         drawer tem nome+qty mas SEM preço/imagem. Em vez de pintar "R$ 0,00" +
+         ícone genérico (o bug que o usuário viu), mostra skeleton no preço e na
+         imagem e mantém nome+qty reais. O reconcileSummaryFromServer() troca pelo
+         item rico (imgSrc + lineTotalPix do /checkout/cart) logo em seguida.
+         Defesa em profundidade: o merge no cart-sheet.js já evita gerar magro na
+         maioria dos casos; isto cobre o resíduo (ex.: cart-sheet foi o 1º a
+         escrever, sem snapshot rico anterior pra preservar). */
+      var thin = !it.imgSrc && !(it.lineTotalPix > 0) && !(it.lineTotal > 0);
+      if (thin) {
+        return (
+          '<div class="mm-id-thumb">' +
+            '<div class="mm-id-thumb-img"><span class="mm-skel" style="display:block;width:100%;height:100%"></span></div>' +
+            '<div class="mm-id-thumb-body">' +
+              '<p class="mm-id-thumb-name">' + qtyPrefix + escapeHTML(it.name) + '</p>' +
+              (it.variant ? '<p class="mm-id-thumb-variant">' + escapeHTML(it.variant) + '</p>' : '') +
+            '</div>' +
+            '<div class="mm-id-thumb-price"><span class="mm-skel" style="display:inline-block;width:56px;height:15px"></span></div>' +
+          '</div>'
+        );
+      }
+      var img = it.imgSrc
+        ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
+        : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
       var price = it.lineTotalPix > 0 ? it.lineTotalPix : it.lineTotal;
       return (
         '<div class="mm-id-thumb">' +
@@ -1479,6 +1500,26 @@
     if (fresh) grid.replaceChild(fresh, existing);
   }
 
+  /* Reconcilia SEMPRE o resumo do checkout com o carrinho REAL do servidor.
+     O snapshot do localStorage (mm_cart_snapshot) serve só pro primeiro paint
+     instantâneo, mas pode estar:
+       (a) "magro" — sobrescrito pelo cart-sheet.js no cálculo de frete do
+           drawer, com itens só {name, quantity} (sem lineTotalPix/imgSrc) →
+           o resumo do identify/onepage renderiza "R$ 0,00" e ícone genérico;
+       (b) "stale" — itens/qtd/total mudaram desde que o snapshot foi salvo
+           (o TTL de 30 min NÃO compara o conteúdo do carrinho).
+     Buscar o /checkout/cart autoritativo e re-renderizar o resumo corrige os
+     DOIS casos. Validado: fetch+parse retorna itens ricos (imgSrc +
+     lineTotalPix) inclusive em sessão guest. Antes isto só rodava quando o
+     snapshot estava vazio — por isso os bugs de desync sobreviviam. */
+  function reconcileSummaryFromServer() {
+    fetchCartSnapshotFallback(function (freshSnap) {
+      if (freshSnap && freshSnap.items && freshSnap.items.length > 0) {
+        rehydrateIdentifySummary(freshSnap);
+      }
+    });
+  }
+
   /* ----- mount entry ----- */
   if (isIdentify) {
     function waitForIdentifyDom(attempt) {
@@ -1503,15 +1544,10 @@
       setTimeout(reparentGoogleLogin, 600);
       setTimeout(reparentGoogleLogin, 1500);
 
-      /* Fallback: se snapshot está null/empty, fetch /checkout/cart e
-         re-renderiza a coluna do summary quando chegar */
-      if (!snap || !snap.items || snap.items.length === 0) {
-        fetchCartSnapshotFallback(function(freshSnap) {
-          if (freshSnap && freshSnap.items && freshSnap.items.length > 0) {
-            rehydrateIdentifySummary(freshSnap);
-          }
-        });
-      }
+      /* Reconcilia SEMPRE com o carrinho real (não só quando o snapshot está
+         vazio) — cobre snapshot magro (sem preço/imagem) e stale (divergente).
+         Ver reconcileSummaryFromServer() pra o porquê. */
+      reconcileSummaryFromServer();
 
       /* Auto-focus no input email após mount */
       setTimeout(function() {
@@ -3621,9 +3657,11 @@
       /* Limpa flag mm_checkout_mode (já foi usada pra entrar no flow guest) */
       STORAGE.remove('mm_checkout_mode');
 
-      /* Liga debug do draft — expose pra user inspecionar no console.
-         Desativa com: window._mmDraftDebug = false */
-      if (typeof window._mmDraftDebug === 'undefined') window._mmDraftDebug = true;
+      /* Debug do draft DESLIGADO por padrão em produção — os logs imprimem no
+         console os dados que o cliente digita no checkout (nome/email/CPF/
+         endereço), então não devem ficar ligados pra todo mundo. Pra debugar,
+         rode no console: window._mmDraftDebug = true (antes de montar a página). */
+      if (typeof window._mmDraftDebug === 'undefined') window._mmDraftDebug = false;
 
       buildOnepageLayout(snap, prefilledEmail);
       bindOnepageEvents();
@@ -3656,14 +3694,11 @@
         }
       } catch (e) {}
 
-      /* Auto-fetch cart snapshot fallback (mesmo padrão da Fase 2) */
-      if (!snap || !snap.items || snap.items.length === 0) {
-        fetchCartSnapshotFallback(function(freshSnap) {
-          if (freshSnap && freshSnap.items && freshSnap.items.length > 0) {
-            rehydrateIdentifySummary(freshSnap);
-          }
-        });
-      }
+      /* Reconcilia SEMPRE com o carrinho real (não só quando o snapshot está
+         vazio). Corrige o resumo "magro" (R$ 0,00 + sem imagem) escrito pelo
+         drawer e o resumo "stale" (itens/total divergentes). Ver
+         reconcileSummaryFromServer(). */
+      reconcileSummaryFromServer();
 
       /* Auto-preenche CEP e dispara fetch se já tem CEP salvo */
       var savedCep = STORAGE.get(CEP_KEY);

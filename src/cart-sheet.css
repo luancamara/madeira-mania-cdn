@@ -1558,6 +1558,78 @@ html:has(#cart-preview-area > div[class*="z-[9999]"].translate-x-\[0\]) .topbar-
   color: #121212 !important;
 }
 
+/* ==========================================================================
+   ESTRUTURA B desktop (.area-finalizar-compra após ADD pela vitrine):
+   esconde o rodapé cru "PIX R$X / Cartão R$Y / 12x" (carrinho ERRADO) e
+   estiliza nosso .mm-cart-total-b (injetado por mmRenderStructureBTotal) com
+   o MESMO visual da estrutura A (.box-total-btn .linha-total): "Total R$X
+   No PIX / Você economiza / ou 12x". Espelha as regras da estrutura A acima.
+   ========================================================================== */
+.carrinho-rapido-ctn .area-finalizar-compra .mm-native-pay-hidden {
+  display: none !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  gap: 0 !important;
+  padding: 2px 0 !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b .mm-tb-label {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #6B7280 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin: 0 0 6px !important;
+  line-height: 1 !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b .mm-tb-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b .mm-tb-value {
+  font-family: 'Libre Baskerville', Georgia, serif !important;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  color: #121212 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.05 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b .mm-tb-pix {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #4B664A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b .mm-tb-savings {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #4B664A !important;
+  font-variant-numeric: tabular-nums !important;
+  margin-top: 2px !important;
+  line-height: 1.3 !important;
+}
+.carrinho-rapido-ctn .mm-cart-total-b .mm-tb-parcela {
+  font-family: 'Poppins', system-ui, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #6B7280 !important;
+  line-height: 1.3 !important;
+  font-variant-numeric: tabular-nums !important;
+  margin-top: 1px !important;
+}
+
 /* ------------------------------------------------------------------
    Animations: item add/remove + total pop
    Keyframes mirror checkout-cro.css (@mm-pop bounce).
