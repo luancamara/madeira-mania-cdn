@@ -81,51 +81,53 @@ html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-
 
 <script>
 (function(){
-  // ===== Madeira Mania CDN loader =====
-  // Pra trocar a versão servida sem rebuild, edita só a linha abaixo.
-  // Aceita semver range (@^2), tag exata (@v2.1.3), ou branch (@main).
-  var VERSION = 'v2.0.31';
-  var REPO    = 'gh/luancamara/madeira-mania-cdn';
+  // ===== Madeira Mania CDN loader (multi-CDN com fallback) =====
+  // Edita só estas 3 linhas pra trocar versão/host sem rebuild se precisar.
+  var VERSION    = 'v2.0.31';
+  var REPO       = 'gh/luancamara/madeira-mania-cdn';
+  var PAGES_HOST = 'madeira-mania-cdn.luancamara.workers.dev';
 
-  var PROD = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
+  // PRIMÁRIO: Cloudflare Pages (host dedicado, sem rate-limit de mirror).
+  //   ?v= força cache-bust por versão (cada deploy bumpa VERSION).
+  var PRIMARY  = 'https://' + PAGES_HOST + '/js/madeira-mania.js?v=' + VERSION;
+  // FALLBACK: jsDelivr @tag (infra independente) — só se o primário falhar.
+  var FALLBACK = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
+
   var devUrl;
   try { devUrl = localStorage.getItem('mm_dev_url'); } catch(e) {}
   var doc = document.documentElement;
-  var s = document.createElement('script');
-  s.src = devUrl || PROD;
-  s.async = true;
 
-  if (devUrl) {
-    // Estado 1: tentativa inicial — pending (cinza) até sabermos se deu certo
-    doc.classList.add('mm-dev-pending');
-
-    s.onload = function(){
-      // Estado 2: bundle local carregou OK — dev real (verde)
-      doc.classList.remove('mm-dev-pending');
-      doc.classList.add('mm-dev-mode');
-      console.info('[mm-dev] bundle local OK:', devUrl);
-    };
-
-    s.onerror = function(){
-      // Estado 3: bundle local falhou — fallback PROD (laranja)
-      doc.classList.remove('mm-dev-pending');
-      doc.classList.add('mm-dev-fallback');
-      console.warn('[mm-dev] localhost offline, usando PROD:', PROD);
-      var f = document.createElement('script');
-      f.src = PROD; f.async = true;
-      document.head.appendChild(f);
-    };
-  } else {
-    // Caminho PROD: se o bundle falhar (404/bloqueado/offline), revela o
-    // Magazord nativo IMEDIATAMENTE em vez de esperar o timeout cego de 3.5s.
-    s.onerror = function(){
-      doc.classList.remove('mm-cart-loading');
-      doc.classList.remove('mm-footer-loading');
-      doc.classList.remove('mm-header-loading');
-      console.warn('[mm] bundle falhou ao carregar:', PROD);
-    };
+  function reveal(){
+    // Última rede: revela o Magazord nativo se TODAS as fontes falharem,
+    // em vez de deixar o usuário num spinner/tela escondida.
+    doc.classList.remove('mm-cart-loading');
+    doc.classList.remove('mm-footer-loading');
+    doc.classList.remove('mm-header-loading');
+  }
+  function load(src, onerr){
+    var s = document.createElement('script');
+    s.src = src; s.async = true;
+    if (onerr) s.onerror = onerr;
+    document.head.appendChild(s);
+    return s;
   }
 
-  document.head.appendChild(s);
+  if (devUrl) {
+    // DEV: tenta localhost; se cair, segue a cadeia PROD (CF Pages → jsDelivr).
+    doc.classList.add('mm-dev-pending');
+    var sd = load(devUrl);
+    sd.onload  = function(){ doc.classList.remove('mm-dev-pending'); doc.classList.add('mm-dev-mode'); console.info('[mm-dev] bundle local OK:', devUrl); };
+    sd.onerror = function(){
+      doc.classList.remove('mm-dev-pending'); doc.classList.add('mm-dev-fallback');
+      console.warn('[mm-dev] localhost offline, usando PROD (CF Pages)');
+      load(PRIMARY, function(){ load(FALLBACK, reveal); });
+    };
+  } else {
+    // PROD: CF Pages (primário) → jsDelivr (fallback) → revela nativo.
+    load(PRIMARY, function(){
+      console.warn('[mm] primário (CF Pages) falhou, tentando fallback jsDelivr');
+      load(FALLBACK, function(){ console.warn('[mm] fallback jsDelivr também falhou — revela nativo'); reveal(); });
+    });
+  }
 })();
 </script>

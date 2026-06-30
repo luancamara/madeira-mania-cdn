@@ -16,15 +16,17 @@ DIST="$SCRIPT_DIR/dist"
 
 mkdir -p "$DIST/js" "$DIST/loaders"
 
-# Pinned tag: jsDelivr caches tag→commit resolution internally and
-# force-moving tags does NOT invalidate it. Semver ranges (^2) also
-# rely on a cached package index that takes hours to refresh. The only
-# reliable approach: create a NEW tag per deploy and update this line.
-# After deploy: create tag, push tag, update Magazord CA.
-# NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
+# === Entrega do bundle (multi-CDN) ===
+# PRIMÁRIO: Cloudflare Pages — host dedicado, deploy automático no push do repo,
+#   sem rate-limit de "mirror sob demanda" (o que derrubou o jsDelivr: 503 no
+#   repo inteiro por excesso de cache-miss). Serve o dist/ do repo: o bundle fica
+#   em https://<CDN_PAGES_HOST>/js/madeira-mania.js. ?v=CDN_VERSION = cache-bust.
+# FALLBACK: jsDelivr @tag — infra independente, carregado SÓ se o CF Pages falhar
+#   (loader tem onerror em cadeia). Manter a tag por deploy dá paridade ao fallback.
+#   NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
+CDN_PAGES_HOST="madeira-mania-cdn.luancamara.workers.dev"
 CDN_VERSION="v2.0.31"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
-CDN_BASE="https://cdn.jsdelivr.net/${CDN_REPO}@${CDN_VERSION}/dist/js"
 
 # Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
 RAW_BUNDLE="$(mktemp /tmp/mm-bundle.raw.XXXXXX.js)"
@@ -277,57 +279,59 @@ echo "Gerando loader..."
   echo ''
   cat "$DIST/loaders/schema-organization.html"
   echo ''
-  # Switchable loader: usa bundle local (localStorage.mm_dev_url) se setado, senão jsDelivr.
-  # VERSION fica isolado no topo pra facilitar edit manual se precisar sem rebuild.
+  # Loader multi-CDN: dev local (localStorage.mm_dev_url) → CF Pages (primário)
+  # → jsDelivr (fallback) → revela Magazord nativo. VERSION/HOST isolados no topo.
   cat <<LOADER_EOF
 <script>
 (function(){
-  // ===== Madeira Mania CDN loader =====
-  // Pra trocar a versão servida sem rebuild, edita só a linha abaixo.
-  // Aceita semver range (@^2), tag exata (@v2.1.3), ou branch (@main).
-  var VERSION = '$CDN_VERSION';
-  var REPO    = '$CDN_REPO';
+  // ===== Madeira Mania CDN loader (multi-CDN com fallback) =====
+  // Edita só estas 3 linhas pra trocar versão/host sem rebuild se precisar.
+  var VERSION    = '$CDN_VERSION';
+  var REPO       = '$CDN_REPO';
+  var PAGES_HOST = '$CDN_PAGES_HOST';
 
-  var PROD = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
+  // PRIMÁRIO: Cloudflare Pages (host dedicado, sem rate-limit de mirror).
+  //   ?v= força cache-bust por versão (cada deploy bumpa VERSION).
+  var PRIMARY  = 'https://' + PAGES_HOST + '/js/madeira-mania.js?v=' + VERSION;
+  // FALLBACK: jsDelivr @tag (infra independente) — só se o primário falhar.
+  var FALLBACK = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
+
   var devUrl;
   try { devUrl = localStorage.getItem('mm_dev_url'); } catch(e) {}
   var doc = document.documentElement;
-  var s = document.createElement('script');
-  s.src = devUrl || PROD;
-  s.async = true;
 
-  if (devUrl) {
-    // Estado 1: tentativa inicial — pending (cinza) até sabermos se deu certo
-    doc.classList.add('mm-dev-pending');
-
-    s.onload = function(){
-      // Estado 2: bundle local carregou OK — dev real (verde)
-      doc.classList.remove('mm-dev-pending');
-      doc.classList.add('mm-dev-mode');
-      console.info('[mm-dev] bundle local OK:', devUrl);
-    };
-
-    s.onerror = function(){
-      // Estado 3: bundle local falhou — fallback PROD (laranja)
-      doc.classList.remove('mm-dev-pending');
-      doc.classList.add('mm-dev-fallback');
-      console.warn('[mm-dev] localhost offline, usando PROD:', PROD);
-      var f = document.createElement('script');
-      f.src = PROD; f.async = true;
-      document.head.appendChild(f);
-    };
-  } else {
-    // Caminho PROD: se o bundle falhar (404/bloqueado/offline), revela o
-    // Magazord nativo IMEDIATAMENTE em vez de esperar o timeout cego de 3.5s.
-    s.onerror = function(){
-      doc.classList.remove('mm-cart-loading');
-      doc.classList.remove('mm-footer-loading');
-      doc.classList.remove('mm-header-loading');
-      console.warn('[mm] bundle falhou ao carregar:', PROD);
-    };
+  function reveal(){
+    // Última rede: revela o Magazord nativo se TODAS as fontes falharem,
+    // em vez de deixar o usuário num spinner/tela escondida.
+    doc.classList.remove('mm-cart-loading');
+    doc.classList.remove('mm-footer-loading');
+    doc.classList.remove('mm-header-loading');
+  }
+  function load(src, onerr){
+    var s = document.createElement('script');
+    s.src = src; s.async = true;
+    if (onerr) s.onerror = onerr;
+    document.head.appendChild(s);
+    return s;
   }
 
-  document.head.appendChild(s);
+  if (devUrl) {
+    // DEV: tenta localhost; se cair, segue a cadeia PROD (CF Pages → jsDelivr).
+    doc.classList.add('mm-dev-pending');
+    var sd = load(devUrl);
+    sd.onload  = function(){ doc.classList.remove('mm-dev-pending'); doc.classList.add('mm-dev-mode'); console.info('[mm-dev] bundle local OK:', devUrl); };
+    sd.onerror = function(){
+      doc.classList.remove('mm-dev-pending'); doc.classList.add('mm-dev-fallback');
+      console.warn('[mm-dev] localhost offline, usando PROD (CF Pages)');
+      load(PRIMARY, function(){ load(FALLBACK, reveal); });
+    };
+  } else {
+    // PROD: CF Pages (primário) → jsDelivr (fallback) → revela nativo.
+    load(PRIMARY, function(){
+      console.warn('[mm] primário (CF Pages) falhou, tentando fallback jsDelivr');
+      load(FALLBACK, function(){ console.warn('[mm] fallback jsDelivr também falhou — revela nativo'); reveal(); });
+    });
+  }
 })();
 </script>
 LOADER_EOF
