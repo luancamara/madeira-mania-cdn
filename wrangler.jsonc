@@ -1,0 +1,12 @@
+{
+  // Cloudflare Workers Static Assets — serve o dist/ como site estático.
+  // A Cloudflare unificou Pages dentro de Workers; este arquivo substitui o
+  // antigo campo "Build output directory" do fluxo Pages clássico.
+  // Deploy: `npx wrangler deploy` (sobe o conteúdo de ./dist como assets).
+  // O bundle fica em https://<name>.<subdomínio>.workers.dev/js/madeira-mania.js
+  "name": "madeira-mania-cdn",
+  "compatibility_date": "2026-01-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}

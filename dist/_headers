@@ -1,0 +1,11 @@
+# Cloudflare Pages headers — https://developers.cloudflare.com/pages/configuration/headers/
+# O bundle é cache-busted via ?v=VERSION no loader, então pode cachear forte:
+# cada versão é uma URL nova; deploy novo = ?v= novo = fetch fresco.
+/js/*
+  Access-Control-Allow-Origin: *
+  Timing-Allow-Origin: *
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# Loader e demais HTML: sem cache agressivo (raramente buscados direto).
+/loaders/*
+  Cache-Control: public, max-age=300
