@@ -2347,37 +2347,83 @@
       }
 
       /* STEP 1 — submit form anonymous (dados pessoais).
-         requestSubmit() é mais robusto que btn.click() porque dispara o
-         submit handler nativo do form, que o Magazord JS escuta. */
+         BUG "muito tempo inativo" na 1ª compra anônima (sessão sem cache):
+         o form anônimo (#anonymous-buy-form) é um Zord.form com
+         setUseRecaptcha(true) que faz validateRemote('login') + reCAPTCHA e SÓ
+         ENTÃO submitTo('checkout/payment','compraSemCadastro') — a operação que
+         ESTABELECE o cliente anônimo na sessão. Esse fluxo nativo está ligado ao
+         CLIQUE do botão "Próxima etapa" (é onde o reCAPTCHA executa), NÃO ao
+         evento 'submit' do form. requestSubmit() dispara 'submit' mas não o
+         handler de clique → compraSemCadastro NUNCA rodava → o salvarEndereco
+         seguinte batia numa sessão sem cliente e a Magazord respondia "faça
+         login novamente". (Só na 1ª vez / sem cache: numa 2ª tentativa a sessão
+         ainda carregava o estado anônimo anterior e passava.) Clicar o botão
+         real dispara o fluxo nativo completo, com reCAPTCHA. */
       function submitStep1() {
         var f1 = findFormByInputId('nome-completo_2');
-        if (f1 && typeof f1.requestSubmit === 'function') {
-          f1.requestSubmit();
-          return true;
+        if (!f1) return false;
+        var btn = f1.querySelector('button[type="submit"], input[type="submit"], button:not([type])');
+        if (btn) { btn.click(); return true; }
+        if (typeof f1.requestSubmit === 'function') { f1.requestSubmit(); return true; }
+        f1.submit();
+        return true;
+      }
+
+      /* A etapa 1 anônima (compraSemCadastro) é ASSÍNCRONA: reCAPTCHA + rede.
+         Em sessão fria (sem cache) leva bem mais que 1.5s. Só dá pra disparar o
+         salvarEndereco DEPOIS que o cliente anônimo foi estabelecido e a UI
+         avançou pra etapa de endereço. Este gate espera a etapa 2 ficar pronta
+         (botão "Cadastrar endereço" visível) ou detecta o toast de erro pra
+         abortar, com teto de tempo. */
+      function step2Ready() {
+        /* toast de erro/sessão → aborta (não adianta salvar endereço) */
+        var errToast = document.querySelector('.mz-toast-popup.error, .swal2-toast.swal2-icon-error');
+        if (errToast && /inativo|realize login/i.test(errToast.textContent || '')) return 'error';
+        /* etapa de endereço pronta: botão "Cadastrar endereço" visível */
+        var btns = document.querySelectorAll('button, [type="submit"]');
+        for (var i = 0; i < btns.length; i++) {
+          var t = (btns[i].textContent || '').toLowerCase();
+          if (t.indexOf('cadastrar endere') !== -1 && btns[i].offsetParent !== null) return 'ready';
         }
-        if (f1) { f1.submit(); return true; }
-        return false;
+        return 'wait';
       }
 
       /* STEP 2/3 — submit form de endereço. O CEP pode estar num form
          intermediário (button-cep "Continuar") ou no form completo de
-         endereço (button-endereco "Cadastrar endereço"). Tentamos
-         requestSubmit em qualquer form que contenha #cep. */
+         endereço (button-endereco "Cadastrar endereço"). Preferimos CLICAR o
+         botão nativo (mesmo motivo da etapa 1: handlers ligados ao clique),
+         com fallback pra requestSubmit. */
       function submitEnderecoForm() {
         var f = findFormByInputId('cep');
-        if (f && typeof f.requestSubmit === 'function') {
-          f.requestSubmit();
-          return true;
-        }
-        if (f) { f.submit(); return true; }
-        return false;
+        if (!f) return false;
+        var btn = f.querySelector('button[type="submit"], input[type="submit"], button:not([type])');
+        if (btn) { btn.click(); return true; }
+        if (typeof f.requestSubmit === 'function') { f.requestSubmit(); return true; }
+        f.submit();
+        return true;
       }
 
       setTimeout(function() {
         submitStep1();
 
-        /* Aguarda ~1.5s pro POST etapa 1 + DOM transition pra etapa 2 */
-        setTimeout(function() {
+        /* Gate: só dispara o salvarEndereco DEPOIS que a etapa 1 anônima
+           (compraSemCadastro) estabeleceu o cliente e a UI avançou pra etapa de
+           endereço. Poll de até ~8s (reCAPTCHA + rede fria demoram). Se surgir o
+           toast "inativo" a etapa 1 falhou de fato → aborta e mostra a tela
+           nativa em vez de deixar o usuário no overlay pra sempre. */
+        var step2Attempts = 0;
+        (function gateEndereco() {
+          step2Attempts++;
+          var st = step2Ready();
+          if (st === 'error') {
+            var ov = document.getElementById('mm-op-overlay');
+            if (ov) ov.remove();
+            return; /* etapa 1 falhou — não força salvarEndereco */
+          }
+          if (st !== 'ready' && step2Attempts < 20) {
+            setTimeout(gateEndereco, 400);
+            return;
+          }
           submitEnderecoForm();
 
           /* Aguarda Magazord chegar no step 3 (pagamento — forma-pagto-pix
@@ -2419,7 +2465,7 @@
             }
           }
           setTimeout(pollForPaymentStep, 800);
-        }, 1500);
+        })();
       }, 150);
     }, 100);
   }
