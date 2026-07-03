@@ -20,12 +20,13 @@ dist/js/madeira-mania.js  (bundle ~260KB)
 dist/loaders/loader.html  (snippet pro <head> do Magazord — conteúdo adicional único)
        │
        ├── [DEV]   serve http://localhost:8080/madeira-mania.js via ./dev.sh
-       └── [PROD]  jsDelivr @v1.0 tag, purgeado a cada deploy
+       └── [PROD]  Cloudflare Workers (primário, auto-deploy no push)
+                   + jsDelivr @v<VERSION> tag imutável (fallback)
                           │
                           ▼
             Loader checa localStorage.mm_dev_url:
             se setado → bundle dev local
-            se não    → bundle prod do jsDelivr
+            se não    → workers.dev; se falhar → jsDelivr
 ```
 
 ### File layout
@@ -144,29 +145,40 @@ Scripts de referência em `/tmp/mm-validation/` (gerados durante sessões de tra
 ## Workflow de deploy
 
 ```bash
-# 1. Build determinístico
+# 1. Bump de versão: editar CDN_VERSION em build.sh (ex.: v2.0.34)
+
+# 2. Build determinístico (minifica com esbuild — ver nota abaixo)
 bash ./build.sh
 
-# 2. Commit
+# 3. Commit (incluir build.sh + dist/js + dist/loaders/loader.html)
 git add -p  # ou arquivos específicos; NUNCA use -A
-git commit -m "feat(escopo): descrição curta"
+git commit -m "feat(escopo): descrição curta (vX.Y.Z)"
 
-# 3. Push main
+# 4. Push main → Cloudflare Workers Builds AUTO-DEPLOYA o worker
+#    (integração GitHub; NÃO precisa de wrangler manual)
 git push origin main
 
-# 4. Force-mover tag v1.0 pro novo commit (jsDelivr serve pela tag)
-git tag -f v1.0
-git push -f origin v1.0
+# 5. Criar tag IMUTÁVEL da versão (fallback jsDelivr do loader novo)
+git tag v2.0.34 && git push origin v2.0.34
 ```
 
-**Por que `-f v1.0`?** jsDelivr faz cache MUITO agressivo de branches (`@main` demora
-horas pra invalidar). Por isso usamos tag móvel: `@v1.0` é sempre a versão atual de
-produção, forçada pra frente a cada deploy. Referência: commit `2031366`.
+**Como o rollout chega em produção:**
+- CDN primário: `madeira-mania-cdn.luancamara.workers.dev/js/madeira-mania.js?v=<VERSION>`
+  — o worker serve sempre o asset mais novo (o `?v=` é só cache-bust de browser).
+  O loader colado no Site Builder pede um `?v=` fixo; sem re-colar o loader, a
+  propagação acontece conforme o cache dos browsers expira (max-age=86400, ≤24h).
+  Pra rollout instantâneo: re-colar o loader novo (com `?v=` bumpado) no Site Builder.
+- Fallback: jsDelivr `@v<VERSION>` (tag imutável = resolve na hora, sem purge).
 
-**Após o deploy, cache do jsDelivr leva minutos pra propagar.** Pra forçar purge:
-```
-https://purge.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/js/madeira-mania.js
-```
+**NUNCA force-mova tag pra deployar** (fluxo antigo do `v1.0`): o jsDelivr cacheia
+a resolução tag→commit e o purge de arquivo NÃO invalida essa resolução — a tag
+movida fica dias servindo o commit antigo. Tag nova por versão resolve na hora.
+
+**Nota esbuild:** `bash ./build.sh` minifica e RENOMEIA identificadores. Pra conferir
+se uma mudança entrou no bundle, grep por literal que sobrevive à minificação
+(string, regex literal), não por nome de função. `MM_NO_MINIFY=1 bash ./build.sh`
+gera bundle cru legível (dev). Se o esbuild falhar (ex.: erro de sintaxe), o build
+cai pro bundle cru SEM quebrar — cuidado com `*/` dentro de comentários de bloco.
 
 ---
 
@@ -189,9 +201,8 @@ https://purge.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/js/madeira-
 5. **NUNCA** commit sem ter validado visualmente. Commits tipo "fix: X" em
    sequência são sintoma de iteração cega — não faça isso.
 
-6. **NUNCA** mova a tag `v1.0` sem commit já validado. A tag v1.0 é PRODUÇÃO.
-   Force push da tag é destrutivo e afeta 100% dos clientes assim que o cache
-   jsDelivr expirar.
+6. **NUNCA** push no `main` sem commit já validado. O push AUTO-DEPLOYA o worker
+   (CDN primário) e afeta 100% dos clientes conforme o cache dos browsers expira.
 
 7. **NUNCA** adicione CSS/JS que dependa de ordem de carregamento. Os IDs de
    `<style>` tag criados por `build.sh` (`mm-produto-css`, `mm-trust-strip`, etc.)
@@ -214,7 +225,7 @@ https://purge.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/js/madeira-
 
 | # | Problema | Workaround |
 |---|---|---|
-| 1 | Cache jsDelivr agressivo em branches (`@main` demora horas) | Usar tag `@v1.0` force-moved (commit `2031366`) |
+| 1 | jsDelivr cacheia resolução tag→commit; purge de arquivo NÃO invalida — tag force-moved fica dias no commit velho | Tag imutável por versão (`@v2.0.33`); NUNCA force-mover tag |
 | 2 | CSS injection às vezes é "truncada" no desktop quando override é longo | Override via JS inline em vez de CSS (commit `edf9644`) |
 | 3 | Magazord usa `gap-space-40` com specificity alta | Precisa `!important` + seletor mais específico |
 | 4 | `#popup-msg-whats` do Magazord flashea antes do nosso JS rodar | `display: none !important` no `<style>` do loader.html |
@@ -229,11 +240,15 @@ https://purge.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/js/madeira-
 ## Troubleshooting
 
 **"Mudei src/, deu push, mas o site real não reflete"**
-1. `bash ./build.sh` rodou? Confirma `dist/js/madeira-mania.js` tem a mudança: `grep "nova-coisa" dist/js/madeira-mania.js`
+1. `bash ./build.sh` rodou? Confirma que a mudança entrou no bundle com um literal
+   que sobrevive à minificação: `grep "string-ou-regex-literal" dist/js/madeira-mania.js`
+   (nomes de função são renomeados pelo esbuild!)
 2. Commit foi pushed? `git log origin/main..HEAD` deve estar vazio
-3. Tag v1.0 foi movida? `git show-ref v1.0` deve apontar pro commit novo
-4. Cache jsDelivr pode não ter purgado ainda. Force: `curl https://purge.jsdelivr.net/gh/luancamara/madeira-mania-cdn@v1.0/dist/js/madeira-mania.js`
-5. Browser cache: hard reload (Ctrl+Shift+R) ou janela anônima
+3. Worker atualizou? `curl -s "https://madeira-mania-cdn.luancamara.workers.dev/js/madeira-mania.js" | grep "literal"`
+   (auto-deploy do Cloudflare leva ~1-2 min após o push)
+4. Tag da versão existe? `git ls-remote --tags origin | grep v2.0` (fallback jsDelivr)
+5. Browser cache: hard reload (Ctrl+Shift+R) ou janela anônima — o loader do Site
+   Builder pede `?v=` fixo, então browsers seguram o bundle por até 24h (max-age=86400)
 
 **"Dev mode não funciona"**
 1. `./dev.sh` está rodando? Checa terminal
