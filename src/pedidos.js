@@ -78,6 +78,15 @@
 
       bindMask(cpf);
 
+      /* eyebrow acima do título (padrão do checkout) */
+      var h2 = box.querySelector('.title-area h2');
+      if (h2 && !box.querySelector('.mm-cp-eyebrow')) {
+        var eyebrow = document.createElement('span');
+        eyebrow.className = 'mm-cp-eyebrow';
+        eyebrow.textContent = 'Acompanhe sua compra';
+        h2.insertAdjacentElement('beforebegin', eyebrow);
+      }
+
       /* hint: onde achar o nº do pedido */
       var numIpt = document.getElementById('numero-pedido');
       if (numIpt && !box.querySelector('.mm-cp-hint')) {
@@ -181,6 +190,7 @@
       hero.id = 'mm-ped-hero';
       hero.innerHTML =
         '<div class="mm-ped-hero-info">' +
+          '<span class="mm-ped-eyebrow">Acompanhe sua compra</span>' +
           '<h1 class="mm-ped-num">Pedido #' + numero +
             ' <button type="button" class="mm-ped-copy" aria-label="Copiar número do pedido">copiar</button></h1>' +
           '<div class="mm-ped-meta">' +
@@ -192,6 +202,17 @@
           waUrl('Olá! Gostaria de saber sobre o meu pedido #' + numero + '.') + '">' +
           WA_SVG + ' Falar sobre este pedido</a>';
       detalhes.insertAdjacentElement('afterbegin', hero);
+
+      /* título nativo "Meus pedidos" (acima do detalhes) fica redundante */
+      var headings = document.querySelectorAll('.main-content h1, .main-content h2, .main-content .title-user-area, .main-content > div');
+      for (var t = 0; t < headings.length; t++) {
+        var el = headings[t];
+        if (el.contains(detalhes)) continue;
+        if (/meus pedidos/i.test(el.textContent || '') && (el.textContent || '').trim().length < 40) {
+          el.classList.add('mm-ped-native-title');
+          break;
+        }
+      }
 
       var copyBtn = hero.querySelector('.mm-ped-copy');
       copyBtn.addEventListener('click', function () {

@@ -1,139 +1,225 @@
 /* =============================================
    PEDIDOS — Consultar Pedido (/login) + Resultado (/cliente/pedidos)
-   Abordagem B: reestrutura progressiva sobre o DOM nativo (jQuery, sem React).
-   Tudo gated por classes que o pedidos.js põe no <html> SÓ depois de rodar
-   com sucesso: .mm-consulta-on (login) e .mm-ped-on (resultado).
-   Se o JS falhar, nada disso aplica e a tela nativa segue intacta.
-   Paleta: verde base #4b664a · CTA #1b7a45 · borda #dbe1db · radius 4/8/12
+   Linguagem visual do checkout (checkout-cro.css): Libre Baskerville pra
+   títulos/valores, Poppins pro corpo, eyebrows uppercase 11px/0.08em,
+   botões pill, cards r16 com hairline #E7E7E7, verde CTA #1b7a45 pontual.
+   Gated por classes que o pedidos.js põe no <html> SÓ depois de rodar:
+   .mm-consulta-on (login) e .mm-ped-on (resultado). JS falhou → nativo.
    ============================================= */
+
+/* tokens (mesma escala do #mm-layout do checkout) */
+html.mm-consulta-on,
+html.mm-ped-on {
+  --mm-olive:       #4B664A;
+  --mm-olive-dark:  #3D4733;
+  --mm-olive-soft:  rgba(75, 102, 74, 0.08);
+  --mm-cta:         #1b7a45;
+  --mm-cta-dark:    #155a33;
+  --mm-cta-soft:    rgba(27, 122, 69, 0.08);
+  --mm-bg:          #FAFAFA;
+  --mm-card:        #FFFFFF;
+  --mm-border:      #E7E7E7;
+  --mm-border-soft: #F0F0F0;
+  --mm-fg:          #121212;
+  --mm-fg-soft:     #374151;
+  --mm-fg-meta:     #4B5563;
+  --mm-fg-subtle:   #6B7280;
+  --mm-fg-muted:    #9CA3AF;
+  --mm-danger:      #DC2626;
+  --mm-sans:        'Poppins', system-ui, -apple-system, sans-serif;
+  --mm-serif:       'Libre Baskerville', Georgia, serif;
+  --mm-r:           8px;
+  --mm-r-lg:        16px;
+  --mm-r-full:      9999px;
+  --mm-shadow-sm:   0 1px 2px rgba(17, 24, 39, 0.04);
+  --mm-tr-fast:     180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 /* ============================================================
    PARTE 1 — FORM CONSULTAR PEDIDO (/login)
    ============================================================ */
 
-/* botão "Consultar Pedido" do header do login (era azul) */
-.mm-consulta-on .login-header .button-consultar-pedido,
-.mm-consulta-on .button-consultar-pedido.mobile {
-  color: #1b7a45 !important;
-  background: transparent !important;
-  border: none !important;
-  font-weight: 600;
+.mm-consulta-on #form-consulta-pedido {
+  font-family: var(--mm-sans);
 }
 
-/* card do form */
-.mm-consulta-on #form-consulta-pedido {
-  font-family: inherit;
-}
-.mm-consulta-on #form-consulta-pedido .title-area h2 {
-  color: #1a1a1a !important;
-  font-weight: 700;
-}
-.mm-consulta-on #form-consulta-pedido .title-area h3 {
-  color: #555 !important;
-  font-weight: 400;
-}
+/* header do card: voltar + título serif */
 .mm-consulta-on #form-consulta-pedido .cancel-consulta,
 .mm-consulta-on #form-consulta-pedido .cancel-consulta span,
 .mm-consulta-on .login-header .btn-voltar,
 .mm-consulta-on .login-header .btn-voltar span {
-  color: #4b664a !important;
-  font-weight: 600;
+  font-family: var(--mm-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mm-fg-subtle) !important;
+  transition: color var(--mm-tr-fast);
 }
-
-/* chevron do voltar: SVG inline com stroke azul hardcoded */
+.mm-consulta-on #form-consulta-pedido .cancel-consulta:hover span,
+.mm-consulta-on .login-header .btn-voltar:hover span {
+  color: var(--mm-fg) !important;
+}
 .mm-consulta-on #form-consulta-pedido .cancel-consulta svg,
 .mm-consulta-on #form-consulta-pedido .cancel-consulta svg path,
 .mm-consulta-on .login-header .btn-voltar svg,
 .mm-consulta-on .login-header .btn-voltar svg path {
-  stroke: #4b664a !important;
+  stroke: var(--mm-fg-subtle) !important;
   fill: none !important;
 }
 
-/* ícones nativos dos campos (sprites azuis) ficam órfãos no layout novo */
-.mm-consulta-on #form-consulta-pedido .ipt-ctn > span[class*="icon-"] {
-  display: none !important;
+/* header: título centralizado, voltar ancorado à esquerda */
+.mm-consulta-on #form-consulta-pedido .title-area {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  position: relative;
+  text-align: center;
+}
+.mm-consulta-on #form-consulta-pedido .title-area .cancel-consulta {
+  position: absolute;
+  left: 0;
+  top: 6px;
+}
+@media (max-width: 768px) {
+  .mm-consulta-on #form-consulta-pedido .title-area .cancel-consulta {
+    position: static;
+    align-self: flex-start;
+    margin-bottom: 8px;
+  }
 }
 
-/* alinha campos, hint e botão na mesma largura, centralizado */
-.mm-consulta-on #form-consulta-pedido form {
-  max-width: 560px;
-  margin-left: auto !important;
-  margin-right: auto !important;
+/* eyebrow injetada + título serif + subtítulo */
+.mm-cp-eyebrow {
+  display: block;
+  font-family: var(--mm-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mm-fg-muted);
+  margin: 4px 0 6px;
+}
+.mm-consulta-on #form-consulta-pedido .title-area h2 {
+  font-family: var(--mm-serif) !important;
+  font-weight: 400 !important;
+  font-size: clamp(26px, 3.2vw, 34px) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--mm-fg) !important;
+}
+.mm-consulta-on #form-consulta-pedido .title-area h3 {
+  font-family: var(--mm-sans) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: var(--mm-fg-subtle) !important;
+  line-height: 1.5 !important;
 }
 
-/* layout do form: mata os floats nativos (o hint injetado desalinha o
-   layout 2-colunas original) — campos empilhados full-width */
+/* form: mata floats nativos; empilha centrado */
 .mm-consulta-on #form-consulta-pedido form {
   display: flex !important;
   flex-direction: column !important;
-  gap: 14px;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto !important;
 }
 .mm-consulta-on #form-consulta-pedido form .line {
   float: none !important;
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
+  padding: 0 !important;
   box-sizing: border-box;
 }
-.mm-consulta-on #form-consulta-pedido .ipt-ctn { width: 100% !important; }
+.mm-consulta-on #form-consulta-pedido .ipt-ctn { width: 100% !important; position: relative; }
 
-/* campos */
+/* ícones nativos dos campos (sprites azuis) fora */
+.mm-consulta-on #form-consulta-pedido .ipt-ctn > span[class*="icon-"] {
+  display: none !important;
+}
+
+/* campos: pill como o CEP do carrinho */
 .mm-consulta-on #form-consulta-pedido .ipt-ctn input.field {
   width: 100% !important;
   max-width: 100% !important;
+  height: 52px !important;
   box-sizing: border-box !important;
-  border: 1px solid #dbe1db !important;
-  border-radius: 8px !important;
-  padding-left: 14px !important;
-  color: #1a1a1a;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  font-family: var(--mm-sans) !important;
+  font-size: 14px !important;
+  color: var(--mm-fg) !important;
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-full) !important;
+  padding: 0 22px !important;
+  transition: border-color var(--mm-tr-fast), box-shadow var(--mm-tr-fast);
+}
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field::placeholder {
+  color: var(--mm-fg-muted);
 }
 .mm-consulta-on #form-consulta-pedido .ipt-ctn input.field:focus {
-  border-color: #1b7a45 !important;
-  box-shadow: 0 0 0 3px rgba(27, 122, 69, .12) !important;
-  outline: none;
+  border-color: var(--mm-cta) !important;
+  box-shadow: 0 0 0 3px var(--mm-cta-soft) !important;
+  outline: none !important;
 }
 
-/* botão submit (era azul Magazord) */
-.mm-consulta-on #form-consulta-pedido button.button-login {
-  background: #1b7a45 !important;
-  border-color: #1b7a45 !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-  font-weight: 700;
-  transition: background .15s ease;
-}
-.mm-consulta-on #form-consulta-pedido button.button-login:hover {
-  background: #166638 !important;
-}
-
-/* hint sob o nº do pedido (injetado) */
+/* hint sob o nº do pedido */
 .mm-cp-hint {
   display: block;
-  margin: 6px 2px 0;
+  margin: 6px 22px 0;
+  font-family: var(--mm-sans);
   font-size: 12px;
-  line-height: 1.4;
-  color: #777;
+  line-height: 1.5;
+  color: var(--mm-fg-subtle);
 }
 
-/* fallback WhatsApp (injetado) */
+/* botão: pill verde com seta, padrão "Finalizar compra" */
+.mm-consulta-on #form-consulta-pedido button.button-login {
+  height: 52px !important;
+  width: 100%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--mm-sans) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  background: var(--mm-cta) !important;
+  border: none !important;
+  border-radius: var(--mm-r-full) !important;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background var(--mm-tr-fast), transform var(--mm-tr-fast);
+}
+.mm-consulta-on #form-consulta-pedido button.button-login:hover { background: var(--mm-cta-dark) !important; }
+.mm-consulta-on #form-consulta-pedido button.button-login:active { transform: scale(0.98); }
+.mm-consulta-on #form-consulta-pedido button.button-login::after {
+  content: '→';
+  font-size: 16px;
+  line-height: 1;
+}
+.mm-consulta-on #form-consulta-pedido button.button-login img { display: none !important; }
+
+/* fallback WhatsApp: box tintada como a do carrinho */
 .mm-cp-wa {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f0f0;
+  gap: 8px;
+  max-width: 480px;
+  margin: 18px auto 28px;
+  padding: 14px 18px;
+  background: var(--mm-cta-soft);
+  border-radius: var(--mm-r-lg);
+  font-family: var(--mm-sans);
   font-size: 13px;
-  color: #555;
+  color: var(--mm-fg-soft);
 }
 .mm-cp-wa a {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: #1b7a45 !important;
-  font-weight: 700;
+  gap: 6px;
+  color: var(--mm-cta) !important;
+  font-weight: 600;
   text-decoration: none;
 }
 .mm-cp-wa a:hover { text-decoration: underline; }
@@ -143,120 +229,181 @@
    PARTE 2 — RESULTADO DO PEDIDO (/cliente/pedidos?verPedido=...)
    ============================================================ */
 
-/* --- nova hierarquia via flex order (sem mover DOM) ---
-   hero (0) → status+itens (1) → resumo financeiro (2) */
+.mm-ped-on .central-cliente { background: transparent; }
+.mm-ped-on .central-cliente .main-content {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.mm-ped-on .detalhes-pedido { font-family: var(--mm-sans); color: var(--mm-fg); }
+
+/* título nativo "Meus pedidos" some — o hero serif assume */
+.mm-ped-on .mm-ped-native-title { display: none !important; }
+
+/* --- nova hierarquia via flex order (sem mover DOM) --- */
 .mm-ped-on .detalhes-pedido {
   display: flex !important;
   flex-direction: column !important;
-  gap: 24px;
+  gap: 28px;
 }
-.mm-ped-on #mm-ped-hero     { order: 0; }
-.mm-ped-on .status-pedido   { order: 1; width: 100% !important; }
-.mm-ped-on .resumo-pedido   { order: 2; width: 100% !important; }
+.mm-ped-on #mm-ped-hero   { order: 0; }
+.mm-ped-on .status-pedido,
+.mm-ped-on .status-pagamento-pedido {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.mm-ped-on .status-pedido {
+  order: 1;
+  width: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.mm-ped-on .resumo-pedido { order: 2; width: 100% !important; }
 
 /* header nativo do resumo some — o hero assume número/data */
 .mm-ped-on .resumo-pedido .resumo-topo { display: none !important; }
 
-/* --- HERO (injetado) --- */
+/* --- HERO --- */
 #mm-ped-hero {
-  background: #fff;
-  border: 1px solid #dbe1db;
-  border-radius: 12px;
-  padding: 20px 24px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
+  padding: 8px 0 0;
 }
-#mm-ped-hero .mm-ped-hero-info { min-width: 0; }
+#mm-ped-hero .mm-ped-eyebrow {
+  display: block;
+  font-family: var(--mm-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mm-fg-muted);
+  margin: 0 0 6px;
+}
 #mm-ped-hero .mm-ped-num {
-  margin: 0 0 4px;
-  font-size: 20px;
-  line-height: 1.25;
-  font-weight: 700;
-  color: #1a1a1a;
+  margin: 0 0 10px;
+  font-family: var(--mm-serif);
+  font-weight: 400;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--mm-fg);
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  gap: 12px;
   flex-wrap: wrap;
 }
 #mm-ped-hero .mm-ped-copy {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid #dbe1db;
-  background: #f7f8f7;
-  border-radius: 6px;
-  padding: 3px 8px;
+  font-family: var(--mm-sans);
+  border: 1px solid var(--mm-border);
+  background: var(--mm-card);
+  border-radius: var(--mm-r-full);
+  padding: 4px 12px;
   font-size: 11px;
-  font-weight: 600;
-  color: #555;
+  font-weight: 500;
+  color: var(--mm-fg-subtle);
   cursor: pointer;
-  transition: all .15s ease;
+  transition: all var(--mm-tr-fast);
+  transform: translateY(-4px);
 }
-#mm-ped-hero .mm-ped-copy:hover { border-color: #1b7a45; color: #1b7a45; }
-#mm-ped-hero .mm-ped-copy.mm-copiado { border-color: #1b7a45; color: #1b7a45; background: #eef7f1; }
+#mm-ped-hero .mm-ped-copy:hover { border-color: var(--mm-fg-subtle); color: var(--mm-fg); }
+#mm-ped-hero .mm-ped-copy.mm-copiado {
+  border-color: var(--mm-cta);
+  color: var(--mm-cta);
+  background: var(--mm-cta-soft);
+}
 #mm-ped-hero .mm-ped-meta {
+  font-family: var(--mm-sans);
   font-size: 13px;
-  color: #777;
+  color: var(--mm-fg-subtle);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 #mm-ped-hero .mm-ped-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: #eef7f1;
-  color: #1b7a45;
-  border-radius: 999px;
-  padding: 3px 10px;
+  gap: 6px;
+  background: var(--mm-cta-soft);
+  color: var(--mm-cta);
+  border-radius: var(--mm-r-full);
+  padding: 4px 12px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 #mm-ped-hero .mm-ped-badge::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #1b7a45;
+  background: var(--mm-cta);
 }
 #mm-ped-hero .mm-ped-hero-wa {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: #1b7a45;
+  height: 48px;
+  background: var(--mm-cta);
   color: #fff !important;
-  border-radius: 8px;
-  padding: 11px 18px;
+  border-radius: var(--mm-r-full);
+  padding: 0 24px;
+  font-family: var(--mm-sans);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none !important;
   white-space: nowrap;
-  transition: background .15s ease;
+  transition: background var(--mm-tr-fast), transform var(--mm-tr-fast);
 }
-#mm-ped-hero .mm-ped-hero-wa:hover { background: #166638; }
+#mm-ped-hero .mm-ped-hero-wa:hover { background: var(--mm-cta-dark); }
+#mm-ped-hero .mm-ped-hero-wa:active { transform: scale(0.98); }
 #mm-ped-hero .mm-ped-hero-wa svg { flex-shrink: 0; }
 
-/* --- TÍTULOS DE SEÇÃO (Status do pedido / Itens do Pedido) --- */
-.mm-ped-on .status-pedido h3 {
-  color: #1a1a1a !important;
-  font-weight: 700 !important;
+/* --- SEÇÕES: status/itens viram cards r16 com título serif --- */
+.mm-ped-on .status-pedido .situacao-pedido,
+.mm-ped-on .itens-pedido {
+  background: var(--mm-card);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-r-lg);
+  padding: 28px;
+  box-shadow: var(--mm-shadow-sm);
+  box-sizing: border-box;
 }
-.mm-ped-on .status-pedido .line-detalhes { background: #dbe1db !important; }
+.mm-ped-on .itens-pedido { margin-top: 28px; }
 
-/* --- TIMELINE / STEPPER ---
-   Ícones e conectores são elementos DOM reais injetados pelo pedidos.js
-   (.mm-step-dot / .mm-step-line). Os pseudo-elements nativos do Magazord
-   (badges de check) são desligados pra não colidir. */
+.mm-ped-on .status-pedido h3 {
+  font-family: var(--mm-serif) !important;
+  font-weight: 400 !important;
+  font-size: 22px !important;
+  letter-spacing: -0.01em !important;
+  color: var(--mm-fg) !important;
+  margin: 0 !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.mm-ped-on .title-situacao-pedido,
+.mm-ped-on .title-itens-pedido { margin-bottom: 24px; }
+.mm-ped-on .status-pedido .line-detalhes {
+  background: var(--mm-border-soft) !important;
+  height: 1px !important;
+  margin-left: 16px;
+}
+
+/* --- TIMELINE / STEPPER (dots e linhas injetados pelo JS) --- */
 .mm-ped-on .historico-pedido {
   display: flex !important;
   align-items: stretch;
   justify-content: space-between;
   gap: 0;
-  margin: 8px 0 4px;
+  margin: 4px 0 0;
 }
 .mm-ped-on .item-historico {
   position: relative;
@@ -269,7 +416,7 @@
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  padding: 0 6px !important;
+  padding: 0 8px !important;
   margin: 0 !important;
   min-width: 0;
 }
@@ -278,152 +425,179 @@
 .mm-ped-on .item-historico::before,
 .mm-ped-on .item-historico::after,
 .mm-ped-on .item-historico strong::before,
-.mm-ped-on .item-historico strong::after,
-.mm-ped-on .item-historico .data-hora-etapa::after {
+.mm-ped-on .item-historico strong::after {
   content: none !important;
   display: none !important;
 }
 
-/* círculo do ícone (injetado) */
+/* círculo do ícone */
 .mm-ped-on .mm-step-dot {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   flex-shrink: 0;
-  margin-bottom: 10px;
-  background: #eef1ee;
-  color: #98a598;
+  margin-bottom: 12px;
+  background: #F4F5F4;
+  color: var(--mm-fg-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 2;
-  border: 2px solid transparent;
+  border: 1.5px solid transparent;
   box-sizing: border-box;
+  transition: all var(--mm-tr-fast);
 }
-.mm-ped-on .mm-step-dot svg { width: 20px; height: 20px; display: block; }
+.mm-ped-on .mm-step-dot svg { width: 18px; height: 18px; display: block; }
 .mm-ped-on .item-historico.status-success .mm-step-dot {
-  background: #1b7a45;
+  background: var(--mm-olive);
   color: #fff;
 }
 
-/* etapa atual (primeira waiting): anel verde + pulso */
+/* etapa atual: anel verde + pulso suave */
 @keyframes mm-ped-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(27, 122, 69, .30); }
-  70%  { box-shadow: 0 0 0 9px rgba(27, 122, 69, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(27, 122, 69, .25); }
+  70%  { box-shadow: 0 0 0 8px rgba(27, 122, 69, 0); }
   100% { box-shadow: 0 0 0 0 rgba(27, 122, 69, 0); }
 }
 .mm-ped-on .item-historico.mm-atual .mm-step-dot {
-  background: #fff;
-  border-color: #1b7a45;
-  color: #1b7a45;
-  animation: mm-ped-pulse 2.2s ease-out infinite;
+  background: var(--mm-card);
+  border-color: var(--mm-cta);
+  color: var(--mm-cta);
+  animation: mm-ped-pulse 2.4s ease-out infinite;
 }
 
 /* labels */
 .mm-ped-on .item-historico strong {
+  font-family: var(--mm-sans);
   font-size: 12.5px;
-  line-height: 1.3;
-  color: #1a1a1a;
+  line-height: 1.35;
+  color: var(--mm-fg);
   font-weight: 600;
   margin: 0 !important;
 }
-.mm-ped-on .item-historico.status-waiting strong { color: #98a598; }
-.mm-ped-on .item-historico.mm-atual strong { color: #1b7a45 !important; }
+.mm-ped-on .item-historico.status-waiting strong {
+  color: var(--mm-fg-muted);
+  font-weight: 500;
+}
+.mm-ped-on .item-historico.mm-atual strong { color: var(--mm-cta) !important; font-weight: 600; }
 .mm-ped-on .item-historico .data-hora-etapa {
-  font-size: 11.5px;
-  color: #777;
-  margin-top: 2px;
-  min-height: 15px;
+  font-family: var(--mm-sans);
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--mm-fg-subtle);
+  margin-top: 3px;
+  min-height: 14px;
+  font-variant-numeric: tabular-nums;
 }
 .mm-ped-on .item-historico.mm-atual .data-hora-etapa:empty::before {
   content: 'em andamento' !important;
   display: inline !important;
-  color: #1b7a45;
+  white-space: nowrap;
+  font-size: 10.5px;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mm-cta);
 }
 
-/* conector entre etapas (injetado; desktop: horizontal na altura do círculo) */
+/* conector entre etapas */
 .mm-ped-on .mm-step-line {
   position: absolute;
-  top: 21px;
-  left: calc(50% + 28px);
-  right: calc(-50% + 28px);
-  height: 2px;
-  background: #dbe1db;
+  top: 20px;
+  left: calc(50% + 25px);
+  right: calc(-50% + 25px);
+  height: 1.5px;
+  background: var(--mm-border);
   z-index: 1;
 }
 .mm-ped-on .item-historico:last-child .mm-step-line { display: none; }
-.mm-ped-on .item-historico.status-success .mm-step-line { background: #1b7a45; }
+.mm-ped-on .item-historico.status-success .mm-step-line { background: var(--mm-olive); }
 
-/* --- BLOCO ENTREGA / RASTREIO (injetado) --- */
+/* --- BLOCO ENTREGA / RASTREIO --- */
 #mm-ped-entrega {
-  margin: 18px 0 4px;
-  border: 1px solid #dbe1db;
-  border-radius: 12px;
-  padding: 14px 18px;
+  margin: 24px 0 0;
+  border-radius: var(--mm-r-lg);
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #f7f8f7;
-  font-size: 13.5px;
-  color: #555;
-  line-height: 1.5;
+  gap: 14px;
+  background: var(--mm-bg);
+  border: 1px solid var(--mm-border-soft);
+  font-family: var(--mm-sans);
+  font-size: 13px;
+  color: var(--mm-fg-meta);
+  line-height: 1.55;
 }
 #mm-ped-entrega.mm-tem-rastreio {
-  background: #eef7f1;
-  border-color: #bcd9c8;
-  color: #1a1a1a;
+  background: var(--mm-cta-soft);
+  border-color: transparent;
+  color: var(--mm-fg-soft);
 }
 #mm-ped-entrega svg { flex-shrink: 0; }
-#mm-ped-entrega a { color: #1b7a45 !important; font-weight: 700; }
+#mm-ped-entrega a { color: var(--mm-cta) !important; font-weight: 600; }
 
 /* --- ITENS DO PEDIDO --- */
-.mm-ped-on .itens-pedido { margin-top: 24px; }
 .mm-ped-on .itens-listagem { background: transparent !important; padding: 0 !important; }
 .mm-ped-on .pedido-item {
-  background: #fff !important;
-  border: 1px solid #dbe1db !important;
-  border-radius: 12px !important;
-  padding: 14px 16px !important;
-  margin-bottom: 10px;
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid var(--mm-border-soft) !important;
+  border-radius: 0 !important;
+  padding: 16px 0 !important;
+  margin: 0 !important;
   box-shadow: none !important;
 }
-.mm-ped-on .pedido-item .item-principal { gap: 14px; }
+.mm-ped-on .pedido-item:first-child { border-top: none !important; padding-top: 0 !important; }
+.mm-ped-on .pedido-item .item-principal { gap: 16px; }
 .mm-ped-on .pedido-item .imagem-produto img {
-  width: 72px !important;
-  height: 72px !important;
+  width: 76px !important;
+  height: 76px !important;
   object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #f0f0f0;
+  border-radius: var(--mm-r);
+  border: 1px solid var(--mm-border-soft);
 }
 .mm-ped-on .pedido-item .info-pedido-item {
-  font-size: 11px;
+  font-family: var(--mm-sans);
+  font-size: 10.5px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .04em;
-  color: #98a598;
+  letter-spacing: 0.08em;
+  color: var(--mm-fg-muted);
+  margin-bottom: 2px;
 }
 .mm-ped-on .pedido-item .nome-produto {
-  color: #1a1a1a !important;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.4;
+  font-family: var(--mm-sans);
+  color: var(--mm-fg) !important;
+  font-weight: 500;
+  font-size: 14.5px;
+  line-height: 1.45;
+  transition: color var(--mm-tr-fast);
 }
-.mm-ped-on .pedido-item .link-produto:hover .nome-produto { color: #1b7a45 !important; }
+.mm-ped-on .pedido-item .link-produto:hover .nome-produto { color: var(--mm-olive) !important; }
 .mm-ped-on .pedido-item .quantidade-produto {
-  background: #f0f0f0;
-  border-radius: 6px;
-  min-width: 28px;
-  height: 28px;
-  font-weight: 700;
-  color: #333;
+  font-family: var(--mm-sans);
+  background: var(--mm-bg);
+  border: 1px solid var(--mm-border-soft);
+  border-radius: var(--mm-r-full);
+  min-width: 30px;
+  height: 26px;
+  padding: 0 10px;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--mm-fg-soft);
 }
 .mm-ped-on .pedido-item .item-valor {
-  color: #1b7a45 !important;
+  font-family: var(--mm-serif);
+  color: var(--mm-fg) !important;
   font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* --- RESUMO FINANCEIRO / ENDEREÇO (desce pra baixo) --- */
+/* --- RESUMO FINANCEIRO / ENDEREÇO --- */
 .mm-ped-on .resumo-pedido {
   background: transparent !important;
   border: none !important;
@@ -431,56 +605,103 @@
   box-shadow: none !important;
 }
 html.mm-ped-on .resumo-pedido .resumo-content {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
   display: grid !important;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 12px;
+  gap: 16px;
   width: 100% !important;
 }
 .mm-ped-on .resumo-info {
   width: auto !important;
-  background: #fff !important;
-  border: 1px solid #dbe1db !important;
-  border-radius: 12px !important;
-  padding: 16px !important;
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-lg) !important;
+  padding: 22px !important;
   margin: 0 !important;
-  box-shadow: none !important;
+  box-shadow: var(--mm-shadow-sm) !important;
+  box-sizing: border-box;
 }
-.mm-ped-on .resumo-info .title-info strong { color: #4b664a !important; }
+/* títulos dos cards viram eyebrows */
+.mm-ped-on .resumo-info .title-info { margin-bottom: 14px; }
+.mm-ped-on .resumo-info .title-info strong {
+  font-family: var(--mm-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--mm-fg-muted) !important;
+}
 .mm-ped-on .resumo-info .title-info svg { display: none !important; }
-.mm-ped-on .resumo-info .title-info::before {
-  content: '';
-  width: 16px;
-  height: 16px;
-  margin-right: 7px;
-  flex-shrink: 0;
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-.mm-ped-on .resumo-endereco .title-info::before {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b664a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
-}
-.mm-ped-on .resumo-forma-pagamento .title-info::before {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b664a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'/%3E%3Cline x1='2' x2='22' y1='10' y2='10'/%3E%3C/svg%3E");
-}
-.mm-ped-on .resumo-pagamento .title-info::before {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b664a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4Z'/%3E%3C/svg%3E");
-}
 .mm-ped-on .resumo-info,
-.mm-ped-on .resumo-info .dado-list { color: #555; font-size: 13px; line-height: 1.5; }
-.mm-ped-on .resumo-info .valor { color: #1b7a45 !important; font-weight: 700; }
-.mm-ped-on .resumo-info .descontos .valor { color: #c0392b !important; }
-.mm-ped-on .resumo-info .resumo-total {
-  border-top: 1px solid #f0f0f0;
-  margin-top: 10px;
-  padding-top: 10px;
+.mm-ped-on .resumo-info .dado-list {
+  font-family: var(--mm-sans);
+  color: var(--mm-fg-meta);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mm-ped-on .resumo-info .dado-list.destinatario strong {
+  font-family: var(--mm-sans);
+  color: var(--mm-fg);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.mm-ped-on .resumo-info .subtotal,
+.mm-ped-on .resumo-info .frete,
+.mm-ped-on .resumo-info .descontos { padding: 3px 0; }
+.mm-ped-on .resumo-info .valor {
+  color: var(--mm-fg) !important;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.mm-ped-on .resumo-info .descontos,
+.mm-ped-on .resumo-info .descontos .valor { color: var(--mm-cta) !important; }
+.mm-ped-on .resumo-forma-pagamento .resumo-total {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--mm-fg-soft);
+}
+.mm-ped-on .resumo-forma-pagamento .resumo-total .valor {
+  font-family: var(--mm-serif);
+  font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+/* total geral: serif grande, padrão "Resumo" do carrinho */
+.mm-ped-on .resumo-pagamento .resumo-total {
+  border-top: 1px solid var(--mm-border-soft);
+  margin-top: 12px;
+  padding-top: 14px;
+  align-items: baseline;
+}
+.mm-ped-on .resumo-pagamento .resumo-total > span:first-child {
+  font-family: var(--mm-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mm-fg-subtle);
+}
+.mm-ped-on .resumo-pagamento .resumo-total .valor {
+  font-family: var(--mm-serif) !important;
+  white-space: nowrap;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: var(--mm-fg) !important;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
 }
 
-/* --- AÇÕES --- */
+/* --- AÇÕES: pills outline, WhatsApp já vive no hero --- */
 .mm-ped-on .mm-ped-acoes {
+  background: transparent !important;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   justify-content: flex-end;
   flex-wrap: wrap;
   order: 3;
@@ -488,62 +709,37 @@ html.mm-ped-on .resumo-pedido .resumo-content {
 }
 .mm-ped-on .btn-comprar-novamente,
 .mm-ped-on .btn-ajuda-pedido {
-  border: 1px solid #4b664a !important;
-  color: #4b664a !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-  font-weight: 600;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 24px !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--mm-border) !important;
+  color: var(--mm-fg-soft) !important;
+  background: var(--mm-card) !important;
+  border-radius: var(--mm-r-full) !important;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: all var(--mm-tr-fast);
 }
 .mm-ped-on .btn-comprar-novamente:hover,
 .mm-ped-on .btn-ajuda-pedido:hover {
-  background: #f2f5f2 !important;
+  border-color: var(--mm-fg-subtle) !important;
+  color: var(--mm-fg) !important;
 }
+.mm-ped-on .btn-comprar-novamente svg path,
+.mm-ped-on .btn-ajuda-pedido svg path { stroke: currentColor !important; }
 
 /* ============================================================
    MOBILE (≤768px)
    ============================================================ */
 @media (max-width: 768px) {
-  /* hero empilha */
-  #mm-ped-hero { flex-direction: column; align-items: stretch; padding: 16px; }
-  #mm-ped-hero .mm-ped-hero-wa { justify-content: center; }
-
-  /* timeline vira stepper VERTICAL */
-  .mm-ped-on .historico-pedido {
-    flex-direction: column !important;
-    gap: 18px;
-  }
-  .mm-ped-on .item-historico {
-    flex-direction: row !important;
-    align-items: center !important;
-    text-align: left;
-    gap: 12px;
-    padding: 0 !important;
-  }
-  .mm-ped-on .mm-step-dot {
-    margin-bottom: 0;
-    width: 42px;
-    height: 42px;
-  }
-  .mm-ped-on .item-historico strong { font-size: 13.5px; }
-  /* conector vertical */
-  .mm-ped-on .mm-step-line {
-    top: 46px;
-    left: 20px;
-    right: auto;
-    width: 2px;
-    height: 18px;
-  }
-  /* data encosta na direita da linha */
-  .mm-ped-on .item-historico .data-hora-etapa {
-    margin-top: 0;
-    margin-left: auto;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  /* containers nativos têm min-width/width fixa que estoura os 375px —
-     força tudo a caber na tela (o article.main-content nativo tem 505px
-     fixos no mobile: bug herdado do Magazord) */
+  /* containers nativos têm width fixa que estoura os 375px
+     (article.main-content nativo = 505px: bug herdado do Magazord) */
   .mm-ped-on .central-cliente,
   .mm-ped-on .central-cliente .main-content,
   .mm-ped-on .detalhes-pedido,
@@ -565,6 +761,46 @@ html.mm-ped-on .resumo-pedido .resumo-content {
     box-sizing: border-box !important;
   }
 
+  .mm-ped-on .detalhes-pedido { gap: 20px; }
+
+  /* hero empilha; CTA vira full-width */
+  #mm-ped-hero { flex-direction: column; align-items: stretch; }
+  #mm-ped-hero .mm-ped-hero-wa { width: 100%; }
+
+  /* cards mais enxutos */
+  .mm-ped-on .status-pedido .situacao-pedido,
+  .mm-ped-on .itens-pedido { padding: 20px; }
+  .mm-ped-on .itens-pedido { margin-top: 20px; }
+
+  /* timeline vira stepper VERTICAL */
+  .mm-ped-on .historico-pedido {
+    flex-direction: column !important;
+    gap: 20px;
+  }
+  .mm-ped-on .item-historico {
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left;
+    gap: 14px;
+    padding: 0 !important;
+  }
+  .mm-ped-on .mm-step-dot { margin-bottom: 0; width: 40px; height: 40px; }
+  .mm-ped-on .item-historico strong { font-size: 13.5px; }
+  .mm-ped-on .item-historico .data-hora-etapa {
+    margin-top: 0;
+    margin-left: auto;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  /* conector vertical */
+  .mm-ped-on .mm-step-line {
+    top: 44px;
+    left: 19px;
+    right: auto;
+    width: 1.5px;
+    height: 22px;
+  }
+
   /* resumo empilha */
   html.mm-ped-on .resumo-pedido .resumo-content {
     grid-template-columns: 1fr !important;
@@ -573,7 +809,7 @@ html.mm-ped-on .resumo-pedido .resumo-content {
   /* itens: produto em linha cheia; qtd e valor viram linhas label→valor */
   .mm-ped-on .pedido-item .item-principal {
     flex-wrap: wrap !important;
-    gap: 10px;
+    gap: 12px;
   }
   .mm-ped-on .pedido-item .link-produto { width: 100% !important; }
   .mm-ped-on .pedido-item .item-principal > div.flex.column {
@@ -582,8 +818,16 @@ html.mm-ped-on .resumo-pedido .resumo-content {
     justify-content: space-between !important;
     align-items: center !important;
   }
+  .mm-ped-on .pedido-item .info-pedido-item { margin-bottom: 0; }
+
+  /* total geral: label em cima, valor embaixo */
+  .mm-ped-on .resumo-pagamento .resumo-total {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px;
+  }
 
   /* ações full-width */
   .mm-ped-on .mm-ped-acoes { flex-direction: column; }
-  .mm-ped-on .mm-ped-acoes a { text-align: center; justify-content: center; }
+  .mm-ped-on .mm-ped-acoes a { width: 100%; }
 }
