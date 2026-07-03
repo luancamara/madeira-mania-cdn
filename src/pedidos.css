@@ -295,6 +295,10 @@ html.mm-ped-on body { background: #EFEFED !important; }
   box-shadow: none !important;
 }
 
+/* FAB global de WhatsApp: redundante aqui (hero tem CTA contextual) e
+   introduzia um 2º tom de verde (olive) na tela */
+html.mm-ped-on #mm-floating-whatsapp { display: none !important; }
+
 /* título nativo "Meus pedidos" some — o hero serif assume */
 .mm-ped-on .mm-ped-native-title { display: none !important; }
 
@@ -531,11 +535,13 @@ html.mm-ped-on body { background: #EFEFED !important; }
 
 /* labels: neutros (verde fica nos dots/estado) — mata o #27AE60 nativo */
 .mm-ped-on .item-historico strong {
-  font-family: var(--mm-sans);
-  font-size: 12.5px;
-  line-height: 1.35;
+  font-family: var(--mm-sans) !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
   color: var(--mm-fg) !important;
-  font-weight: 600;
+  font-weight: 600 !important;
   margin: 0 !important;
   min-height: 34px;
   text-wrap: balance;
@@ -547,10 +553,11 @@ html.mm-ped-on body { background: #EFEFED !important; }
 }
 .mm-ped-on .item-historico.mm-atual strong { color: var(--mm-cta) !important; font-weight: 600; }
 .mm-ped-on .item-historico .data-hora-etapa {
-  font-family: var(--mm-sans);
+  font-family: var(--mm-sans) !important;
   white-space: nowrap;
-  font-size: 11px;
-  color: var(--mm-fg-subtle);
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  color: var(--mm-fg-subtle) !important;
   margin-top: 3px;
   min-height: 14px;
   font-variant-numeric: tabular-nums;
@@ -683,7 +690,8 @@ html.mm-ped-on .resumo-pedido .resumo-content {
   width: auto !important;
   align-self: stretch !important;
   height: auto !important;
-  min-height: 0 !important;
+  min-height: 100% !important;
+  max-height: none !important;
   background: var(--mm-card) !important;
   border: 1px solid var(--mm-border) !important;
   border-radius: var(--mm-r-lg) !important;
