@@ -1,0 +1,589 @@
+/* =============================================
+   PEDIDOS — Consultar Pedido (/login) + Resultado (/cliente/pedidos)
+   Abordagem B: reestrutura progressiva sobre o DOM nativo (jQuery, sem React).
+   Tudo gated por classes que o pedidos.js põe no <html> SÓ depois de rodar
+   com sucesso: .mm-consulta-on (login) e .mm-ped-on (resultado).
+   Se o JS falhar, nada disso aplica e a tela nativa segue intacta.
+   Paleta: verde base #4b664a · CTA #1b7a45 · borda #dbe1db · radius 4/8/12
+   ============================================= */
+
+/* ============================================================
+   PARTE 1 — FORM CONSULTAR PEDIDO (/login)
+   ============================================================ */
+
+/* botão "Consultar Pedido" do header do login (era azul) */
+.mm-consulta-on .login-header .button-consultar-pedido,
+.mm-consulta-on .button-consultar-pedido.mobile {
+  color: #1b7a45 !important;
+  background: transparent !important;
+  border: none !important;
+  font-weight: 600;
+}
+
+/* card do form */
+.mm-consulta-on #form-consulta-pedido {
+  font-family: inherit;
+}
+.mm-consulta-on #form-consulta-pedido .title-area h2 {
+  color: #1a1a1a !important;
+  font-weight: 700;
+}
+.mm-consulta-on #form-consulta-pedido .title-area h3 {
+  color: #555 !important;
+  font-weight: 400;
+}
+.mm-consulta-on #form-consulta-pedido .cancel-consulta,
+.mm-consulta-on #form-consulta-pedido .cancel-consulta span,
+.mm-consulta-on .login-header .btn-voltar,
+.mm-consulta-on .login-header .btn-voltar span {
+  color: #4b664a !important;
+  font-weight: 600;
+}
+
+/* chevron do voltar: SVG inline com stroke azul hardcoded */
+.mm-consulta-on #form-consulta-pedido .cancel-consulta svg,
+.mm-consulta-on #form-consulta-pedido .cancel-consulta svg path,
+.mm-consulta-on .login-header .btn-voltar svg,
+.mm-consulta-on .login-header .btn-voltar svg path {
+  stroke: #4b664a !important;
+  fill: none !important;
+}
+
+/* ícones nativos dos campos (sprites azuis) ficam órfãos no layout novo */
+.mm-consulta-on #form-consulta-pedido .ipt-ctn > span[class*="icon-"] {
+  display: none !important;
+}
+
+/* alinha campos, hint e botão na mesma largura, centralizado */
+.mm-consulta-on #form-consulta-pedido form {
+  max-width: 560px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* layout do form: mata os floats nativos (o hint injetado desalinha o
+   layout 2-colunas original) — campos empilhados full-width */
+.mm-consulta-on #form-consulta-pedido form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px;
+}
+.mm-consulta-on #form-consulta-pedido form .line {
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+.mm-consulta-on #form-consulta-pedido .ipt-ctn { width: 100% !important; }
+
+/* campos */
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  border: 1px solid #dbe1db !important;
+  border-radius: 8px !important;
+  padding-left: 14px !important;
+  color: #1a1a1a;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field:focus {
+  border-color: #1b7a45 !important;
+  box-shadow: 0 0 0 3px rgba(27, 122, 69, .12) !important;
+  outline: none;
+}
+
+/* botão submit (era azul Magazord) */
+.mm-consulta-on #form-consulta-pedido button.button-login {
+  background: #1b7a45 !important;
+  border-color: #1b7a45 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  font-weight: 700;
+  transition: background .15s ease;
+}
+.mm-consulta-on #form-consulta-pedido button.button-login:hover {
+  background: #166638 !important;
+}
+
+/* hint sob o nº do pedido (injetado) */
+.mm-cp-hint {
+  display: block;
+  margin: 6px 2px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #777;
+}
+
+/* fallback WhatsApp (injetado) */
+.mm-cp-wa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #555;
+}
+.mm-cp-wa a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #1b7a45 !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+.mm-cp-wa a:hover { text-decoration: underline; }
+.mm-cp-wa svg { flex-shrink: 0; }
+
+/* ============================================================
+   PARTE 2 — RESULTADO DO PEDIDO (/cliente/pedidos?verPedido=...)
+   ============================================================ */
+
+/* --- nova hierarquia via flex order (sem mover DOM) ---
+   hero (0) → status+itens (1) → resumo financeiro (2) */
+.mm-ped-on .detalhes-pedido {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px;
+}
+.mm-ped-on #mm-ped-hero     { order: 0; }
+.mm-ped-on .status-pedido   { order: 1; width: 100% !important; }
+.mm-ped-on .resumo-pedido   { order: 2; width: 100% !important; }
+
+/* header nativo do resumo some — o hero assume número/data */
+.mm-ped-on .resumo-pedido .resumo-topo { display: none !important; }
+
+/* --- HERO (injetado) --- */
+#mm-ped-hero {
+  background: #fff;
+  border: 1px solid #dbe1db;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+#mm-ped-hero .mm-ped-hero-info { min-width: 0; }
+#mm-ped-hero .mm-ped-num {
+  margin: 0 0 4px;
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#mm-ped-hero .mm-ped-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #dbe1db;
+  background: #f7f8f7;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+#mm-ped-hero .mm-ped-copy:hover { border-color: #1b7a45; color: #1b7a45; }
+#mm-ped-hero .mm-ped-copy.mm-copiado { border-color: #1b7a45; color: #1b7a45; background: #eef7f1; }
+#mm-ped-hero .mm-ped-meta {
+  font-size: 13px;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#mm-ped-hero .mm-ped-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #eef7f1;
+  color: #1b7a45;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+#mm-ped-hero .mm-ped-badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1b7a45;
+}
+#mm-ped-hero .mm-ped-hero-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #1b7a45;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background .15s ease;
+}
+#mm-ped-hero .mm-ped-hero-wa:hover { background: #166638; }
+#mm-ped-hero .mm-ped-hero-wa svg { flex-shrink: 0; }
+
+/* --- TÍTULOS DE SEÇÃO (Status do pedido / Itens do Pedido) --- */
+.mm-ped-on .status-pedido h3 {
+  color: #1a1a1a !important;
+  font-weight: 700 !important;
+}
+.mm-ped-on .status-pedido .line-detalhes { background: #dbe1db !important; }
+
+/* --- TIMELINE / STEPPER ---
+   Ícones e conectores são elementos DOM reais injetados pelo pedidos.js
+   (.mm-step-dot / .mm-step-line). Os pseudo-elements nativos do Magazord
+   (badges de check) são desligados pra não colidir. */
+.mm-ped-on .historico-pedido {
+  display: flex !important;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0;
+  margin: 8px 0 4px;
+}
+.mm-ped-on .item-historico {
+  position: relative;
+  flex: 1 1 0;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: center;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 6px !important;
+  margin: 0 !important;
+  min-width: 0;
+}
+/* mata ícone nativo e pseudo-elements nativos (badges de check) */
+.mm-ped-on .item-historico > img { display: none !important; }
+.mm-ped-on .item-historico::before,
+.mm-ped-on .item-historico::after,
+.mm-ped-on .item-historico strong::before,
+.mm-ped-on .item-historico strong::after,
+.mm-ped-on .item-historico .data-hora-etapa::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* círculo do ícone (injetado) */
+.mm-ped-on .mm-step-dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  background: #eef1ee;
+  color: #98a598;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+}
+.mm-ped-on .mm-step-dot svg { width: 20px; height: 20px; display: block; }
+.mm-ped-on .item-historico.status-success .mm-step-dot {
+  background: #1b7a45;
+  color: #fff;
+}
+
+/* etapa atual (primeira waiting): anel verde + pulso */
+@keyframes mm-ped-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(27, 122, 69, .30); }
+  70%  { box-shadow: 0 0 0 9px rgba(27, 122, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(27, 122, 69, 0); }
+}
+.mm-ped-on .item-historico.mm-atual .mm-step-dot {
+  background: #fff;
+  border-color: #1b7a45;
+  color: #1b7a45;
+  animation: mm-ped-pulse 2.2s ease-out infinite;
+}
+
+/* labels */
+.mm-ped-on .item-historico strong {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: #1a1a1a;
+  font-weight: 600;
+  margin: 0 !important;
+}
+.mm-ped-on .item-historico.status-waiting strong { color: #98a598; }
+.mm-ped-on .item-historico.mm-atual strong { color: #1b7a45 !important; }
+.mm-ped-on .item-historico .data-hora-etapa {
+  font-size: 11.5px;
+  color: #777;
+  margin-top: 2px;
+  min-height: 15px;
+}
+.mm-ped-on .item-historico.mm-atual .data-hora-etapa:empty::before {
+  content: 'em andamento' !important;
+  display: inline !important;
+  color: #1b7a45;
+  font-weight: 600;
+}
+
+/* conector entre etapas (injetado; desktop: horizontal na altura do círculo) */
+.mm-ped-on .mm-step-line {
+  position: absolute;
+  top: 21px;
+  left: calc(50% + 28px);
+  right: calc(-50% + 28px);
+  height: 2px;
+  background: #dbe1db;
+  z-index: 1;
+}
+.mm-ped-on .item-historico:last-child .mm-step-line { display: none; }
+.mm-ped-on .item-historico.status-success .mm-step-line { background: #1b7a45; }
+
+/* --- BLOCO ENTREGA / RASTREIO (injetado) --- */
+#mm-ped-entrega {
+  margin: 18px 0 4px;
+  border: 1px solid #dbe1db;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f7f8f7;
+  font-size: 13.5px;
+  color: #555;
+  line-height: 1.5;
+}
+#mm-ped-entrega.mm-tem-rastreio {
+  background: #eef7f1;
+  border-color: #bcd9c8;
+  color: #1a1a1a;
+}
+#mm-ped-entrega svg { flex-shrink: 0; }
+#mm-ped-entrega a { color: #1b7a45 !important; font-weight: 700; }
+
+/* --- ITENS DO PEDIDO --- */
+.mm-ped-on .itens-pedido { margin-top: 24px; }
+.mm-ped-on .itens-listagem { background: transparent !important; padding: 0 !important; }
+.mm-ped-on .pedido-item {
+  background: #fff !important;
+  border: 1px solid #dbe1db !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 10px;
+  box-shadow: none !important;
+}
+.mm-ped-on .pedido-item .item-principal { gap: 14px; }
+.mm-ped-on .pedido-item .imagem-produto img {
+  width: 72px !important;
+  height: 72px !important;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+.mm-ped-on .pedido-item .info-pedido-item {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #98a598;
+}
+.mm-ped-on .pedido-item .nome-produto {
+  color: #1a1a1a !important;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.mm-ped-on .pedido-item .link-produto:hover .nome-produto { color: #1b7a45 !important; }
+.mm-ped-on .pedido-item .quantidade-produto {
+  background: #f0f0f0;
+  border-radius: 6px;
+  min-width: 28px;
+  height: 28px;
+  font-weight: 700;
+  color: #333;
+}
+.mm-ped-on .pedido-item .item-valor {
+  color: #1b7a45 !important;
+  font-weight: 700;
+}
+
+/* --- RESUMO FINANCEIRO / ENDEREÇO (desce pra baixo) --- */
+.mm-ped-on .resumo-pedido {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+html.mm-ped-on .resumo-pedido .resumo-content {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px;
+  width: 100% !important;
+}
+.mm-ped-on .resumo-info {
+  width: auto !important;
+  background: #fff !important;
+  border: 1px solid #dbe1db !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+.mm-ped-on .resumo-info .title-info strong { color: #4b664a !important; }
+.mm-ped-on .resumo-info .title-info svg { display: none !important; }
+.mm-ped-on .resumo-info .title-info::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  margin-right: 7px;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+.mm-ped-on .resumo-endereco .title-info::before {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b664a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
+}
+.mm-ped-on .resumo-forma-pagamento .title-info::before {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b664a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='14' x='2' y='5' rx='2'/%3E%3Cline x1='2' x2='22' y1='10' y2='10'/%3E%3C/svg%3E");
+}
+.mm-ped-on .resumo-pagamento .title-info::before {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b664a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4Z'/%3E%3C/svg%3E");
+}
+.mm-ped-on .resumo-info,
+.mm-ped-on .resumo-info .dado-list { color: #555; font-size: 13px; line-height: 1.5; }
+.mm-ped-on .resumo-info .valor { color: #1b7a45 !important; font-weight: 700; }
+.mm-ped-on .resumo-info .descontos .valor { color: #c0392b !important; }
+.mm-ped-on .resumo-info .resumo-total {
+  border-top: 1px solid #f0f0f0;
+  margin-top: 10px;
+  padding-top: 10px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* --- AÇÕES --- */
+.mm-ped-on .mm-ped-acoes {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  order: 3;
+  width: 100%;
+}
+.mm-ped-on .btn-comprar-novamente,
+.mm-ped-on .btn-ajuda-pedido {
+  border: 1px solid #4b664a !important;
+  color: #4b664a !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+}
+.mm-ped-on .btn-comprar-novamente:hover,
+.mm-ped-on .btn-ajuda-pedido:hover {
+  background: #f2f5f2 !important;
+}
+
+/* ============================================================
+   MOBILE (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* hero empilha */
+  #mm-ped-hero { flex-direction: column; align-items: stretch; padding: 16px; }
+  #mm-ped-hero .mm-ped-hero-wa { justify-content: center; }
+
+  /* timeline vira stepper VERTICAL */
+  .mm-ped-on .historico-pedido {
+    flex-direction: column !important;
+    gap: 18px;
+  }
+  .mm-ped-on .item-historico {
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left;
+    gap: 12px;
+    padding: 0 !important;
+  }
+  .mm-ped-on .mm-step-dot {
+    margin-bottom: 0;
+    width: 42px;
+    height: 42px;
+  }
+  .mm-ped-on .item-historico strong { font-size: 13.5px; }
+  /* conector vertical */
+  .mm-ped-on .mm-step-line {
+    top: 46px;
+    left: 20px;
+    right: auto;
+    width: 2px;
+    height: 18px;
+  }
+  /* data encosta na direita da linha */
+  .mm-ped-on .item-historico .data-hora-etapa {
+    margin-top: 0;
+    margin-left: auto;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* containers nativos têm min-width/width fixa que estoura os 375px —
+     força tudo a caber na tela (o article.main-content nativo tem 505px
+     fixos no mobile: bug herdado do Magazord) */
+  .mm-ped-on .central-cliente,
+  .mm-ped-on .central-cliente .main-content,
+  .mm-ped-on .detalhes-pedido,
+  .mm-ped-on .status-pedido,
+  .mm-ped-on .status-pagamento-pedido,
+  .mm-ped-on .situacao-pedido,
+  .mm-ped-on .historico-pedido,
+  .mm-ped-on .itens-pedido,
+  .mm-ped-on .itens-listagem,
+  .mm-ped-on .pedido-item,
+  .mm-ped-on .pedido-item .item-principal,
+  .mm-ped-on #mm-ped-entrega,
+  .mm-ped-on .resumo-pedido,
+  .mm-ped-on .resumo-content,
+  .mm-ped-on .mm-ped-acoes {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* resumo empilha */
+  html.mm-ped-on .resumo-pedido .resumo-content {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* itens: produto em linha cheia; qtd e valor viram linhas label→valor */
+  .mm-ped-on .pedido-item .item-principal {
+    flex-wrap: wrap !important;
+    gap: 10px;
+  }
+  .mm-ped-on .pedido-item .link-produto { width: 100% !important; }
+  .mm-ped-on .pedido-item .item-principal > div.flex.column {
+    flex-direction: row !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  /* ações full-width */
+  .mm-ped-on .mm-ped-acoes { flex-direction: column; }
+  .mm-ped-on .mm-ped-acoes a { text-align: center; justify-content: center; }
+}

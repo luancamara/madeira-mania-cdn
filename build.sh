@@ -82,6 +82,8 @@ echo "Gerando bundle único..."
   echo ""
   css_to_js "$SRC/checkout-cro.css" "mm-checkout-cro-css" | sed 's/^/  /'
   echo ""
+  css_to_js "$SRC/pedidos.css" "mm-pedidos-css" | sed 's/^/  /'
+  echo ""
   css_to_js "$SRC/ticker.css" "mm-ticker-css" | sed 's/^/  /'
   echo ""
   css_to_js "$SRC/header.css" "mm-header-css" | sed 's/^/  /'
@@ -173,6 +175,15 @@ echo "Gerando bundle único..."
   echo ""
   echo "  /* === checkout-cro.js === */"
   sed 's/^/  /' "$SRC/checkout-cro.js"
+  echo ""
+
+  # --- 7. Pedidos (consulta + resultado) ---
+  echo "  /* ============================================="
+  echo "     SEÇÃO 7: PEDIDOS (consultar pedido + resultado)"
+  echo "     ============================================= */"
+  echo ""
+  echo "  /* === pedidos.js === */"
+  sed 's/^/  /' "$SRC/pedidos.js"
   echo ""
 
   echo "})();"
