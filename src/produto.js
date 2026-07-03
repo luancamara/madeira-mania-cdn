@@ -361,7 +361,10 @@
     /* Dados do produto para mensagem pré-preenchida */
     var prodNome = (document.querySelector('#prod-nome') || {}).value || '';
     var prodValor = (document.querySelector('#prod-valor') || {}).value || '';
-    var prodUrl = window.location.href;
+    /* URL sem query de tracking (utm/gclid deixam o link com +300 chars e o
+       WhatsApp mobile não gera preview); mantém só o hash de variação */
+    var prodUrl = window.location.origin + window.location.pathname
+      + (/^#derivacao=/.test(window.location.hash) ? window.location.hash : '');
     var phone = '5511915299488';
 
     /* Formatar preço */

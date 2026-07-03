@@ -9,7 +9,10 @@
 
   var phone = '5511915299488';
   var prodNome = (document.querySelector('#prod-nome') || {}).value;
-  var currentUrl = window.location.href;
+  /* URL sem query de tracking (utm/gclid deixam o link com +300 chars e o
+     WhatsApp mobile não gera preview); mantém só o hash de variação */
+  var currentUrl = window.location.origin + window.location.pathname
+    + (/^#derivacao=/.test(window.location.hash) ? window.location.hash : '');
 
   var msg;
   if (prodNome) {
@@ -52,6 +55,40 @@
   el.addEventListener('touchend', function() { el.style.transform = ''; }, { passive: true });
 
   document.body.appendChild(el);
+})();
+
+/* --- 1b. Limpar parâmetros de tracking da barra de endereço ---
+   Cliente que chega por anúncio (Google Shopping etc.) copia a URL com
+   utm, gclid, gbraid... (~400 chars) e o WhatsApp mobile não gera preview.
+   Removemos só os params de tracking DEPOIS do load (+3s), quando GTM/gtag
+   e Meta Pixel já consumiram gclid/utm — atribuição preservada.
+   Params funcionais do Magazord (inStock, derivacao, etc.) são mantidos. */
+(function cleanTrackingParams() {
+  var TRACKING = /^(utm_|gad_|gclid$|gbraid$|wbraid$|fbclid$|msclkid$|ttclid$|srsltid$)/;
+
+  function clean() {
+    try {
+      if (!window.history || !window.history.replaceState || !window.URL) return;
+      if (!window.location.search) return;
+      var url = new URL(window.location.href);
+      var keys = [];
+      url.searchParams.forEach(function (_v, k) { keys.push(k); });
+      var removed = false;
+      keys.forEach(function (k) {
+        if (TRACKING.test(k)) { url.searchParams.delete(k); removed = true; }
+      });
+      if (!removed) return;
+      var q = url.searchParams.toString();
+      window.history.replaceState(window.history.state, document.title,
+        url.pathname + (q ? '?' + q : '') + url.hash);
+    } catch (e) { /* URL API indisponível — mantém a URL como está */ }
+  }
+
+  if (document.readyState === 'complete') {
+    setTimeout(clean, 3000);
+  } else {
+    window.addEventListener('load', function () { setTimeout(clean, 3000); });
+  }
 })();
 
 /* --- 2. Back-to-top — substituir ícone (posição controlada via CSS) --- */
