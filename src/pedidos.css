@@ -39,6 +39,11 @@ html.mm-ped-on {
    PARTE 1 — FORM CONSULTAR PEDIDO (/login)
    ============================================================ */
 
+html.mm-consulta-on body { background: #EFEFED !important; }
+html.mm-consulta-on #main-area { background: #EFEFED !important; }
+html.mm-consulta-on, html.mm-consulta-on body,
+html.mm-ped-on, html.mm-ped-on body { overflow-x: clip; }
+
 .mm-consulta-on #form-consulta-pedido {
   font-family: var(--mm-sans);
 }
@@ -66,24 +71,28 @@ html.mm-ped-on {
   fill: none !important;
 }
 
-/* header: título centralizado, voltar ancorado à esquerda */
+/* header: voltar absoluto na linha do eyebrow (desktop); tudo centrado */
 .mm-consulta-on #form-consulta-pedido .title-area {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  position: relative;
   text-align: center;
+  position: relative;
+  padding-top: 24px;
 }
 .mm-consulta-on #form-consulta-pedido .title-area .cancel-consulta {
   position: absolute;
   left: 0;
-  top: 6px;
+  top: 22px;
+  margin: 0;
 }
 @media (max-width: 768px) {
+  .mm-consulta-on #form-consulta-pedido { padding: 0 20px 8px !important; box-sizing: border-box; }
+  .mm-consulta-on #form-consulta-pedido .title-area { padding-top: 16px; }
   .mm-consulta-on #form-consulta-pedido .title-area .cancel-consulta {
     position: static;
     align-self: flex-start;
-    margin-bottom: 8px;
+    margin: 0 0 14px;
   }
 }
 
@@ -99,6 +108,10 @@ html.mm-ped-on {
   margin: 4px 0 6px;
 }
 .mm-consulta-on #form-consulta-pedido .title-area h2 {
+  border: none !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 10px !important;
   font-family: var(--mm-serif) !important;
   font-weight: 400 !important;
   font-size: clamp(26px, 3.2vw, 34px) !important;
@@ -112,7 +125,10 @@ html.mm-ped-on {
   font-weight: 400 !important;
   color: var(--mm-fg-subtle) !important;
   line-height: 1.5 !important;
+  margin: 0 !important;
+  text-wrap: balance;
 }
+.mm-consulta-on #form-consulta-pedido form { margin-top: 4px !important; }
 
 /* form: mata floats nativos; empilha centrado */
 .mm-consulta-on #form-consulta-pedido form {
@@ -137,7 +153,15 @@ html.mm-ped-on {
   display: none !important;
 }
 
-/* campos: pill como o CEP do carrinho */
+/* campos: pill como o CEP do carrinho — borda hairline em repouso,
+   inclusive quando a validação remota do Magazord marca como válido */
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field,
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field[remotevalidateresult],
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field.valid,
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field:not(:focus) {
+  border-color: var(--mm-border) !important;
+  box-shadow: none !important;
+}
 .mm-consulta-on #form-consulta-pedido .ipt-ctn input.field {
   width: 100% !important;
   max-width: 100% !important;
@@ -155,15 +179,32 @@ html.mm-ped-on {
 .mm-consulta-on #form-consulta-pedido .ipt-ctn input.field::placeholder {
   color: var(--mm-fg-muted);
 }
-.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field:focus {
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field:focus,
+.mm-consulta-on #form-consulta-pedido .ipt-ctn input.field[remotevalidateresult]:focus {
   border-color: var(--mm-cta) !important;
   box-shadow: 0 0 0 3px var(--mm-cta-soft) !important;
   outline: none !important;
 }
 
+/* micro-label eyebrow acima de cada campo (injetada via JS) */
+.mm-consulta-on #form-consulta-pedido label.mm-cp-label {
+  display: block;
+  font-family: var(--mm-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--mm-fg-muted) !important;
+  line-height: 1.3 !important;
+  margin: 0 0 6px 22px !important;
+  padding: 0 !important;
+  text-align: left;
+}
+
 /* hint sob o nº do pedido */
 .mm-cp-hint {
   display: block;
+  text-wrap: balance;
   margin: 6px 22px 0;
   font-family: var(--mm-sans);
   font-size: 12px;
@@ -229,13 +270,30 @@ html.mm-ped-on {
    PARTE 2 — RESULTADO DO PEDIDO (/cliente/pedidos?verPedido=...)
    ============================================================ */
 
+/* página: fundo deliberado + coluna central de verdade.
+   Sem sidebar (consulta anônima) o JS marca .mm-ped-center no main:
+   o slot vazio da sidebar deixava o article 118px fora do centro. */
+html.mm-ped-on body { background: #EFEFED !important; }
 .mm-ped-on .central-cliente { background: transparent; }
+.mm-ped-on .central-cliente.mm-ped-center { justify-content: center !important; }
+.mm-ped-on .central-cliente.mm-ped-center .main-content {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
 .mm-ped-on .central-cliente .main-content {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  padding-top: 6px !important;
+  padding-bottom: 8px !important;
 }
-.mm-ped-on .detalhes-pedido { font-family: var(--mm-sans); color: var(--mm-fg); }
+.mm-ped-on .detalhes-pedido {
+  font-family: var(--mm-sans);
+  color: var(--mm-fg);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
 
 /* título nativo "Meus pedidos" some — o hero serif assume */
 .mm-ped-on .mm-ped-native-title { display: none !important; }
@@ -244,7 +302,8 @@ html.mm-ped-on {
 .mm-ped-on .detalhes-pedido {
   display: flex !important;
   flex-direction: column !important;
-  gap: 28px;
+  gap: 24px;
+  margin-top: 0 !important;
 }
 .mm-ped-on #mm-ped-hero   { order: 0; }
 .mm-ped-on .status-pedido,
@@ -373,11 +432,12 @@ html.mm-ped-on {
   background: var(--mm-card);
   border: 1px solid var(--mm-border);
   border-radius: var(--mm-r-lg);
-  padding: 28px;
+  padding: 26px 28px 22px;
   box-shadow: var(--mm-shadow-sm);
   box-sizing: border-box;
+  margin-bottom: 0 !important;
 }
-.mm-ped-on .itens-pedido { margin-top: 28px; }
+.mm-ped-on .itens-pedido { margin: 24px 0 0 !important; }
 
 .mm-ped-on .status-pedido h3 {
   font-family: var(--mm-serif) !important;
@@ -398,12 +458,14 @@ html.mm-ped-on {
 }
 
 /* --- TIMELINE / STEPPER (dots e linhas injetados pelo JS) --- */
+.mm-ped-on .status-pagamento-pedido { padding: 0 !important; }
 .mm-ped-on .historico-pedido {
   display: flex !important;
   align-items: stretch;
   justify-content: space-between;
   gap: 0;
-  margin: 4px 0 0;
+  margin: 0 !important;
+  padding: 10px 0 2px !important;
 }
 .mm-ped-on .item-historico {
   position: relative;
@@ -450,7 +512,7 @@ html.mm-ped-on {
 }
 .mm-ped-on .mm-step-dot svg { width: 18px; height: 18px; display: block; }
 .mm-ped-on .item-historico.status-success .mm-step-dot {
-  background: var(--mm-olive);
+  background: var(--mm-cta);
   color: #fff;
 }
 
@@ -467,17 +529,20 @@ html.mm-ped-on {
   animation: mm-ped-pulse 2.4s ease-out infinite;
 }
 
-/* labels */
+/* labels: neutros (verde fica nos dots/estado) — mata o #27AE60 nativo */
 .mm-ped-on .item-historico strong {
   font-family: var(--mm-sans);
   font-size: 12.5px;
   line-height: 1.35;
-  color: var(--mm-fg);
+  color: var(--mm-fg) !important;
   font-weight: 600;
   margin: 0 !important;
+  min-height: 34px;
+  text-wrap: balance;
 }
+.mm-ped-on .item-historico.status-success strong { color: var(--mm-fg) !important; }
 .mm-ped-on .item-historico.status-waiting strong {
-  color: var(--mm-fg-muted);
+  color: var(--mm-fg-muted) !important;
   font-weight: 500;
 }
 .mm-ped-on .item-historico.mm-atual strong { color: var(--mm-cta) !important; font-weight: 600; }
@@ -506,13 +571,13 @@ html.mm-ped-on {
   position: absolute;
   top: 20px;
   left: calc(50% + 25px);
-  right: calc(-50% + 25px);
+  width: calc(100% - 50px);
   height: 1.5px;
-  background: var(--mm-border);
+  background: #D1D5DB;
   z-index: 1;
 }
 .mm-ped-on .item-historico:last-child .mm-step-line { display: none; }
-.mm-ped-on .item-historico.status-success .mm-step-line { background: var(--mm-olive); }
+.mm-ped-on .item-historico.status-success .mm-step-line { background: var(--mm-cta); }
 
 /* --- BLOCO ENTREGA / RASTREIO --- */
 #mm-ped-entrega {
@@ -616,6 +681,9 @@ html.mm-ped-on .resumo-pedido .resumo-content {
 }
 .mm-ped-on .resumo-info {
   width: auto !important;
+  align-self: stretch !important;
+  height: auto !important;
+  min-height: 0 !important;
   background: var(--mm-card) !important;
   border: 1px solid var(--mm-border) !important;
   border-radius: var(--mm-r-lg) !important;
@@ -652,9 +720,13 @@ html.mm-ped-on .resumo-pedido .resumo-content {
 .mm-ped-on .resumo-info .frete,
 .mm-ped-on .resumo-info .descontos { padding: 3px 0; }
 .mm-ped-on .resumo-info .valor {
+  font-family: var(--mm-serif);
   color: var(--mm-fg) !important;
-  font-weight: 500;
+  font-weight: 400;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .mm-ped-on .resumo-info .descontos,
 .mm-ped-on .resumo-info .descontos .valor { color: var(--mm-cta) !important; }
@@ -686,6 +758,7 @@ html.mm-ped-on .resumo-pedido .resumo-content {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mm-fg-subtle);
+  white-space: nowrap;
 }
 .mm-ped-on .resumo-pagamento .resumo-total .valor {
   font-family: var(--mm-serif) !important;
@@ -706,14 +779,22 @@ html.mm-ped-on .resumo-pedido .resumo-content {
   flex-wrap: wrap;
   order: 3;
   width: 100%;
+  margin: 4px 0 8px !important;
+  padding: 0 !important;
 }
+.mm-ped-on .btn-comprar-novamente img,
+.mm-ped-on .btn-ajuda-pedido img,
+.mm-ped-on .btn-comprar-novamente svg,
+.mm-ped-on .btn-ajuda-pedido svg { display: none !important; }
 .mm-ped-on .btn-comprar-novamente,
 .mm-ped-on .btn-ajuda-pedido {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 46px;
+  height: 46px !important;
+  min-height: 46px !important;
+  line-height: 1 !important;
   padding: 0 24px !important;
   font-family: var(--mm-sans) !important;
   font-size: 13.5px !important;

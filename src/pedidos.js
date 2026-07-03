@@ -87,12 +87,43 @@
         h2.insertAdjacentElement('beforebegin', eyebrow);
       }
 
+      /* micro-labels eyebrow acima dos campos (placeholder some ao digitar) */
+      function addFieldLabel(input, txt) {
+        if (!input) return;
+        var line = input.closest('.line') || input.parentElement;
+        if (line.querySelector('.mm-cp-label')) return;
+        var lb = document.createElement('label');
+        lb.className = 'mm-cp-label';
+        lb.textContent = txt;
+        if (input.id) lb.setAttribute('for', input.id);
+        line.insertAdjacentElement('afterbegin', lb);
+      }
+      addFieldLabel(cpf, 'CPF ou CNPJ');
+      addFieldLabel(document.getElementById('numero-pedido'), 'Nº do pedido');
+      cpf.placeholder = '000.000.000-00';
+      var numeroIpt = document.getElementById('numero-pedido');
+      if (numeroIpt) numeroIpt.placeholder = 'Ex.: 0012606865731';
+
+      /* sentence case nos textos de ação (nativo mistura Title Case) */
+      var btnSubmit = box.querySelector('button.button-login');
+      if (btnSubmit) {
+        for (var bn = 0; bn < btnSubmit.childNodes.length; bn++) {
+          var nd = btnSubmit.childNodes[bn];
+          if (nd.nodeType === 3 && /consultar/i.test(nd.textContent)) {
+            nd.textContent = ' Consultar meu pedido ';
+          }
+        }
+      }
+      var cancelSpan = box.querySelector('.cancel-consulta span');
+      if (cancelSpan) cancelSpan.textContent = 'Voltar para login';
+
       /* hint: onde achar o nº do pedido */
       var numIpt = document.getElementById('numero-pedido');
       if (numIpt && !box.querySelector('.mm-cp-hint')) {
         var hint = document.createElement('span');
         hint.className = 'mm-cp-hint';
-        hint.textContent = 'O número do pedido está no e-mail de confirmação da compra.';
+        /* \u2011 = hífen não separável (evita quebrar "e-mail" entre linhas) */
+        hint.textContent = 'O número do pedido está no e\u2011mail de confirmação da compra.';
         var line = numIpt.closest('.line') || numIpt.parentElement;
         line.appendChild(hint);
       }
@@ -203,7 +234,18 @@
           WA_SVG + ' Falar sobre este pedido</a>';
       detalhes.insertAdjacentElement('afterbegin', hero);
 
-      /* título nativo "Meus pedidos" (acima do detalhes) fica redundante */
+      /* label do total: "Resumo do Pedido" quebra em 2-3 linhas — vira "Total" */
+    var totalRow = detalhes.querySelector('.resumo-pagamento .resumo-total > span:first-child');
+    if (totalRow && /resumo do pedido/i.test(totalRow.textContent)) {
+      totalRow.textContent = 'Total';
+    }
+    /* capitalização consistente entre títulos de seção */
+    var h3itens = detalhes.querySelector('.title-itens-pedido h3');
+    if (h3itens && /itens do pedido/i.test(h3itens.textContent)) {
+      h3itens.textContent = ' Itens do pedido ';
+    }
+
+    /* título nativo "Meus pedidos" (acima do detalhes) fica redundante */
       var headings = document.querySelectorAll('.main-content h1, .main-content h2, .main-content .title-user-area, .main-content > div');
       for (var t = 0; t < headings.length; t++) {
         var el = headings[t];
@@ -266,6 +308,12 @@
       /* se o container das ações não for filho direto de .detalhes-pedido,
          move pra lá pra participar do flex order (fica por último) */
       if (acoesRow.parentElement !== detalhes) detalhes.appendChild(acoesRow);
+    }
+
+    /* consulta anônima não tem sidebar: centraliza a coluna */
+    var mainEl = document.querySelector('main.central-cliente');
+    if (mainEl && mainEl.children.length === 1) {
+      mainEl.classList.add('mm-ped-center');
     }
 
     document.documentElement.classList.add('mm-ped-on');
