@@ -454,9 +454,12 @@
     var variantHTML = item.variant
       ? '<p class="mm-item-variant">' + escapeHTML(item.variant) + '</p>'
       : '';
-    var badgeHTML = item.deposito
-      ? '<span class="mm-item-badge">' + ICON.bolt + '<span>Pronta entrega · Envio em 24h</span></span>'
-      : '';
+    /* Badge "Pronta entrega" REMOVIDO: data-item-deposito é "1" pra TODOS os
+       produtos (é só o depósito padrão — confirmado comparando um produto
+       com tag "Envio Imediato" e um sob encomenda). O cart não expõe o sinal
+       real de pronta entrega (tag do produto, só existe na PDP), então
+       renderizar a promessa "Envio em 24h" aqui era falso pra maioria. */
+    var badgeHTML = '';
     var minDisabled = item.quantity <= 1 ? ' disabled aria-disabled="true"' : '';
 
     var priceBlock;
