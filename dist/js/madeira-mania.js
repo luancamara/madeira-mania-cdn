@@ -7857,13 +7857,15 @@ html.mm-ped-on #mm-floating-whatsapp { display: none !important; }
   display: flex !important;
   align-items: stretch;
   justify-content: space-between;
-  gap: 0;
+  gap: 0 !important; /* nativo tem column-gap 8% que desalinha os conectores */
   margin: 0 !important;
   padding: 10px 0 2px !important;
 }
 .mm-ped-on .item-historico {
   position: relative;
-  flex: 1 1 0;
+  flex: 1 1 0 !important;
+  width: auto !important;
+  max-width: none !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -7941,7 +7943,7 @@ html.mm-ped-on #mm-floating-whatsapp { display: none !important; }
   color: var(--mm-fg-muted) !important;
   font-weight: 500;
 }
-.mm-ped-on .item-historico.mm-atual strong { color: var(--mm-cta) !important; font-weight: 600; }
+.mm-ped-on .item-historico.mm-atual strong { color: var(--mm-fg) !important; }
 .mm-ped-on .item-historico .data-hora-etapa {
   font-family: var(--mm-sans) !important;
   white-space: nowrap;
@@ -7954,13 +7956,17 @@ html.mm-ped-on #mm-floating-whatsapp { display: none !important; }
 }
 .mm-ped-on .item-historico.mm-atual .data-hora-etapa:empty::before {
   content: 'em andamento' !important;
-  display: inline !important;
+  display: inline-block !important;
   white-space: nowrap;
-  font-size: 10.5px;
+  background: var(--mm-cta-soft);
+  color: var(--mm-cta);
+  border-radius: var(--mm-r-full);
+  padding: 3px 10px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mm-cta);
+  line-height: 1.3;
 }
 
 /* conector entre etapas */
