@@ -267,6 +267,256 @@ html.mm-ped-on, html.mm-ped-on body { overflow-x: clip; }
 .mm-cp-wa svg { flex-shrink: 0; }
 
 /* ============================================================
+   PARTE 1B — /login UNIFICADO: card de login + card de consulta
+   lado a lado (grid), consulta sempre visível (sem toggle).
+   Estados internos do login (senha/cadastro/recovery/otp) intactos:
+   nenhum reparent — só layout dos irmãos dentro de .page-login.
+   ============================================================ */
+
+html.mm-login-on #main-area { background: #EFEFED !important; }
+
+.mm-login-on .page.page-login {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 20px;
+  align-items: start;
+  max-width: 1060px;
+  margin: 36px auto 52px !important;
+  padding: 0 16px;
+  box-sizing: border-box;
+  width: 100% !important;
+}
+
+/* cards */
+.mm-login-on .login-holder,
+.mm-login-on #form-otp-code {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-lg) !important;
+  padding: 28px 32px !important;
+  box-shadow: var(--mm-shadow-sm) !important;
+  box-sizing: border-box;
+}
+.mm-login-on #form-consulta-pedido {
+  display: block !important; /* nativo esconde via inline style (toggle) */
+  width: 100% !important;
+  margin: 0 !important;
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-lg) !important;
+  padding: 24px 28px 6px !important;
+  box-shadow: var(--mm-shadow-sm) !important;
+  box-sizing: border-box;
+}
+
+/* toggles e duplicatas somem: consulta agora é permanente */
+.mm-login-on #btn-consulta,
+.mm-login-on .button-consultar-pedido,
+.mm-login-on #box-consulta-pedido,
+.mm-login-on #form-consulta-pedido .cancel-consulta { display: none !important; }
+
+/* header do login: eyebrow (injetada) + título serif; estados trocam o
+   texto do h2 ("Acesse ou crie sua conta" → "Cadastre-se") e o estilo segue */
+.mm-login-on .login-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px;
+  margin-bottom: 18px;
+  border: none !important;
+  padding-bottom: 0 !important;
+}
+.mm-login-on .login-holder .default-form-login h3,
+.mm-login-on .login-holder .default-form-login .lbl,
+.mm-login-on #form-consulta-pedido .title-area h3 { border: none !important; }
+/* sub-título de estado ("Digite sua senha" etc.) e link de recovery */
+.mm-login-on .login-holder .default-form-login h3 {
+  font-family: var(--mm-sans) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--mm-fg) !important;
+  text-align: left !important;
+}
+.mm-login-on .login-holder .recovery-password-area {
+  color: var(--mm-cta) !important;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mm-login-on .login-header h2,
+.mm-login-on .login-holder h2.title {
+  font-family: var(--mm-serif) !important;
+  font-weight: 400 !important;
+  font-size: clamp(24px, 2.6vw, 30px) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--mm-fg) !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.mm-login-on .login-header .btn-voltar {
+  order: -1;
+  margin-bottom: 10px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.mm-login-on .mm-lg-eyebrow {
+  display: block;
+  font-family: var(--mm-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mm-fg-muted);
+}
+
+/* corpo do card de login: textos e campos em todos os estados */
+.mm-login-on .login-holder .txt-informe,
+.mm-login-on .login-holder p {
+  font-family: var(--mm-sans);
+  font-size: 13.5px;
+  color: var(--mm-fg-subtle);
+  line-height: 1.55;
+}
+.mm-login-on .login-holder .txt-informe { text-align: left !important; display: block; }
+/* labels dos forms (cadastro/senha/recovery) */
+.mm-login-on .login-holder label.lbl {
+  font-family: var(--mm-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--mm-fg-soft) !important;
+}
+/* links dentro do card (pessoa jurídica, consulte aqui, esqueci a senha...) */
+.mm-login-on .login-holder .default-form-login a,
+.mm-login-on .login-holder .mm-lg-link {
+  color: var(--mm-cta) !important;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* checkbox de ofertas no verde da marca */
+.mm-login-on .login-holder input[type="checkbox"] { accent-color: var(--mm-cta); }
+.mm-login-on .login-holder .default-form-login input[type="text"],
+.mm-login-on .login-holder .default-form-login input[type="email"],
+.mm-login-on .login-holder .default-form-login input[type="password"],
+.mm-login-on .login-holder .default-form-login input[type="tel"],
+.mm-login-on #form-otp-code input[type="text"] {
+  width: 100% !important;
+  height: 52px !important;
+  box-sizing: border-box !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 14px !important;
+  color: var(--mm-fg) !important;
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-full) !important;
+  padding: 0 22px !important;
+  box-shadow: none !important;
+  transition: border-color var(--mm-tr-fast), box-shadow var(--mm-tr-fast);
+}
+.mm-login-on .login-holder .default-form-login input:focus {
+  border-color: var(--mm-cta) !important;
+  box-shadow: 0 0 0 3px var(--mm-cta-soft) !important;
+  outline: none !important;
+}
+.mm-login-on .login-holder .default-form-login input::placeholder { color: var(--mm-fg-muted); }
+/* ícones sprite dos campos: decorativos somem; olho de senha (funcional)
+   fica, dessaturado */
+.mm-login-on .login-holder .mail-icon,
+.mm-login-on .login-holder [class*="icon-"],
+.mm-login-on .login-holder span[class$="-icon"]:not(.eye-icon) { display: none !important; }
+.mm-login-on .login-holder .eye-icon {
+  filter: grayscale(1) opacity(0.55);
+}
+
+/* botão principal de cada estado: pill verde */
+.mm-login-on .login-holder button.button-send,
+.mm-login-on .login-holder button.button-login {
+  height: 52px !important;
+  width: 100%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--mm-sans) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  background: var(--mm-cta) !important;
+  border: none !important;
+  border-radius: var(--mm-r-full) !important;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background var(--mm-tr-fast), transform var(--mm-tr-fast);
+}
+.mm-login-on .login-holder button.button-send:hover,
+.mm-login-on .login-holder button.button-login:hover { background: var(--mm-cta-dark) !important; }
+.mm-login-on .login-holder button.button-send:active,
+.mm-login-on .login-holder button.button-login:active { transform: scale(0.98); }
+
+/* divisor "ou" antes do login social (injetado) */
+.mm-login-on .mm-lg-ou {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  font-family: var(--mm-sans);
+  font-size: 12px;
+  color: var(--mm-fg-muted);
+}
+.mm-login-on .mm-lg-ou::before,
+.mm-login-on .mm-lg-ou::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--mm-border-soft);
+}
+.mm-login-on .social-login-area { display: flex; justify-content: center; }
+.mm-login-on .social-login-area .btn-login {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* rodapé legal do card */
+.mm-login-on .footer-login,
+.mm-login-on .footer-login p {
+  font-family: var(--mm-sans);
+  font-size: 11.5px !important;
+  color: var(--mm-fg-subtle) !important;
+  line-height: 1.6;
+  text-align: center;
+}
+.mm-login-on .footer-login { margin-top: 18px; border-top: 1px solid var(--mm-border-soft); padding-top: 14px; }
+.mm-login-on .footer-login a { color: var(--mm-cta) !important; font-weight: 600; }
+
+/* card da consulta: título alinhado à esquerda pra parear com o login */
+.mm-login-on #form-consulta-pedido .title-area {
+  align-items: flex-start !important;
+  text-align: left;
+  padding-top: 0;
+}
+.mm-login-on #form-consulta-pedido .title-area h2 {
+  font-size: clamp(24px, 2.6vw, 30px) !important;
+}
+.mm-login-on #form-consulta-pedido form { max-width: none; }
+.mm-login-on .mm-cp-hint { text-align: left; }
+.mm-login-on .mm-cp-wa { max-width: none; }
+
+@media (max-width: 900px) {
+  .mm-login-on .page.page-login {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+    margin: 20px auto 32px !important;
+  }
+  .mm-login-on .login-holder { padding: 22px 20px !important; }
+  .mm-login-on #form-consulta-pedido { padding: 22px 20px 4px !important; }
+}
+
+/* ============================================================
    PARTE 2 — RESULTADO DO PEDIDO (/cliente/pedidos?verPedido=...)
    ============================================================ */
 

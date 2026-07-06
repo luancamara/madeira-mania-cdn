@@ -140,18 +140,47 @@
       }
 
       document.documentElement.classList.add('mm-consulta-on');
+
+      /* --- layout unificado login + consulta (sem toggle) --- */
+      var holder = document.querySelector('.login-holder');
+      var pageLogin = document.querySelector('.page.page-login');
+      if (holder && pageLogin) {
+        /* eyebrow no header do login */
+        var lgHeader = holder.querySelector('.login-header');
+        if (lgHeader && !lgHeader.querySelector('.mm-lg-eyebrow')) {
+          var lgEyebrow = document.createElement('span');
+          lgEyebrow.className = 'mm-lg-eyebrow';
+          lgEyebrow.textContent = 'Área do cliente';
+          var lgH2 = lgHeader.querySelector('h2');
+          if (lgH2) lgH2.insertAdjacentElement('beforebegin', lgEyebrow);
+        }
+        /* divisor "ou" antes do login social */
+        var social = holder.querySelector('.social-login-area');
+        if (social && !holder.querySelector('.mm-lg-ou')) {
+          var ou = document.createElement('div');
+          ou.className = 'mm-lg-ou';
+          ou.textContent = 'ou';
+          social.insertAdjacentElement('beforebegin', ou);
+        }
+        /* "Inserir dados como pessoa jurídica" não é <a> — marca pra estilizar */
+        var pjToggle = [].filter.call(holder.querySelectorAll('span, div, button'), function (e2) {
+          return /pessoa jur/i.test(e2.textContent) && e2.textContent.length < 60 && e2.children.length === 0;
+        })[0];
+        if (pjToggle) pjToggle.classList.add('mm-lg-link');
+
+        document.documentElement.classList.add('mm-login-on');
+      }
     })();
 
-    /* deep-link: /login#consultar-pedido abre o form direto */
+    /* deep-link: /login#consultar-pedido rola até o card e foca o CPF
+       (a consulta agora é permanente — clicar no toggle esconderia o login) */
     if (/#consultar?-?pedido/i.test(window.location.hash)) {
-      var clicks = 0;
-      (function openConsulta() {
-        var btn = document.getElementById('btn-consulta');
+      setTimeout(function () {
         var box = document.getElementById('form-consulta-pedido');
-        if (box && box.offsetParent !== null) return; /* já visível */
-        if (btn) btn.click();
-        if (++clicks < 10) setTimeout(openConsulta, 400);
-      })();
+        var cpfIpt = document.getElementById('cpfcnpj');
+        if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (cpfIpt) setTimeout(function () { cpfIpt.focus(); }, 500);
+      }, 600);
     }
   }
 
