@@ -272,9 +272,25 @@
       });
     }
 
-    /* --- BLOCO ENTREGA/RASTREIO (após a timeline) --- */
+    /* --- previsão de entrega no stepper (pedidos despachados) --- */
+    var rastreioArea = detalhes.querySelector('.rastreio-area');
+    var prevEl = rastreioArea ? rastreioArea.querySelector('.previsao-entrega .previsao') : null;
+    var prevTxt = prevEl ? prevEl.textContent.trim() : '';
+    if (prevTxt) {
+      var etapaEntrega = detalhes.querySelector('.item-historico.entrega');
+      if (etapaEntrega && !etapaEntrega.querySelector('.mm-step-prev')) {
+        var prev = document.createElement('span');
+        prev.className = 'mm-step-prev';
+        prev.textContent = 'Previsão: ' + prevTxt;
+        etapaEntrega.appendChild(prev);
+      }
+    }
+
+    /* --- BLOCO ENTREGA/RASTREIO (após a timeline) ---
+       Só quando o pedido AINDA NÃO foi despachado — depois do despacho o
+       card nativo "Transporte" (restilizado) assume com prazo+código+CTA. */
     var situacao = detalhes.querySelector('.status-pagamento-pedido');
-    if (situacao && !document.getElementById('mm-ped-entrega')) {
+    if (situacao && !rastreioArea && !document.getElementById('mm-ped-entrega')) {
       var bloco = document.createElement('div');
       bloco.id = 'mm-ped-entrega';
 

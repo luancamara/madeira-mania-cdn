@@ -615,6 +615,136 @@ html.mm-ped-on #mm-floating-whatsapp { display: none !important; }
 #mm-ped-entrega svg { flex-shrink: 0; }
 #mm-ped-entrega a { color: var(--mm-cta) !important; font-weight: 600; }
 
+/* --- TRANSPORTE + NOTA FISCAL (pedidos despachados) --- */
+.mm-ped-on .acoes-pedido-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0 0 !important;
+  width: 100% !important;
+}
+.mm-ped-on .acoes-pedido-grid > * {
+  background: var(--mm-card);
+  border: 1px solid var(--mm-border);
+  border-radius: var(--mm-r-lg);
+  padding: 22px !important;
+  box-shadow: var(--mm-shadow-sm);
+  box-sizing: border-box;
+  margin: 0 !important;
+  min-width: 0;
+}
+.mm-ped-on .acoes-pedido-grid h3,
+.mm-ped-on .acoes-pedido-grid h4,
+.mm-ped-on .acoes-pedido-grid .title-acao {
+  font-family: var(--mm-serif) !important;
+  font-weight: 400 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.01em !important;
+  color: var(--mm-fg) !important;
+  margin: 0 0 14px !important;
+}
+/* previsão de entrega: valor em serif, label eyebrow */
+.mm-ped-on .previsao-entrega-area { gap: 10px; }
+.mm-ped-on .previsao-entrega-area > img { display: none !important; }
+.mm-ped-on .previsao-entrega .previsao {
+  font-family: var(--mm-serif) !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  color: var(--mm-fg) !important;
+}
+.mm-ped-on .previsao-entrega .text {
+  font-family: var(--mm-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--mm-fg-muted) !important;
+}
+/* CTA rastrear: pill verde */
+.mm-ped-on a.link-rastrear-pedido {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 20px !important;
+  background: var(--mm-cta) !important;
+  color: #fff !important;
+  border-radius: var(--mm-r-full) !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background var(--mm-tr-fast);
+}
+.mm-ped-on a.link-rastrear-pedido:hover { background: var(--mm-cta-dark) !important; }
+/* código de rastreio */
+.mm-ped-on .title-rastreio {
+  font-family: var(--mm-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--mm-fg-muted) !important;
+  margin: 14px 0 6px !important;
+}
+.mm-ped-on .rastreio { gap: 10px; align-items: center; }
+.mm-ped-on .codigo-rastreio { flex: 1 1 auto; min-width: 0; }
+.mm-ped-on .codigo-rastreio a { display: block; width: 100%; }
+.mm-ped-on input.link-rastreio {
+  width: 100% !important;
+  height: 40px !important;
+  box-sizing: border-box;
+  background: var(--mm-bg) !important;
+  border: 1px solid var(--mm-border-soft) !important;
+  border-radius: var(--mm-r) !important;
+  padding: 0 12px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-size: 12.5px !important;
+  color: var(--mm-fg-soft) !important;
+  cursor: pointer;
+}
+/* copiar: pill neutra (mata o botão azul nativo) */
+.mm-ped-on .copy-codigo {
+  background: var(--mm-card) !important;
+  border: 1px solid var(--mm-border) !important;
+  border-radius: var(--mm-r-full) !important;
+  height: 40px;
+  padding: 0 16px !important;
+  font-family: var(--mm-sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--mm-fg-soft) !important;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--mm-tr-fast);
+}
+.mm-ped-on .copy-codigo:hover { border-color: var(--mm-fg-subtle) !important; color: var(--mm-fg) !important; }
+.mm-ped-on .copy-codigo img { display: none !important; }
+/* nota fiscal: texto e link no padrão */
+.mm-ped-on .acoes-pedido-grid,
+.mm-ped-on .acoes-pedido-grid span,
+.mm-ped-on .acoes-pedido-grid p {
+  font-family: var(--mm-sans);
+  font-size: 13px;
+  color: var(--mm-fg-meta);
+  line-height: 1.55;
+}
+.mm-ped-on .acoes-pedido-grid a:not(.link-rastrear-pedido) {
+  color: var(--mm-cta) !important;
+  font-weight: 600;
+}
+
+/* previsão dentro do stepper (etapa Entrega, injetada via JS) */
+.mm-ped-on .mm-step-prev {
+  display: block;
+  font-family: var(--mm-sans);
+  font-size: 11px;
+  color: var(--mm-fg-subtle);
+  margin-top: 4px;
+}
+
 /* --- ITENS DO PEDIDO --- */
 .mm-ped-on .itens-listagem { background: transparent !important; padding: 0 !important; }
 .mm-ped-on .pedido-item {
@@ -900,6 +1030,9 @@ html.mm-ped-on .resumo-pedido .resumo-content {
   html.mm-ped-on .resumo-pedido .resumo-content {
     grid-template-columns: 1fr !important;
   }
+
+  /* transporte + nota fiscal empilham */
+  .mm-ped-on .acoes-pedido-grid { grid-template-columns: 1fr !important; }
 
   /* itens: produto em linha cheia; qtd e valor viram linhas label→valor */
   .mm-ped-on .pedido-item .item-principal {
