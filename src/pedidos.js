@@ -123,7 +123,7 @@
         var hint = document.createElement('span');
         hint.className = 'mm-cp-hint';
         /* \u2011 = hífen não separável (evita quebrar "e-mail" entre linhas) */
-        hint.textContent = 'O número do pedido está no e\u2011mail de confirmação da compra.';
+        hint.textContent = 'O número do pedido está no\u00A0e\u2011mail de confirmação da compra.';
         var line = numIpt.closest('.line') || numIpt.parentElement;
         line.appendChild(hint);
       }
@@ -162,6 +162,32 @@
           ou.textContent = 'ou';
           social.insertAdjacentElement('beforebegin', ou);
         }
+        /* Google Sign-In: re-renderiza no formato pill do DS (a API do GSI
+           aceita shape/width — o iframe nativo vinha retangular 223px) */
+        setTimeout(function () {
+          try {
+            var rb = holder.querySelector('.social-login-area .render-button');
+            if (rb && window.google && google.accounts && google.accounts.id) {
+              rb.innerHTML = '';
+              google.accounts.id.renderButton(rb, {
+                theme: 'outline', size: 'large', shape: 'pill',
+                width: Math.min(400, rb.parentElement.clientWidth || 360),
+                text: 'continue_with', logo_alignment: 'center'
+              });
+            }
+          } catch (e) { /* GSI ausente — botão nativo permanece */ }
+          /* social não renderizou (comum no mobile): divisor "ou" órfão sai */
+          setTimeout(function () {
+            var soc = holder.querySelector('.social-login-area');
+            var ou2 = holder.querySelector('.mm-lg-ou');
+            var vivo = soc && soc.offsetParent !== null && soc.querySelector('iframe');
+            if (!vivo) {
+              if (ou2) ou2.style.display = 'none';
+              if (soc) soc.style.display = 'none';
+            }
+          }, 2000);
+        }, 1200);
+
         /* "Inserir dados como pessoa jurídica" não é <a> — marca pra estilizar */
         var pjToggle = [].filter.call(holder.querySelectorAll('span, div, button'), function (e2) {
           return /pessoa jur/i.test(e2.textContent) && e2.textContent.length < 60 && e2.children.length === 0;

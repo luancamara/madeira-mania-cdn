@@ -277,9 +277,9 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
 
 .mm-login-on .page.page-login {
   display: grid !important;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
   max-width: 1060px;
   margin: 36px auto 52px !important;
   padding: 0 16px;
@@ -301,16 +301,20 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   box-sizing: border-box;
 }
 .mm-login-on #form-consulta-pedido {
-  display: block !important; /* nativo esconde via inline style (toggle) */
+  display: flex !important; /* nativo esconde via inline style (toggle) */
+  flex-direction: column !important;
   width: 100% !important;
+  max-width: none !important;
   margin: 0 !important;
   background: var(--mm-card) !important;
   border: 1px solid var(--mm-border) !important;
   border-radius: var(--mm-r-lg) !important;
-  padding: 24px 28px 6px !important;
+  padding: 28px 32px 6px !important;
   box-shadow: var(--mm-shadow-sm) !important;
   box-sizing: border-box;
 }
+.mm-login-on #form-consulta-pedido .mm-cp-wa { margin-top: auto !important; }
+.mm-login-on #form-consulta-pedido form { margin-bottom: 18px !important; }
 
 /* toggles e duplicatas somem: consulta agora é permanente */
 .mm-login-on #btn-consulta,
@@ -324,11 +328,13 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  gap: 2px;
-  margin-bottom: 18px;
+  gap: 0;
+  margin-bottom: 14px;
   border: none !important;
   padding-bottom: 0 !important;
 }
+.mm-login-on .mm-lg-eyebrow { margin: 0 0 8px !important; }
+.mm-login-on .login-header h2 { margin: 0 !important; }
 .mm-login-on .login-holder .default-form-login h3,
 .mm-login-on .login-holder .default-form-login .lbl,
 .mm-login-on #form-consulta-pedido .title-area h3 { border: none !important; }
@@ -383,7 +389,30 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   color: var(--mm-fg-subtle);
   line-height: 1.55;
 }
-.mm-login-on .login-holder .txt-informe { text-align: left !important; display: block; }
+.mm-login-on .login-holder .txt-informe {
+  text-align: left !important;
+  display: block;
+  margin: 0 0 18px !important;
+  padding: 0 !important;
+}
+.mm-login-on .login-holder .holder-input,
+.mm-login-on .login-holder .suggest-domains {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+.mm-login-on .login-holder .default-form-login .line,
+.mm-login-on .login-holder .default-form-login .line-field {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box;
+}
 /* labels dos forms (cadastro/senha/recovery) */
 .mm-login-on .login-holder label.lbl {
   font-family: var(--mm-sans) !important;
@@ -450,8 +479,15 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   border: none !important;
   border-radius: var(--mm-r-full) !important;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 16px;
   transition: background var(--mm-tr-fast), transform var(--mm-tr-fast);
+}
+/* seta no CTA, padrão do DS (o "Consultar meu pedido" vizinho já tem) */
+.mm-login-on .login-holder button.button-send::after,
+.mm-login-on .login-holder button.button-login::after {
+  content: '→';
+  font-size: 16px;
+  line-height: 1;
 }
 .mm-login-on .login-holder button.button-send:hover,
 .mm-login-on .login-holder button.button-login:hover { background: var(--mm-cta-dark) !important; }
@@ -491,7 +527,44 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   text-align: center;
 }
 .mm-login-on .footer-login { margin-top: 18px; border-top: 1px solid var(--mm-border-soft); padding-top: 14px; }
-.mm-login-on .footer-login a { color: var(--mm-cta) !important; font-weight: 600; }
+.mm-login-on .footer-login,
+.mm-login-on .footer-login * {
+  font-size: 11.5px !important;
+  line-height: 1.6 !important;
+  text-wrap: balance;
+}
+.mm-login-on .footer-login a { color: var(--mm-cta) !important; font-weight: 500 !important; }
+
+/* tablet nativo centra os controles a ~63% — força largura total na cadeia */
+html.mm-login-on .login-holder .default-form-login form,
+html.mm-login-on .login-holder .default-form-login .holder-input,
+html.mm-login-on .login-holder .default-form-login .suggest-domains,
+html.mm-login-on .login-holder .default-form-login .line,
+html.mm-login-on .login-holder .default-form-login .line-field,
+html.mm-login-on .login-holder .default-form-login button.button-send,
+html.mm-login-on .login-holder .default-form-login button.button-login,
+html.mm-login-on.mm-consulta-on #form-consulta-pedido form,
+html.mm-login-on.mm-consulta-on #form-consulta-pedido form .line,
+html.mm-login-on.mm-consulta-on #form-consulta-pedido .ipt-ctn,
+html.mm-login-on.mm-consulta-on #form-consulta-pedido button.button-login {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* social sem iframe (Google não renderizou) = divisor "ou" some — CSS
+   reage na hora, sem depender de timer */
+.mm-login-on .social-login-area:not(:has(iframe)) { display: none !important; }
+.mm-login-on .mm-lg-ou:has(+ .social-login-area:not(:has(iframe))) { display: none !important; }
+
+/* borda idle sempre hairline, mesmo com classe de validação nativa */
+html.mm-login-on #form-consulta-pedido .ipt-ctn input.field:not(:focus),
+html.mm-login-on #form-consulta-pedido .ipt-ctn input.field.field-valid:not(:focus),
+html.mm-login-on .login-holder .default-form-login input:not(:focus):not([type="checkbox"]) {
+  border-color: var(--mm-border) !important;
+  box-shadow: none !important;
+}
 
 /* card da consulta: título alinhado à esquerda pra parear com o login */
 .mm-login-on #form-consulta-pedido .title-area {
@@ -499,8 +572,17 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   text-align: left;
   padding-top: 0;
 }
-.mm-login-on #form-consulta-pedido .title-area h2 {
+.mm-login-on #form-consulta-pedido form .line.submit {
+  padding: 0 !important;
+  margin: 4px 0 0 !important;
+}
+.mm-login-on #form-consulta-pedido form .line.submit button { width: 100% !important; }
+html.mm-login-on.mm-consulta-on #form-consulta-pedido .title-area h2 {
   font-size: clamp(24px, 2.6vw, 30px) !important;
+  margin: 0 0 10px !important;
+}
+html.mm-login-on.mm-consulta-on #form-consulta-pedido .mm-cp-eyebrow {
+  margin: 0 0 8px !important;
 }
 .mm-login-on #form-consulta-pedido form { max-width: none; }
 .mm-login-on .mm-cp-hint { text-align: left; }
@@ -1244,13 +1326,13 @@ html.mm-ped-on .resumo-pedido .resumo-content {
 
   /* cards mais enxutos */
   .mm-ped-on .status-pedido .situacao-pedido,
-  .mm-ped-on .itens-pedido { padding: 20px; }
+  .mm-ped-on .itens-pedido { padding: 20px 20px 16px; }
   .mm-ped-on .itens-pedido { margin-top: 20px; }
 
   /* timeline vira stepper VERTICAL */
   .mm-ped-on .historico-pedido {
     flex-direction: column !important;
-    gap: 20px;
+    gap: 20px !important;
   }
   .mm-ped-on .item-historico {
     flex-direction: row !important;
@@ -1260,7 +1342,12 @@ html.mm-ped-on .resumo-pedido .resumo-content {
     padding: 0 !important;
   }
   .mm-ped-on .mm-step-dot { margin-bottom: 0; width: 40px; height: 40px; }
-  .mm-ped-on .item-historico strong { font-size: 13.5px; }
+  .mm-ped-on .item-historico strong {
+    font-size: 13.5px !important;
+    text-align: left !important;
+    flex: 1 1 auto;
+    min-height: 0 !important;
+  }
   .mm-ped-on .item-historico .data-hora-etapa {
     margin-top: 0;
     margin-left: auto;
