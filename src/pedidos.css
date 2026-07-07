@@ -511,11 +511,45 @@ html.mm-login-on #main-area { background: #EFEFED !important; }
   height: 1px;
   background: var(--mm-border-soft);
 }
-.mm-login-on .social-login-area { display: flex; justify-content: center; }
-.mm-login-on .social-login-area .btn-login {
+.mm-login-on .social-login-area,
+.mm-login-on .social-login-area .btn-login,
+.mm-login-on .social-login-area .render-button {
+  width: 100% !important;
+  max-width: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
   background: transparent !important;
   border: none !important;
 }
+.mm-login-on .social-login-area .render-button > div,
+.mm-login-on .social-login-area .render-button iframe {
+  margin: 0 auto !important;
+  float: none !important;
+}
+
+/* logos do rodapé: só o nosso (1º), centralizado; Magazord (2º) fora */
+.mm-login-on .footer-login .logos {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center;
+}
+.mm-login-on .footer-login .logos .logo-login:nth-of-type(2) { display: none !important; }
+.mm-login-on .footer-login .logos .logo-login:first-child svg,
+.mm-login-on .footer-login .logos .logo-login:first-child img {
+  max-height: 34px;
+  width: auto;
+}
+
+/* 3. textos de Turnstile/Cloudflare e "Nunca postaremos" ocultos */
+.mm-login-on .footer-login .mensagem-turnstile,
+.mm-login-on .footer-login .mensagem-lgpd,
+.mm-login-on .footer-login .mm-lg-nopost { display: none !important; }
+
+/* 4. FAB flutuante de WhatsApp oculto no login */
+html.mm-login-on #mm-floating-whatsapp { display: none !important; }
 
 /* rodapé legal do card */
 .mm-login-on .footer-login,

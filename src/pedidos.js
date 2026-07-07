@@ -171,7 +171,7 @@
               rb.innerHTML = '';
               google.accounts.id.renderButton(rb, {
                 theme: 'outline', size: 'large', shape: 'pill',
-                width: Math.min(400, rb.parentElement.clientWidth || 360),
+                width: 320,
                 text: 'continue_with', logo_alignment: 'center'
               });
             }
@@ -193,6 +193,14 @@
           return /pessoa jur/i.test(e2.textContent) && e2.textContent.length < 60 && e2.children.length === 0;
         })[0];
         if (pjToggle) pjToggle.classList.add('mm-lg-link');
+
+        /* "*Nunca postaremos nada em suas redes sociais" é <p> sem classe */
+        var footerLg = document.querySelector('.footer-login');
+        if (footerLg) {
+          [].forEach.call(footerLg.querySelectorAll('p'), function (pp) {
+            if (/nunca postaremos/i.test(pp.textContent)) pp.classList.add('mm-lg-nopost');
+          });
+        }
 
         document.documentElement.classList.add('mm-login-on');
       }
