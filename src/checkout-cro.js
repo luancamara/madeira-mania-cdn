@@ -1470,10 +1470,20 @@
       }
       var freteEl = area.querySelector('#resumo-compra .frete-calculado');
       var shipping = null, shippingDeadline = '';
-      if (freteEl && freteEl.textContent.trim()) {
+      if (freteEl) {
+        /* AUTORITATIVO: .servico-frete[data-valor-frete] (numérico). data-valor-frete=0
+           é grátis DE VERDADE; o texto "frete grátis!" (nudge promo ≥R$2.000) NÃO conta. */
+        var servSel = freteEl.querySelector('.servico-frete[data-valor-frete]');
+        if (servSel) {
+          var dvc = servSel.getAttribute('data-valor-frete');
+          if (dvc !== null && dvc !== '') {
+            var vc = parseFloat(dvc);
+            if (!isNaN(vc)) shipping = vc;
+          }
+        }
         var raw = freteEl.textContent.trim();
-        if (/gr[aá]tis/i.test(raw)) shipping = 0;
-        else {
+        if (shipping === null && raw) {
+          /* Fallback só pra valor POSITIVO no texto — nunca deriva grátis de texto livre */
           var p = parseBRL(raw);
           if (p > 0) shipping = p;
         }
@@ -1852,6 +1862,75 @@
   /* Lê frete do DOM Magazord — retorna { value, deadline, name, city, options[] }
      Suporta tanto cart (.frete-calculado com .servico-frete) quanto onepage
      (.info-frete-selec com .item-frete + .dias-entrega). */
+  /* Frete AUTORITATIVO do onepage. O onepage do Magazord NÃO calcula o frete
+     no DOM — mostra "Grátis" como placeholder (.line-entrega/.valor-frete),
+     com .servico-frete vazio (data-valor-frete=null). Pintar isso dava "Frete
+     grátis" falso no resumo (bug reportado: R$223,50 reais virava "Grátis").
+     O valor real vem do endpoint do carrinho, que:
+       - devolve .servico-frete[data-valor-frete] (numérico, confiável);
+       - PERSISTE o frete server-side (o pedido cobra esse valor — validado);
+       - traz múltiplas modalidades (Econômico/Normal/Expressa).
+     Lemos data-valor-frete, NUNCA o texto: o HTML tem um nudge
+     <span class="frete-gratis">frete grátis!</span> (promo ≥R$2.000) que
+     falseia qualquer regex /grátis/. */
+  function fetchAuthoritativeFrete(cepDigits, cb) {
+    var cepFmt = formatCep(cepDigits);
+    var coupon = '';
+    try { var s0 = loadCartSnapshot(); coupon = (s0 && s0.couponCode) || ''; } catch (e) {}
+    var body = 'cep=' + encodeURIComponent(cepFmt) + '&cupom-desconto=' + encodeURIComponent(coupon);
+    fetch('/checkout/cart?operation=atualizaValoresCarrinho', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: body
+    })
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        var doc;
+        try { doc = new DOMParser().parseFromString(html, 'text/html'); }
+        catch (e) { cb(null); return; }
+        var servEls = doc.querySelectorAll('.servico-frete');
+        var opts = [];
+        for (var i = 0; i < servEls.length; i++) {
+          var s = servEls[i];
+          var dv = s.getAttribute('data-valor-frete');
+          if (dv === null || dv === '') continue;   /* placeholder sem valor → ignora */
+          var valor = parseFloat(dv);
+          if (isNaN(valor)) continue;
+          var radio = s.querySelector('input[type="radio"]');
+          var prazoEl = s.querySelector('.dias-entrega');
+          var prazoText = prazoEl ? prazoEl.textContent.trim() : '';
+          var pm = prazoText.match(/(\d+(?:\s*[aà]\s*\d+)?\s*dias?(?:\s*[úu]teis)?)/i);
+          opts.push({
+            id: radio ? radio.value : '',
+            name: s.getAttribute('data-servico-frete') || '',
+            deadline: pm ? pm[1].replace(/\s+/g, ' ') : '',
+            value: valor,
+            isFree: valor === 0,
+            isSelected: radio ? radio.checked : false
+          });
+        }
+        if (!opts.length) { cb(null); return; }
+        var sel = opts.filter(function (o) { return o.isSelected; })[0];
+        if (!sel) {
+          sel = opts.reduce(function (a, b) { return b.value < a.value ? b : a; }, opts[0]);
+          sel.isSelected = true;
+        }
+        var cityEl = doc.querySelector('.frete-location .city, .frete-calculado .city');
+        cb({
+          value: sel.value,
+          name: sel.name,
+          deadline: sel.deadline,
+          city: cityEl ? cityEl.textContent.trim() : '',
+          options: opts
+        });
+      })
+      .catch(function () { cb(null); });
+  }
+
   function readFreteFromDom() {
     function parseDeadline(text) {
       if (!text) return '';
@@ -1994,40 +2073,27 @@
 
     renderFreteResult('loading');
 
-    try {
-      if (window.Zord && window.Zord.Cart && typeof window.Zord.Cart.calculaFreteCarrinho === 'function') {
-        window.Zord.Cart.calculaFreteCarrinho();
-      }
-    } catch (e) {}
-
-    var attempts = 0;
-    var maxAttempts = 18;
-    function pollFrete() {
+    /* O DOM nativo do onepage NÃO calcula frete de verdade — ele mostra "Grátis"
+       como placeholder (data-valor-frete ausente). Buscar o valor AUTORITATIVO
+       no endpoint do carrinho, que devolve data-valor-frete real e persiste
+       server-side (o pedido cobra esse valor). readFreteFromDom só serviria pra
+       ler o placeholder falso, então NÃO é usado aqui. */
+    fetchAuthoritativeFrete(digits, function (result) {
       /* Cancelado por cálculo mais recente? aborta silenciosamente */
       if (calcFreteOnepage._token !== myToken) return;
-      attempts++;
-      var result = readFreteFromDom();
-      if (result) {
-        renderFreteResult(result);
-        var snap = loadCartSnapshot();
-        if (snap) {
-          snap.shipping = result.value;
-          snap.shippingDeadline = result.deadline;
-          snap.shippingName = result.name || '';
-          snap.shippingCity = result.city || '';
-          snap.shippingOptions = result.options || [];
-          STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
-          rehydrateIdentifySummary(snap);
-        }
-        return;
+      if (!result) { renderFreteResult('error'); return; }
+      renderFreteResult(result);
+      var snap = loadCartSnapshot();
+      if (snap) {
+        snap.shipping = result.value;
+        snap.shippingDeadline = result.deadline;
+        snap.shippingName = result.name || '';
+        snap.shippingCity = result.city || '';
+        snap.shippingOptions = result.options || [];
+        STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
+        rehydrateIdentifySummary(snap);
       }
-      if (attempts < maxAttempts) {
-        setTimeout(pollFrete, 350);
-      } else {
-        renderFreteResult('error');
-      }
-    }
-    setTimeout(pollFrete, 400);
+    });
   }
 
   /* ----- bind eventos do onepage ----- */
@@ -2070,22 +2136,29 @@
         }
         radio.checked = true;
         radio.click();
-        /* Re-poll the frete result após Magazord recalcular */
-        setTimeout(function() {
-          var result = readFreteFromDom();
-          if (result) {
-            renderFreteResult(result);
-            var snap = loadCartSnapshot();
-            if (snap) {
-              snap.shipping = result.value;
-              snap.shippingDeadline = result.deadline;
-              snap.shippingName = result.name || '';
-              snap.shippingOptions = result.options || [];
-              STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snap));
-              rehydrateIdentifySummary(snap);
-            }
+        /* Reflete a modalidade escolhida usando os valores AUTORITATIVOS já
+           carregados (fetchAuthoritativeFrete populou snap.shippingOptions).
+           NÃO relê o DOM: o onepage mostra "Grátis" placeholder e reintroduziria
+           o frete grátis falso. modId === option.id (radio.value). */
+        var snapSel = loadCartSnapshot();
+        if (snapSel && snapSel.shippingOptions && snapSel.shippingOptions.length) {
+          var picked = snapSel.shippingOptions.filter(function (o) { return String(o.id) === String(modId); })[0];
+          if (picked) {
+            snapSel.shipping = picked.value;
+            snapSel.shippingDeadline = picked.deadline || '';
+            snapSel.shippingName = picked.name || '';
+            snapSel.shippingOptions = snapSel.shippingOptions.map(function (o) {
+              o.isSelected = String(o.id) === String(modId);
+              return o;
+            });
+            STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(snapSel));
+            renderFreteResult({
+              value: picked.value, deadline: picked.deadline || '', name: picked.name || '',
+              city: snapSel.shippingCity || '', options: snapSel.shippingOptions
+            });
+            rehydrateIdentifySummary(snapSel);
           }
-        }, 700);
+        }
         return;
       }
     });
