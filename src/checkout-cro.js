@@ -2360,7 +2360,55 @@
     document.body.appendChild(overlay);
   }
 
+  /* Sinal REAL de conclusão da etapa 1 (compraSemCadastro). O gate antigo
+     esperava só um teto cego de ~8s e então FORÇAVA o salvarEndereco — em
+     mobile (CPU/rede + Turnstile mais lentos) a etapa 1 passa dos 8s, o
+     salvarEndereco batia numa sessão SEM cliente e dava "muito tempo inativo".
+     Aqui observamos fetch+XHR pra saber a HORA EXATA que o compraSemCadastro
+     responde (ok = cliente estabelecido; erro = falhou), sem cegar em timer.
+     Wrap idempotente e puramente observacional (não altera args/comportamento). */
+  var mmStep1State = null;
+  function mmInstallStep1Observer() {
+    if (window.__mmStep1Observed) return;
+    window.__mmStep1Observed = true;
+    var reS1 = /compraSemCadastro/i;
+    try {
+      var of = window.fetch;
+      if (typeof of === 'function') {
+        window.fetch = function (input, init) {
+          var url = (typeof input === 'string') ? input : (input && input.url) || '';
+          var body = (init && init.body) || '';
+          var isS1 = reS1.test(url) || reS1.test(String(body));
+          var pr = of.apply(this, arguments);
+          if (isS1) {
+            pr.then(function (r) { if (mmStep1State) { if (r && r.ok) mmStep1State.done = true; else mmStep1State.failed = true; } })
+              .catch(function () { if (mmStep1State) mmStep1State.failed = true; });
+          }
+          return pr;
+        };
+      }
+    } catch (e) {}
+    try {
+      var oo = XMLHttpRequest.prototype.open, os = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function (m, u) { this.__mmU = u || ''; return oo.apply(this, arguments); };
+      XMLHttpRequest.prototype.send = function (b) {
+        try {
+          if (reS1.test(this.__mmU || '') || reS1.test(String(b || ''))) {
+            var xhr = this;
+            xhr.addEventListener('load', function () { if (mmStep1State) { if (xhr.status >= 200 && xhr.status < 300) mmStep1State.done = true; else mmStep1State.failed = true; } });
+            xhr.addEventListener('error', function () { if (mmStep1State) mmStep1State.failed = true; });
+          }
+        } catch (e) {}
+        return os.apply(this, arguments);
+      };
+    } catch (e) {}
+  }
+
   function submitOnepageToMagazord(data) {
+    /* Limpa nota de retry de uma tentativa anterior (evita empilhar) */
+    var oldRetry = document.querySelector('.mm-op-form .mm-op-retry');
+    if (oldRetry) oldRetry.remove();
+
     var nomeT = data.nome.trim();
     var emailT = data.email.trim();
     var ruaT = data.rua.trim();
@@ -2479,68 +2527,98 @@
         return true;
       }
 
+      /* Aborta o fluxo dirigido SEM forçar salvarEndereco (a causa do "muito
+         tempo inativo"): restaura nossa tela com os dados preenchidos e oferece
+         retry. A 2ª tentativa passa porque a sessão já esquentou a etapa 1. */
+      function abortStep1(msg) {
+        var ov = document.getElementById('mm-op-overlay');
+        if (ov) ov.remove();
+        var layout = document.getElementById('mm-layout');
+        if (layout) layout.style.display = '';
+        mainArea.classList.add('mm-shadow-mode');
+        var cta = document.querySelector('.mm-op-form .mm-cta');
+        if (cta) cta.classList.remove('is-loading');
+        var form = document.querySelector('.mm-op-form[data-mm-act="onepage-submit"]');
+        if (form && !form.querySelector('.mm-op-retry')) {
+          var note = document.createElement('div');
+          note.className = 'mm-op-retry';
+          note.setAttribute('data-mm-retry', '1');
+          note.setAttribute('role', 'alert');
+          note.style.cssText = 'margin:14px 0;padding:12px 16px;border:1px solid #E7B84B;background:#FFF8E6;border-radius:12px;font-family:Poppins,system-ui,sans-serif;font-size:13px;color:#6B5313;line-height:1.45;';
+          note.textContent = msg || 'Quase lá — toque em “Última etapa: pagamento” novamente para concluir.';
+          form.insertBefore(note, form.firstChild);
+          try { note.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+        }
+      }
+
+      /* Aguarda Magazord chegar no step 3 (pagamento — forma-pagto-pix aparece).
+         NÃO navegamos pra /checkout/payment: o flow onepage tem dados + endereço
+         + pagamento INLINE na mesma URL. Ao detectar os radios → Fase 4 hijack. */
+      function pollForPaymentStep(attempts) {
+        var paymentRadio = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
+        if (paymentRadio && paymentRadio.offsetParent !== null) {
+          try {
+            mountStep3Payment(data);
+          } catch (e) {
+            var ovErr = document.getElementById('mm-op-overlay');
+            if (ovErr) ovErr.remove();
+            var layoutErr = document.getElementById('mm-layout');
+            if (layoutErr) layoutErr.style.display = 'none';
+          }
+          return;
+        }
+        if (attempts < 30) {
+          setTimeout(function () { pollForPaymentStep(attempts + 1); }, 250);
+        } else {
+          abortStep1('Não conseguimos abrir o pagamento. Toque em “Última etapa: pagamento” para tentar de novo.');
+        }
+      }
+
+      /* Instala o observador do compraSemCadastro e zera o estado ANTES de
+         clicar. */
+      mmInstallStep1Observer();
+      var step1 = { done: false, failed: false };
+      mmStep1State = step1;
+
       setTimeout(function() {
         submitStep1();
 
-        /* Gate: só dispara o salvarEndereco DEPOIS que a etapa 1 anônima
-           (compraSemCadastro) estabeleceu o cliente e a UI avançou pra etapa de
-           endereço. Poll de até ~8s (reCAPTCHA + rede fria demoram). Se surgir o
-           toast "inativo" a etapa 1 falhou de fato → aborta e mostra a tela
-           nativa em vez de deixar o usuário no overlay pra sempre. */
-        var step2Attempts = 0;
+        /* Gate dirigido pelo SINAL REAL da etapa 1 (compraSemCadastro), não por
+           timer cego. Só dispara salvarEndereco quando o cliente foi de fato
+           estabelecido (resposta ok do compraSemCadastro) OU a UI de endereço já
+           está pronta. Em falha/toast → aborta com retry. No teto (~24s, mobile
+           lento) → aborta com retry, NUNCA força salvarEndereco (era o bug do
+           "muito tempo inativo": em mobile a etapa 1 passa dos 8s antigos). */
+        var maxAttempts = 60; /* 60 x 400ms = 24s teto */
+        var attempts = 0;
         (function gateEndereco() {
-          step2Attempts++;
+          attempts++;
           var st = step2Ready();
-          if (st === 'error') {
-            var ov = document.getElementById('mm-op-overlay');
-            if (ov) ov.remove();
-            return; /* etapa 1 falhou — não força salvarEndereco */
+          if (step1.failed || st === 'error') {
+            abortStep1('Não foi possível iniciar o pedido. Toque em “Última etapa: pagamento” para tentar de novo.');
+            return;
           }
-          if (st !== 'ready' && step2Attempts < 20) {
+          /* Sinal PROVADO (desktop): a UI de endereço ficou pronta → etapa 1
+             concluiu e o step avançou. Dispara o salvarEndereco. */
+          if (st === 'ready') {
+            submitEnderecoForm();
+            setTimeout(function () { pollForPaymentStep(0); }, 800);
+            return;
+          }
+          if (attempts < maxAttempts) {
             setTimeout(gateEndereco, 400);
             return;
           }
-          submitEnderecoForm();
-
-          /* Aguarda Magazord chegar no step 3 (pagamento — forma-pagto-pix
-             aparece). NÃO navegamos pra /checkout/payment porque o flow
-             Magazord onepage tem dados + endereço + pagamento INLINE
-             na mesma URL — /checkout/payment é só a tela de processing/done.
-
-             Quando detectamos os radios de pagamento → Fase 4 hijack:
-             re-ativa shadow-mode + re-renderiza #mm-layout com nosso
-             step 3 premium (radios PIX/cartão/boleto, cartão form inline,
-             botão Finalizar compra). Os forms nativos Magazord ficam
-             hidden atrás, sincronizamos valores via native setter e
-             delegamos o submit final pra form.requestSubmit(). */
-          var paymentDetectAttempts = 0;
-          function pollForPaymentStep() {
-            paymentDetectAttempts++;
-            var paymentRadio = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
-            if (paymentRadio && paymentRadio.offsetParent !== null) {
-              /* Magazord chegou no step 3 — hijack pra nosso layout premium */
-              try {
-                mountStep3Payment(data);
-              } catch (e) {
-                /* Fallback: se o hijack falhar, remove overlay e deixa o
-                   user no Magazord native (degradação graceful) */
-                var ovErr = document.getElementById('mm-op-overlay');
-                if (ovErr) ovErr.remove();
-                var layoutErr = document.getElementById('mm-layout');
-                if (layoutErr) layoutErr.style.display = 'none';
-              }
-              return;
-            }
-            if (paymentDetectAttempts < 30) {
-              setTimeout(pollForPaymentStep, 250);
-            } else {
-              /* Timeout — algo deu errado, remove overlay mesmo assim
-                 pra user não ficar travado na tela de loading */
-              var ov2 = document.getElementById('mm-op-overlay');
-              if (ov2) ov2.remove();
-            }
+          /* Teto atingido: só prossegue se a etapa 1 REALMENTE concluiu (resposta
+             ok do compraSemCadastro = cliente estabelecido) mas nossa detecção de
+             UI não pegou. Aí salvarEndereco é seguro. Se a etapa 1 NÃO concluiu,
+             ABORTA com retry — nunca força salvarEndereco sem cliente (o bug). */
+          if (step1.done) {
+            submitEnderecoForm();
+            setTimeout(function () { pollForPaymentStep(0); }, 800);
+          } else {
+            abortStep1('Está demorando mais que o normal. Toque em “Última etapa: pagamento” para tentar de novo.');
           }
-          setTimeout(pollForPaymentStep, 800);
         })();
       }, 150);
     }, 100);
