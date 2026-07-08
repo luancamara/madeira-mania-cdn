@@ -1158,7 +1158,9 @@
       var img = it.imgSrc
         ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
         : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
-      var price = it.lineTotalPix > 0 ? it.lineTotalPix : it.lineTotal;
+      /* Item no preço A PRAZO (cheio) pra bater com o Subtotal; a ênfase no à
+         vista fica no bloco de Total ("R$ X à vista no PIX · economia"). */
+      var price = it.lineTotal > 0 ? it.lineTotal : it.lineTotalPix;
       return (
         '<div class="mm-id-thumb">' +
           '<div class="mm-id-thumb-img">' + img + '</div>' +
@@ -2360,6 +2362,13 @@
     document.body.appendChild(overlay);
   }
 
+  /* Atualiza o texto do overlay pra dar progresso legível durante o fluxo
+     nativo (Turnstile + 2 POSTs demoram; sem isso a espera parece travada). */
+  function setSubmitOverlayStage(message) {
+    var el = document.querySelector('#mm-op-overlay .mm-op-overlay-text');
+    if (el) el.textContent = message;
+  }
+
   /* Sinal REAL de conclusão da etapa 1 (compraSemCadastro). O gate antigo
      esperava só um teto cego de ~8s e então FORÇAVA o salvarEndereco — em
      mobile (CPU/rede + Turnstile mais lentos) a etapa 1 passa dos 8s, o
@@ -2452,7 +2461,7 @@
     setVal('#estado', ufT);
 
     /* Show overlay loading fullscreen */
-    showSubmitOverlay('Indo para o pagamento...');
+    showSubmitOverlay('Confirmando seus dados...');
 
     /* Hide nosso layout + remove shadow-mode pra Magazord ficar no flow
        normal (overlay esconde visualmente). Magazord JS roda a chain
@@ -2555,6 +2564,7 @@
          NÃO navegamos pra /checkout/payment: o flow onepage tem dados + endereço
          + pagamento INLINE na mesma URL. Ao detectar os radios → Fase 4 hijack. */
       function pollForPaymentStep(attempts) {
+        if (attempts === 0) setSubmitOverlayStage('Abrindo o pagamento...');
         var paymentRadio = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
         if (paymentRadio && paymentRadio.offsetParent !== null) {
           try {
@@ -2567,11 +2577,19 @@
           }
           return;
         }
-        if (attempts < 30) {
-          setTimeout(function () { pollForPaymentStep(attempts + 1); }, 250);
+        if (attempts < 40) {
+          setTimeout(function () { pollForPaymentStep(attempts + 1); }, 200);
         } else {
           abortStep1('Não conseguimos abrir o pagamento. Toque em “Última etapa: pagamento” para tentar de novo.');
         }
+      }
+
+      /* Prossegue pro endereço/pagamento — dispara imediatamente o poll (sem o
+         dead-wait de 800ms; o próprio poll detecta quando o step aparece). */
+      function proceedToEndereco() {
+        setSubmitOverlayStage('Salvando sua entrega...');
+        submitEnderecoForm();
+        pollForPaymentStep(0);
       }
 
       /* Instala o observador do compraSemCadastro e zera o estado ANTES de
@@ -2584,13 +2602,16 @@
         submitStep1();
 
         /* Gate dirigido pelo SINAL REAL da etapa 1 (compraSemCadastro), não por
-           timer cego. Só dispara salvarEndereco quando o cliente foi de fato
-           estabelecido (resposta ok do compraSemCadastro) OU a UI de endereço já
-           está pronta. Em falha/toast → aborta com retry. No teto (~24s, mobile
-           lento) → aborta com retry, NUNCA força salvarEndereco (era o bug do
-           "muito tempo inativo": em mobile a etapa 1 passa dos 8s antigos). */
-        var maxAttempts = 60; /* 60 x 400ms = 24s teto */
+           timer cego. Dispara o salvarEndereco assim que a UI de endereço fica
+           pronta (sinal provado do desktop) OU logo após o compraSemCadastro
+           confirmar (fallback com graça curta — evita a espera de 24s quando a
+           detecção de UI falha, ex.: mobile). Em falha/toast → aborta com retry.
+           No teto → aborta, NUNCA força salvarEndereco sem cliente (era o bug do
+           "muito tempo inativo"). */
+        var maxAttempts = 80; /* 80 x 250ms = 20s teto */
+        var graceCap = 4;     /* após step1.done, espera ~1s (4x250ms) por 'ready' */
         var attempts = 0;
+        var doneAt = null;
         (function gateEndereco() {
           attempts++;
           var st = step2Ready();
@@ -2598,30 +2619,25 @@
             abortStep1('Não foi possível iniciar o pedido. Toque em “Última etapa: pagamento” para tentar de novo.');
             return;
           }
-          /* Sinal PROVADO (desktop): a UI de endereço ficou pronta → etapa 1
-             concluiu e o step avançou. Dispara o salvarEndereco. */
-          if (st === 'ready') {
-            submitEnderecoForm();
-            setTimeout(function () { pollForPaymentStep(0); }, 800);
-            return;
+          /* Sinal PROVADO (desktop): a UI de endereço ficou pronta → dispara já. */
+          if (st === 'ready') { proceedToEndereco(); return; }
+          /* Fallback: compraSemCadastro confirmou (cliente estabelecido). Espera
+             uma graça curta por 'ready'; se não vier, dispara mesmo assim
+             (salvarEndereco é seguro — o cliente já existe). */
+          if (step1.done) {
+            if (doneAt === null) doneAt = attempts;
+            if (attempts - doneAt >= graceCap) { proceedToEndereco(); return; }
           }
           if (attempts < maxAttempts) {
-            setTimeout(gateEndereco, 400);
+            setTimeout(gateEndereco, 250);
             return;
           }
-          /* Teto atingido: só prossegue se a etapa 1 REALMENTE concluiu (resposta
-             ok do compraSemCadastro = cliente estabelecido) mas nossa detecção de
-             UI não pegou. Aí salvarEndereco é seguro. Se a etapa 1 NÃO concluiu,
-             ABORTA com retry — nunca força salvarEndereco sem cliente (o bug). */
-          if (step1.done) {
-            submitEnderecoForm();
-            setTimeout(function () { pollForPaymentStep(0); }, 800);
-          } else {
-            abortStep1('Está demorando mais que o normal. Toque em “Última etapa: pagamento” para tentar de novo.');
-          }
+          /* Teto: só prossegue se a etapa 1 concluiu de fato; senão aborta. */
+          if (step1.done) proceedToEndereco();
+          else abortStep1('Está demorando mais que o normal. Toque em “Última etapa: pagamento” para tentar de novo.');
         })();
-      }, 150);
-    }, 100);
+      }, 120);
+    }, 80);
   }
 
   /* =============================================
@@ -3070,7 +3086,9 @@
         ? '<img src="' + escapeHTML(it.imgSrc) + '" alt="' + escapeHTML(it.name) + '" loading="lazy">'
         : '<div class="mm-id-thumb-placeholder">' + ICON.box + '</div>';
       var qtyPrefix = it.quantity > 1 ? '<strong class="mm-id-thumb-qty">' + it.quantity + '×</strong> ' : '';
-      var price = it.lineTotalPix > 0 ? it.lineTotalPix : it.lineTotal;
+      /* Item no preço A PRAZO (cheio) pra bater com o Subtotal; a ênfase no à
+         vista fica no bloco de Total ("R$ X à vista no PIX · economia"). */
+      var price = it.lineTotal > 0 ? it.lineTotal : it.lineTotalPix;
       return (
         '<div class="mm-id-thumb">' +
           '<div class="mm-id-thumb-img">' + img + '</div>' +
