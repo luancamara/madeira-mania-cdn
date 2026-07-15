@@ -2650,6 +2650,15 @@
         var doneAt = null;
         (function gateEndereco() {
           attempts++;
+          /* O fluxo nativo JÁ chegou no pagamento? (usuário logado, sessão
+             quente, ou cliente+endereço já salvos → o Magazord pula a etapa 1
+             anônima e/ou o endereço). Aí NENHUM dos sinais abaixo dispara
+             (compraSemCadastro não roda; "Cadastrar endereço" não aparece) e o
+             gate ia estourar o teto com "Está demorando...". Detectar os radios
+             de pagamento visíveis é o sinal de sucesso mais forte — monta o
+             step 3 direto. Cobre o caso de quem "já tem carrinho". */
+          var payReady = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
+          if (payReady && payReady.offsetParent !== null) { pollForPaymentStep(0); return; }
           var st = step2Ready();
           if (step1.failed || st === 'error') {
             abortStep1('Não foi possível iniciar o pedido. Toque em “Última etapa: pagamento” para tentar de novo.');
