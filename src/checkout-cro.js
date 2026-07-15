@@ -30,13 +30,21 @@
   var isPayment = path.indexOf('/checkout/payment') !== -1;
   var isDone = path.indexOf('/checkout/done') !== -1;
 
-  /* Pedido confirmado — limpa o draft do onepage (user terminou o fluxo) */
+  /* Sinal de sessão LOGADA (cliente). O checkout customizado foi desenhado pro
+     fluxo GUEST (compraSemCadastro + captura de dados). Cliente logado já tem
+     identidade + endereços salvos preenchidos NATIVAMENTE pelo Magazord — então
+     pra ele NÃO forçamos "sem cadastro" nem pedimos dados de novo; adaptamos a
+     layout (identidade em resumo + seletor de endereços salvos). Cookie zordEm
+     só existe logado (visitante fresco nunca recebe). Ver [[magazord-cpf-mask-autofill]]. */
+  var mmLoggedIn = /(?:^|;\s*)zordEm=[^;\s]/.test(document.cookie);
+
+  /* Pedido confirmado — limpa o draft do onepage (user terminou o fluxo).
+     NÃO retorna: repaginamos a tela de comprovante/QR (mountDone) abaixo. */
   if (isDone) {
     try { localStorage.removeItem('mm_onepage_draft'); } catch (e) {}
-    return;
   }
 
-  if (!isCart && !isIdentify && !isOnepage && !isPayment) return;
+  if (!isCart && !isIdentify && !isOnepage && !isPayment && !isDone) return;
 
   /* Retry até Magazord montar o DOM do checkout */
   initCheckoutCRO._retries = (initCheckoutCRO._retries || 0) + 1;
@@ -1563,6 +1571,10 @@
   function reconcileSummaryFromServer() {
     fetchCartSnapshotFallback(function (freshSnap) {
       if (freshSnap && freshSnap.items && freshSnap.items.length > 0) {
+        /* logado: o frete do CARRINHO pode vir vazio (null) e sobrescreveria o
+           resumo com "Informe seu CEP". Injeta o frete NATIVO do onepage (real
+           pro endereço selecionado) antes de re-hidratar. */
+        if (mmLoggedIn) mmApplyNativeFrete(freshSnap);
         rehydrateIdentifySummary(freshSnap);
       }
     });
@@ -1767,6 +1779,393 @@
     );
   }
 
+  /* ===== CLIENTE LOGADO: identidade + endereços salvos (nosso estilo) ===== */
+
+  /* email da sessão logada (cookie zordEm é o e-mail em claro) */
+  function mmReadLoggedEmail() {
+    var m = document.cookie.match(/(?:^|;\s*)zordEm=([^;]+)/);
+    if (!m) return '';
+    try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+  }
+
+  /* nome do cliente logado — #destinatario vem preenchido pelo Magazord;
+     fallback: 1ª linha do endereço selecionado */
+  function mmReadLoggedName(addrs) {
+    var dest = mainArea.querySelector('#destinatario');
+    if (dest && dest.value && dest.value.trim()) return dest.value.trim();
+    var sel = (addrs || []).filter(function (a) { return a.checked; })[0] || (addrs || [])[0];
+    return sel && sel.lines[0] ? sel.lines[0] : '';
+  }
+
+  /* lê os endereços salvos nativos (#box-lista-enderecos .item-endereco).
+     Texto real fica em .info-address > span.txt-info (1º = destinatário/nome,
+     demais = rua e cidade|CEP). Ignora .acoes-endereco (Editar/Excluir). */
+  function mmReadSavedAddresses() {
+    var items = mainArea.querySelectorAll('#box-lista-enderecos .item-endereco');
+    return [].map.call(items, function (item) {
+      var radio = item.querySelector('input[name="endereco_entrega"]');
+      if (!radio) return null;
+      var info = item.querySelector('.info-address');
+      var lines = info
+        ? [].map.call(info.querySelectorAll('.txt-info'), function (s) {
+            return (s.textContent || '').replace(/\s+/g, ' ').trim();
+          }).filter(Boolean)
+        : [];
+      return { id: radio.id, value: radio.value, checked: radio.checked, lines: lines };
+    }).filter(Boolean);
+  }
+
+  var TRASH_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>';
+
+  function renderLoggedAddrCard(a, idx) {
+    var name = a.lines[0] ? '<strong>' + escapeHTML(a.lines[0]) + '</strong>' : '';
+    var rest = a.lines.slice(1).map(function (l) { return '<span>' + escapeHTML(l) + '</span>'; }).join('');
+    return (
+      '<label class="mm-op-addr' + (a.checked ? ' is-selected' : '') + '" data-mm-addr="' + escapeHTML(a.value) + '">' +
+        '<input type="radio" name="mm-op-addr" value="' + escapeHTML(a.value) + '"' + (a.checked ? ' checked' : '') + '>' +
+        '<span class="mm-op-addr-check" aria-hidden="true"></span>' +
+        '<span class="mm-op-addr-body">' + name + rest + '</span>' +
+        '<button type="button" class="mm-op-addr-del" data-mm-act="addr-remove" data-id="' + escapeHTML(a.value) + '" title="Remover endereço" aria-label="Remover este endereço">' + TRASH_SVG + '</button>' +
+      '</label>'
+    );
+  }
+
+  /* layout do onepage pro cliente LOGADO — mantém nosso visual, mas troca a
+     captura de dados por resumo da identidade + seletor de endereços salvos. */
+  function renderOnepageLoggedIn() {
+    var addrs = mmReadSavedAddresses();
+    var email = mmReadLoggedEmail();
+    var name = mmReadLoggedName(addrs);
+    var initial = (name || email || '?').trim().charAt(0).toUpperCase();
+
+    var LIMIT = 4;
+    var addrCards;
+    if (!addrs.length) {
+      addrCards = '<p class="mm-op-microcopy-soft">Nenhum endereço salvo — você adiciona na próxima etapa.</p>';
+    } else if (addrs.length <= LIMIT) {
+      addrCards = addrs.map(renderLoggedAddrCard).join('');
+    } else {
+      /* muitos endereços: mostra o selecionado + os primeiros; resto atrás de
+         "ver mais" (o selecionado sempre visível). */
+      var sel = null, others = [];
+      addrs.forEach(function (x) { if (x.checked && !sel) sel = x; else others.push(x); });
+      var ordered = sel ? [sel].concat(others) : addrs.slice();
+      addrCards = ordered.slice(0, LIMIT).map(renderLoggedAddrCard).join('') +
+        '<div class="mm-op-addr-extra" hidden>' + ordered.slice(LIMIT).map(renderLoggedAddrCard).join('') + '</div>' +
+        '<button type="button" class="mm-op-addr-more" data-mm-act="addr-more">Ver mais ' + (ordered.length - LIMIT) + ' endereços</button>';
+    }
+
+    return (
+      '<section class="mm-op-form-col">' +
+        '<h2 class="mm-id-h2">Falta pouco. Confirme a entrega.</h2>' +
+        '<p class="mm-id-sub">Seus dados já estão com a gente — é só escolher onde entregar.</p>' +
+
+        '<form class="mm-op-form" data-mm-act="onepage-submit" novalidate>' +
+
+          /* CARD 1 — identidade (logado) */
+          '<div class="mm-op-card mm-op-ident">' +
+            '<span class="mm-op-ident-avatar" aria-hidden="true">' + escapeHTML(initial) + '</span>' +
+            '<span class="mm-op-ident-info">' +
+              '<span class="mm-op-ident-label">Você está logado</span>' +
+              (name ? '<strong class="mm-op-ident-name">' + escapeHTML(name) + '</strong>' : '') +
+              (email ? '<span class="mm-op-ident-email">' + escapeHTML(email) + '</span>' : '') +
+            '</span>' +
+            '<a class="mm-op-ident-switch" href="/logout">Sair</a>' +
+          '</div>' +
+
+          /* CARD 2 — endereços salvos */
+          '<div class="mm-op-card">' +
+            '<h3 class="mm-op-card-title">' + ICONS_OP.pin + '<span>Endereço de entrega</span></h3>' +
+            '<div class="mm-op-addr-list">' + addrCards + '</div>' +
+            '<a class="mm-op-addr-new" data-mm-act="addr-novo" href="#">' + ICONS_OP.pin + 'Entregar em outro endereço</a>' +
+            '<div class="mm-op-frete" id="mm-op-frete-slot"></div>' +
+          '</div>' +
+
+          '<button type="submit" class="mm-cta mm-op-cta">' +
+            'Última etapa: pagamento' + ICON.arrow +
+          '</button>' +
+          '<p class="mm-id-microcopy mm-op-cta-sub">' + ICON.lock + '<span>Você revisa tudo antes de finalizar</span></p>' +
+        '</form>' +
+
+        '<div class="mm-trust mm-id-trust">' +
+          '<span class="mm-trust-item">' + ICON.lock + '<span>Pagamento seguro</span></span>' +
+          '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
+          '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  /* frete NATIVO do onepage logado (sempre calculado pro endereço selecionado):
+     .valor-frete ("Grátis"/"R$ X"), .prazo-frete, .nome-servico-frete. */
+  function mmReadNativeFrete() {
+    if (!mainArea) return null;
+    function t(sel) { var e = mainArea.querySelector(sel); return e ? (e.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
+    var valTxt = t('.value.valor-frete') || t('span.valor-frete');
+    var prazo = t('.prazo-frete');
+    var nome = t('.nome-servico-frete').replace(/[()]/g, '').trim();
+    if (!valTxt && !prazo) return null;
+    var value = null;
+    if (/gr[aá]tis/i.test(valTxt)) value = 0;
+    else if (valTxt) {
+      var d = valTxt.replace(/[^\d,.]/g, '');
+      if (d.indexOf(',') !== -1) d = d.replace(/\./g, '').replace(',', '.');
+      value = parseFloat(d); if (isNaN(value)) value = null;
+    }
+    return { value: value, deadline: prazo, name: nome };
+  }
+
+  /* injeta o frete nativo num snapshot (pro resumo mostrar o frete real do
+     endereço selecionado em vez de "Informe seu CEP"). */
+  function mmApplyNativeFrete(snap) {
+    snap = snap || {};
+    var f = mmReadNativeFrete();
+    if (f && f.value !== null) {
+      snap.shipping = f.value;
+      if (f.deadline) snap.shippingDeadline = f.deadline;
+      if (f.name) snap.shippingName = f.name;
+    }
+    return snap;
+  }
+
+  /* CPF do bloco "Dados Pessoais" nativo (texto "CPF: 000.000.000-00") */
+  function mmReadLoggedCpf() {
+    var m = ((mainArea && mainArea.innerText) || document.body.innerText || '').match(/CPF[:\s]*([\d]{3}\.?[\d]{3}\.?[\d]{3}\-?[\d]{2})/i);
+    return m ? m[1].trim() : '';
+  }
+
+  /* só o estado visual dos nossos cards (sem tocar no nativo) */
+  function mmMarkAddrVisual(value) {
+    [].forEach.call(document.querySelectorAll('.mm-op-addr'), function (c) {
+      c.classList.toggle('is-selected', c.getAttribute('data-mm-addr') === String(value));
+    });
+  }
+
+  /* ANTI-FLICKER na troca de endereço: o dispatch nativo re-renderiza o
+     #checkout-main-area (recalc de frete) e apaga nosso #mm-layout; o guard
+     re-injeta depois. Nesse intervalo a página some (footer sobe) = flicker.
+     Solução: congelamos um CLONE fixo do layout atual por cima, escondendo o
+     re-render, e fazemos crossfade quando o layout novo (com frete atualizado)
+     re-monta. Mantém o fluxo nativo 100% intacto (correção garantida). */
+  var mmFreezeEl = null, mmFreezeFailsafe = null, mmUnfreezeDebounce = null;
+  function mmFreezeLayout() {
+    if (mmFreezeEl) return;
+    var layout = document.getElementById('mm-layout');
+    if (!layout) return;
+    var r = layout.getBoundingClientRect();
+    var vh = window.innerHeight || 800;
+    var clone = layout.cloneNode(true);
+    clone.id = 'mm-op-freeze';
+    clone.setAttribute('aria-hidden', 'true');
+    var bg = '';
+    try { bg = getComputedStyle(document.body).backgroundColor; } catch (e) {}
+    if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') bg = '#ffffff';
+    clone.style.cssText = 'position:fixed;left:' + Math.round(r.left) + 'px;top:' +
+      Math.round(r.top) + 'px;width:' + Math.round(r.width) + 'px;min-height:' +
+      Math.round(Math.max(r.height, vh - Math.max(r.top, 0))) + 'px;z-index:9990;' +
+      'pointer-events:none;background:' + bg + ';';
+    document.body.appendChild(clone);
+    mmFreezeEl = clone;
+    if (mmFreezeFailsafe) clearTimeout(mmFreezeFailsafe);
+    mmFreezeFailsafe = setTimeout(mmUnfreezeLayout, 1600);
+  }
+  function mmScheduleUnfreeze() {
+    if (!mmFreezeEl) return;
+    if (mmUnfreezeDebounce) clearTimeout(mmUnfreezeDebounce);
+    /* espera ~250ms sem novos re-renders (frete assentou) antes do crossfade */
+    mmUnfreezeDebounce = setTimeout(mmUnfreezeLayout, 250);
+  }
+  function mmUnfreezeLayout() {
+    if (mmFreezeFailsafe) { clearTimeout(mmFreezeFailsafe); mmFreezeFailsafe = null; }
+    if (mmUnfreezeDebounce) { clearTimeout(mmUnfreezeDebounce); mmUnfreezeDebounce = null; }
+    if (!mmFreezeEl) return;
+    var el = mmFreezeEl; mmFreezeEl = null;
+    el.style.transition = 'opacity 160ms ease';
+    el.style.opacity = '0';
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 180);
+  }
+
+  /* marca no form NATIVO o endereço salvo escolhido (radio endereco_N) e dispara
+     os eventos pro Magazord recalcular frete/entrega. O re-render nativo fica
+     escondido pelo clone congelado (mmFreezeLayout). */
+  function mmSelectSavedAddress(value) {
+    mmMarkAddrVisual(value);   /* marca a nova seleção ANTES de clonar */
+    mmFreezeLayout();          /* congela o visual atual por cima do re-render */
+    var native = document.getElementById('endereco_' + value) ||
+                 mainArea.querySelector('input[name="endereco_entrega"][value="' + value + '"]');
+    if (native) {
+      if (!native.checked) native.checked = true;
+      native.dispatchEvent(new Event('click', { bubbles: true }));
+      native.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  /* Estado desejado da tela do logado. O Magazord re-renderiza o
+     #checkout-main-area (recalc de frete ao trocar endereço, transições) e apaga
+     nosso #mm-layout — o guard re-injeta a tela CERTA conforme este estado:
+       'delivery' → tela de entrega (identidade + endereços)
+       'payment'  → nosso step de pagamento (Fase 4)
+       'native'   → não re-injetar (escape intencional pro checkout nativo) */
+  var mmLoggedDesired = 'delivery';
+  var mmLoggedUserData = null;
+  var mmLoggedRemountTimer = null;
+
+  /* liga os eventos do onepage LOGADO no #mm-layout atual. Idempotente por
+     elemento (flag no layout) — seguro re-chamar após re-mount. */
+  function mmBindLoggedOnepage() {
+    var layout = document.getElementById('mm-layout');
+    if (!layout || layout.__mmLoggedBound) return;
+    layout.__mmLoggedBound = true;
+
+    layout.addEventListener('submit', function (e) {
+      var form = e.target.closest('[data-mm-act="onepage-submit"]');
+      if (!form) return;
+      e.preventDefault();
+      mmSubmitLoggedOnepage(form);
+    });
+
+    var list = layout.querySelector('.mm-op-addr-list');
+    if (list) list.addEventListener('change', function (e) {
+      if (e.target && e.target.name === 'mm-op-addr') mmSelectSavedAddress(e.target.value);
+    });
+
+    /* remover endereço: dispara o delete NATIVO (span.remover-endereco[data-id]).
+       O Magazord cuida da confirmação/remoção; o guard re-injeta a lista atualizada. */
+    if (list) list.addEventListener('click', function (e) {
+      var del = e.target.closest('[data-mm-act="addr-remove"]');
+      if (!del) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var id = del.getAttribute('data-id');
+      var nativeDel = mainArea.querySelector('#box-lista-enderecos .remover-endereco[data-id="' + id + '"]');
+      if (nativeDel) nativeDel.click();
+    });
+
+    var more = layout.querySelector('[data-mm-act="addr-more"]');
+    if (more) more.addEventListener('click', function () {
+      var extra = layout.querySelector('.mm-op-addr-extra');
+      if (extra) extra.hidden = false;
+      more.remove();
+    });
+
+    /* "Entregar em outro endereço": v1 = escape pro checkout nativo (o cliente
+       adiciona/gerencia endereços com a UI do Magazord). Remove nosso overlay. */
+    var novo = layout.querySelector('[data-mm-act="addr-novo"]');
+    if (novo) novo.addEventListener('click', function (e) {
+      e.preventDefault();
+      mmLoggedDesired = 'native';
+      layout.style.display = 'none';
+      mainArea.classList.remove('mm-shadow-mode');
+      document.body.classList.remove('mm-checkout-rebuild');
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (er) { window.scrollTo(0, 0); }
+    });
+  }
+
+  /* re-injeta a tela CERTA quando o Magazord re-renderiza o #checkout-main-area
+     e apaga nosso #mm-layout (ex.: recalc de frete ao trocar endereço). */
+  function mmRemountLoggedOnepage() {
+    if (mmLoggedDesired === 'native') return;
+    if (document.getElementById('mm-layout')) return;
+    if (!mainArea) return;
+    if (mmLoggedDesired === 'payment') {
+      if (!mainArea.querySelector('input[name="forma-pagto"]')) return; /* pagto não pronto */
+      try { mountStep3Payment(mmLoggedUserData || {}); } catch (e) {}
+      return;
+    }
+    /* delivery */
+    if (!mainArea.querySelector('#box-lista-enderecos')) return;
+    buildOnepageLayout(mmApplyNativeFrete(loadCartSnapshot()), '');
+    mmBindLoggedOnepage();
+    mmSetupLoggedOnepage();
+    reconcileSummaryFromServer();
+    mmScheduleUnfreeze();   /* crossfade: remove o clone congelado quando assentar */
+  }
+
+  function mmInstallLoggedGuard() {
+    if (mmInstallLoggedGuard._obs) return;
+    var obs = new MutationObserver(function () {
+      if (mmLoggedDesired === 'native') return;
+      if (!document.getElementById('mm-layout') && !document.getElementById('mm-op-overlay')) {
+        if (mmLoggedRemountTimer) clearTimeout(mmLoggedRemountTimer);
+        mmLoggedRemountTimer = setTimeout(mmRemountLoggedOnepage, 80);
+      }
+    });
+    obs.observe(mainArea, { childList: true });
+    mmInstallLoggedGuard._obs = obs;
+  }
+
+  /* setup pós-mount do onepage LOGADO: sincroniza o visual do endereço já
+     selecionado e instala o guard de re-mount. NÃO redispara o endereço default
+     (evitaria recalc/re-render desnecessário). */
+  function mmSetupLoggedOnepage() {
+    var checked = document.querySelector('.mm-op-addr input[name="mm-op-addr"]:checked');
+    if (checked) mmMarkAddrVisual(checked.value);
+    /* frete nativo no slot de entrega (Econômico · prazo · valor) */
+    var f = mmReadNativeFrete();
+    if (f && f.value !== null) {
+      renderFreteResult({ value: f.value, name: f.name || '', deadline: f.deadline || '', city: '', options: [] });
+    }
+    mmInstallLoggedGuard();
+  }
+
+  /* submit do onepage LOGADO: garante o endereço nativo selecionado e avança pro
+     nosso step de pagamento (Fase 4). SEM compraSemCadastro — o cliente já está
+     estabelecido. O pagamento já vem inline no onepage nativo do logado. */
+  function mmSubmitLoggedOnepage(form) {
+    var checked = document.querySelector('.mm-op-addr input[name="mm-op-addr"]:checked');
+    var value = checked ? checked.value : '';
+    if (!value) {
+      var novoLink = document.querySelector('[data-mm-act="addr-novo"]');
+      if (novoLink) novoLink.click();
+      return;
+    }
+    /* O endereço nativo JÁ está selecionado (default ou o escolhido no card, que
+       já disparou o recalc). NÃO redisparar aqui — evita um re-render assíncrono
+       que apagaria o step de pagamento. Só avançamos pro nosso pagamento. */
+    var addrs = mmReadSavedAddresses();
+    var a = addrs.filter(function (x) { return x.value === String(value); })[0] || {};
+    var lines = a.lines || [];
+    mmLoggedUserData = {
+      email: mmReadLoggedEmail(),
+      nome: ((mainArea.querySelector('#destinatario') || {}).value || lines[0] || '').trim(),
+      cpf: mmReadLoggedCpf(),
+      tel: '',
+      /* linhas prontas do endereço salvo (sem o nome, que já vai em Dados) */
+      addressLines: lines.slice(1),
+      rua: lines[1] || '', num: '', comp: '',
+      bairro: '', cidade: lines[2] || '', uf: '', cep: ''
+    };
+
+    var btn = form && form.querySelector('.mm-cta');
+    if (btn) btn.classList.add('is-loading');
+    showSubmitOverlay('Abrindo o pagamento...');
+
+    /* pagamento já vem inline pro logado — poll até os radios aparecerem e monta
+       nosso step 3. Estado 'payment' faz o guard re-injetar o step se o Magazord
+       re-renderizar (recalc tardio de frete). */
+    mmLoggedDesired = 'payment';
+    var tries = 0;
+    (function poll() {
+      var payReady = mainArea.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao');
+      if (payReady) {
+        try { mountStep3Payment(mmLoggedUserData); }
+        catch (e) {
+          var ov = document.getElementById('mm-op-overlay'); if (ov) ov.remove();
+          mmLoggedDesired = 'native';
+          var l = document.getElementById('mm-layout'); if (l) l.style.display = 'none';
+          mainArea.classList.remove('mm-shadow-mode');
+        }
+        return;
+      }
+      if (++tries < 40) { setTimeout(poll, 200); return; }
+      /* timeout: abre o nativo pra não travar */
+      var ov2 = document.getElementById('mm-op-overlay'); if (ov2) ov2.remove();
+      mmLoggedDesired = 'native';
+      var l2 = document.getElementById('mm-layout'); if (l2) l2.style.display = 'none';
+      mainArea.classList.remove('mm-shadow-mode');
+    })();
+  }
+
   /* ----- monta layout completo do onepage ----- */
   function buildOnepageLayout(snap, prefilledEmail) {
     var existing = document.getElementById('mm-layout');
@@ -1785,10 +2184,11 @@
     layout.innerHTML =
       renderCheckoutHeader('delivery') +
       '<div class="mm-grid mm-id-grid mm-op-grid">' +
-        renderOnepageForm(prefilledEmail) +
+        (mmLoggedIn ? renderOnepageLoggedIn() : renderOnepageForm(prefilledEmail)) +
         renderIdentifySummary(snap) +
       '</div>';
 
+    if (mmLoggedIn) layout.classList.add('mm-op-logged');
     mainArea.insertBefore(layout, mainArea.firstChild);
     document.body.classList.add('mm-checkout-rebuild');
     mainArea.classList.add('mm-shadow-mode');
@@ -2206,6 +2606,9 @@
       var form = e.target.closest('[data-mm-act="onepage-submit"]');
       if (!form) return;
       e.preventDefault();
+
+      /* LOGADO: caminho próprio (endereço salvo → pagamento), sem captura guest */
+      if (mmLoggedIn) { mmSubmitLoggedOnepage(form); return; }
 
       var data = {
         email: (document.getElementById('mm-op-email') || {}).value || '',
@@ -2905,9 +3308,13 @@
             '<a href="/checkout/onepage" class="mm-op-completed-edit" data-mm-act="edit-endereco" aria-label="Editar endereço">' + ICONS_OP.editPencil + ' Editar</a>' +
           '</div>' +
           '<address class="mm-op-completed-address">' +
-            rua + ', ' + num + comp + '<br>' +
-            bairro + ' — ' + cidade + '/' + uf + '<br>' +
-            (cep ? 'CEP ' + cep : '') +
+            (u.addressLines && u.addressLines.length
+              /* logado: linhas já formatadas (endereço salvo do Magazord) */
+              ? u.addressLines.map(function (l) { return escapeHTML(l); }).join('<br>')
+              /* guest: campos individuais capturados no form */
+              : (rua + ', ' + num + comp + '<br>' +
+                 bairro + ' — ' + cidade + '/' + uf + '<br>' +
+                 (cep ? 'CEP ' + cep : ''))) +
           '</address>' +
         '</div>' +
       '</div>'
@@ -3926,7 +4333,11 @@
     function waitForOnepageDom(attempt) {
       attempt = attempt || 0;
       if (attempt > 30) { mountOnepage(); return; }
-      var hasForm = mainArea.querySelector('#cep, .box-area-dados, #nome-completo_2');
+      /* guest: form de dados (#cep/#nome-completo_2). logado: lista de endereços
+         salvos (#box-lista-enderecos). Espera o sinal certo pro tipo de sessão. */
+      var hasForm = mmLoggedIn
+        ? mainArea.querySelector('#box-lista-enderecos, #container-step-2')
+        : mainArea.querySelector('#cep, .box-area-dados, #nome-completo_2');
       if (hasForm || attempt > 8) {
         mountOnepage();
       } else {
@@ -3947,7 +4358,19 @@
          rode no console: window._mmDraftDebug = true (antes de montar a página). */
       if (typeof window._mmDraftDebug === 'undefined') window._mmDraftDebug = false;
 
+      /* logado: resumo mostra o frete NATIVO real (não "Informe seu CEP") */
+      if (mmLoggedIn) mmApplyNativeFrete(snap);
       buildOnepageLayout(snap, prefilledEmail);
+
+      /* CLIENTE LOGADO: binder próprio (submit + troca de endereço + guard de
+         re-mount). Sem draft/captura/recalc-por-CEP nem o beforeunload guest. */
+      if (mmLoggedIn) {
+        mmBindLoggedOnepage();
+        mmSetupLoggedOnepage();
+        reconcileSummaryFromServer();
+        return;
+      }
+
       bindOnepageEvents();
 
       /* Restaura draft salvo (campos que o user já tinha digitado antes do reload) */
@@ -3977,8 +4400,11 @@
       }
 
       /* Garante que o tab "Compra sem cadastro" do Magazord esteja ativo
-         (caso não esteja por default) — clicamos no link nativo */
-      try {
+         (caso não esteja por default) — clicamos no link nativo.
+         NÃO fazer isso pra cliente LOGADO: ele já está identificado e tem
+         endereços salvos; forçar "sem cadastro" era o que jogava o logado no
+         fluxo anônimo (bug "tratando todos como login anônimo"). */
+      if (!mmLoggedIn) try {
         var sememCadLink = Array.from(mainArea.querySelectorAll('a, button')).find(function(el) {
           var t = (el.textContent || '').toLowerCase();
           return t.indexOf('sem cadastro') !== -1 && el.offsetParent !== null;
@@ -4036,6 +4462,214 @@
 
     var cvvInput = mainArea.querySelector('input[placeholder*="000" i]');
     if (cvvInput && (!cvvInput.maxLength || cvvInput.maxLength <= 4)) cvvInput.inputMode = 'numeric';
+  }
+
+  /* ==========================================================
+     DONE — /checkout/done: comprovante + QR PIX repaginado
+     ========================================================== */
+  if (isDone) {
+    document.documentElement.classList.remove('mm-cart-loading');
+
+    var ICON_QR = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm-2 16h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zm-6 4h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 0h2v2h-2v-2z"/></svg>';
+    var ICON_COPY = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>';
+    var ICON_DONE_CHECK = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    var ICON_WA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.2-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.6-1.5-.9-2.1-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s1 2.5 1.1 2.7c.1.2 1.9 2.9 4.6 4 .6.3 1.1.5 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.3zM12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2zm0 18.3c-1.5 0-3-.4-4.3-1.2l-.3-.2-2.9.8.8-2.8-.2-.3A8.3 8.3 0 1 1 12 20.3z"/></svg>';
+    var ICON_CLOCK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.1.8-1.3-4.5-2.7V7z"/></svg>';
+    var PIX_COUNTDOWN_MS = 5 * 60 * 1000; /* contador de expiração do QR (padrão 5 min) */
+
+    function mmReadDone() {
+      var txt = (mainArea.innerText || '');
+      var orderM = txt.match(/\b(\d{10,})\b/);
+      var totalM = txt.match(/R\$\s?[\d.]+,\d{2}/);
+      var pixInput = mainArea.querySelector('.campo-numero-pix');
+      return {
+        canvas: mainArea.querySelector('canvas'),
+        pixCode: pixInput ? (pixInput.value || '') : '',
+        order: orderM ? orderM[1] : '',
+        total: totalM ? totalM[0].replace(/\s+/g, ' ') : ''
+      };
+    }
+
+    function renderDoneLayout(d) {
+      var footerHTML = typeof renderGlobalFooter === 'function' ? renderGlobalFooter() : '';
+      var hasPix = !!d.canvas;
+      var pixCard = hasPix ? (
+        '<div class="mm-done-pix-card">' +
+          '<div class="mm-done-pix-head">' + ICON_QR + '<span>Pague com PIX</span>' +
+            '<span class="mm-done-pix-status">Aguardando pagamento</span></div>' +
+          '<div class="mm-done-qr" id="mm-done-qr-slot"></div>' +
+          '<div class="mm-done-timer" id="mm-done-timer">' + ICON_CLOCK +
+            '<span class="mm-done-timer-text">Este código expira em <strong id="mm-done-timer-val">05:00</strong></span>' +
+          '</div>' +
+          (d.pixCode
+            ? '<button type="button" class="mm-done-copy" data-mm-act="done-copy-pix">' + ICON_COPY + '<span>Copiar código PIX (copia e cola)</span></button>'
+            : '') +
+          '<p class="mm-done-pix-note">' + ICON.lock + '<span>Aprovação em até 1 minuto após o pagamento.</span></p>' +
+        '</div>'
+      ) : (
+        '<div class="mm-done-pix-card mm-done-nopix">' +
+          '<p>Seu pedido foi registrado. Acompanhe o pagamento e o status em “Meus pedidos”.</p>' +
+        '</div>'
+      );
+
+      return (
+        renderCheckoutHeader('payment') +
+        '<main class="mm-op-main mm-done-main">' +
+          '<div class="mm-done-hero">' +
+            '<span class="mm-done-hero-check">' + ICON_DONE_CHECK + '</span>' +
+            '<h1 class="mm-done-h1">Pedido realizado com sucesso!</h1>' +
+            '<p class="mm-done-hero-sub">' +
+              (d.order ? 'Pedido <strong>Nº ' + escapeHTML(d.order) + '</strong> · ' : '') +
+              (hasPix ? 'falta só concluir o pagamento no PIX abaixo.' : 'obrigado pela sua compra!') +
+            '</p>' +
+          '</div>' +
+          '<div class="mm-done-grid">' +
+            '<section class="mm-done-left">' + pixCard + '</section>' +
+            '<aside class="mm-done-right">' +
+              (hasPix ?
+                '<div class="mm-done-card">' +
+                  '<h3 class="mm-op-card-title">Como pagar</h3>' +
+                  '<ol class="mm-done-steps">' +
+                    '<li>Abra o app do seu banco e entre na área <strong>PIX</strong>.</li>' +
+                    '<li>Escaneie o <strong>QR Code</strong> ou use <strong>Pix Copia e Cola</strong>.</li>' +
+                    '<li>Confirme os dados e finalize o pagamento.</li>' +
+                  '</ol>' +
+                '</div>' : '') +
+              (d.total ?
+                '<div class="mm-done-total">' +
+                  '<span class="mm-done-total-label">Total</span>' +
+                  '<span class="mm-done-total-value">' + escapeHTML(d.total) + '</span>' +
+                  (hasPix ? '<span class="mm-done-total-sub">no PIX</span>' : '') +
+                '</div>' : '') +
+              '<a class="mm-cta mm-done-cta" href="/cliente/pedidos">Acompanhar meu pedido</a>' +
+              '<a class="mm-done-help" href="' + MM_WHATSAPP_URL + '" target="_blank" rel="noopener">' + ICON_WA +
+                '<span>Dificuldade no pagamento? <strong>Fale com a gente no WhatsApp</strong></span></a>' +
+              '<a class="mm-done-back" href="/">Voltar para a loja</a>' +
+              '<div class="mm-trust mm-done-trust">' +
+                '<span class="mm-trust-item">' + ICON.lock + '<span>Pagamento seguro</span></span>' +
+                '<span class="mm-trust-item">' + ICON.rotate + '<span>7 dias para troca</span></span>' +
+                '<span class="mm-trust-item">' + ICON.shield + '<span>Garantia 12 meses</span></span>' +
+              '</div>' +
+            '</aside>' +
+          '</div>' +
+        '</main>' +
+        footerHTML
+      );
+    }
+
+    function mountDone() {
+      if (document.getElementById('mm-layout')) return;
+      var d = mmReadDone();
+      var layout = document.createElement('div');
+      layout.id = 'mm-layout';
+      layout.className = 'mm-op-layout mm-done-layout';
+      layout.innerHTML = renderDoneLayout(d);
+      mainArea.insertBefore(layout, mainArea.firstChild);
+      document.body.classList.add('mm-checkout-rebuild');
+      mainArea.classList.add('mm-shadow-mode');
+      document.documentElement.classList.remove('mm-cart-loading');
+
+      /* QR: converte o canvas nativo (já desenhado) num <img> estático via
+         toDataURL. Mais robusto que mover o nó (imune a override de CSS que
+         zerava a largura do canvas E a re-render/re-draw nativo depois). */
+      if (d.canvas) {
+        var slot = layout.querySelector('#mm-done-qr-slot');
+        if (slot) {
+          try {
+            var img = document.createElement('img');
+            img.src = d.canvas.toDataURL('image/png');
+            img.alt = 'QR Code PIX';
+            img.width = 220; img.height = 220;
+            slot.appendChild(img);
+          } catch (e) {
+            slot.appendChild(d.canvas); /* fallback: move o nó */
+          }
+        }
+      }
+
+      /* copiar código PIX — bulletproof: clipboard API → execCommand → botão
+         nativo. Feedback visual só quando alguma cópia realmente ocorre. */
+      var copyBtn = layout.querySelector('[data-mm-act="done-copy-pix"]');
+      if (copyBtn) copyBtn.addEventListener('click', function () {
+        var code = d.pixCode || '';
+        var lbl = copyBtn.querySelector('span');
+        var prev = lbl ? lbl.textContent : '';
+        function ok() {
+          copyBtn.classList.add('is-copied');
+          if (lbl) lbl.textContent = 'Código copiado!';
+          setTimeout(function () { copyBtn.classList.remove('is-copied'); if (lbl) lbl.textContent = prev; }, 2200);
+        }
+        function execCopy() {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = code;
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+            document.body.appendChild(ta);
+            ta.focus(); ta.select();
+            var done = document.execCommand('copy');
+            document.body.removeChild(ta);
+            return done;
+          } catch (e) { return false; }
+        }
+        function fallback() {
+          if (execCopy()) { ok(); return; }
+          var nativeCopy = mainArea.querySelector('.box-btn button, .box-btn a');
+          if (nativeCopy) { nativeCopy.click(); ok(); }
+        }
+        if (code && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(ok).catch(fallback);
+        } else {
+          fallback();
+        }
+      });
+
+      /* Contador de expiração do QR (padrão 5 min). Persiste o prazo por PEDIDO
+         em localStorage pra não reiniciar a cada reload. Ao zerar → "gerar novo
+         código" (reload). Obs: o PIX nativo vale ~6h; o contador é urgência. */
+      var timerEl = layout.querySelector('#mm-done-timer');
+      if (timerEl) {
+        var okey = 'mm_pix_deadline_' + (d.order || 'x');
+        var deadline = parseInt(localStorage.getItem(okey), 10);
+        if (!deadline || isNaN(deadline)) {
+          deadline = Date.now() + PIX_COUNTDOWN_MS;
+          try { localStorage.setItem(okey, String(deadline)); } catch (e) {}
+        }
+        var pixIv = null;
+        function tickTimer() {
+          var rem = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+          if (rem <= 0) {
+            if (pixIv) clearInterval(pixIv);
+            timerEl.classList.add('is-expired');
+            timerEl.innerHTML = '<span class="mm-done-timer-text">Tempo esgotado — gere um novo código.</span>' +
+              '<button type="button" class="mm-done-timer-renew" data-mm-act="done-renew">Gerar novo código</button>';
+            var renew = timerEl.querySelector('[data-mm-act="done-renew"]');
+            if (renew) renew.addEventListener('click', function () {
+              try { localStorage.removeItem(okey); } catch (e) {}
+              location.reload();
+            });
+            return;
+          }
+          if (rem <= 60) timerEl.classList.add('is-urgent');
+          var m = Math.floor(rem / 60), s = rem % 60;
+          var valEl = timerEl.querySelector('#mm-done-timer-val');
+          if (valEl) valEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+        tickTimer();
+        pixIv = setInterval(tickTimer, 1000);
+      }
+    }
+
+    var doneTries = 0;
+    (function waitForDone() {
+      /* espera o QR ser DESENHADO no canvas (não só existir) — o lib nativo
+         desenha async; um QR pronto é quadrado e >100px. Monta mesmo assim após
+         ~4s (cartão/boleto não têm canvas). */
+      var c = mainArea.querySelector('canvas');
+      var drawn = c && c.width > 100 && c.width === c.height;
+      if (drawn || doneTries > 16) { mountDone(); return; }
+      doneTries++;
+      setTimeout(waitForDone, 250);
+    })();
   }
 
   /* Safety net: failsafe global — se chegamos até o final da IIFE e a classe
