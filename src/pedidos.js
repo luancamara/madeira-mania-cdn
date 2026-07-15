@@ -26,27 +26,68 @@
     }
   }
 
+  /* Formata CPF/CNPJ com pontuação (progressivo). Módulo-level: usado pela
+     máscara visual E pelo interceptor de rede abaixo. */
+  function fmtDoc(digits) {
+    var d = (digits || '').replace(/\D/g, '').slice(0, 14);
+    if (d.length <= 11) {
+      if (d.length > 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+      if (d.length > 6) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+      if (d.length > 3) return d.slice(0, 3) + '.' + d.slice(3);
+      return d;
+    }
+    var p = d.slice(0, 2) + '.' + d.slice(2, 5) + '.' + d.slice(5, 8) + '/' + d.slice(8, 12);
+    if (d.length > 12) p += '-' + d.slice(12);
+    return p;
+  }
+
+  /* À PROVA DE TUDO: o Magazord envia a consulta como POST AJAX pra
+     /login?operation=consultaPedido. Se o cpfcnpj for SEM pontuação, o servidor
+     responde {"pedido-invalido":true} → "Informe um número do pedido válido".
+     A máscara visual + captura resolvem quase tudo, mas timing de evento /
+     autofill / colar podem escapar. Aqui pontuamos o cpfcnpj NO CORPO da request
+     (fetch E XMLHttpRequest) — independente de como o form foi submetido. */
+  function fixCpfInBody(body) {
+    if (typeof body !== 'string' || !/cpfcnpj=/i.test(body)) return body;
+    return body.replace(/(^|&)(cpfcnpj=)([^&]*)/i, function (_, pre, key, val) {
+      return pre + key + encodeURIComponent(fmtDoc(decodeURIComponent(val)));
+    });
+  }
+  function installConsultaInterceptor() {
+    if (window.__mmConsultaFix) return;
+    window.__mmConsultaFix = true;
+    var reC = /operation=consultaPedido/i;
+    try {
+      var of = window.fetch;
+      if (typeof of === 'function') {
+        window.fetch = function (input, init) {
+          try {
+            var url = (typeof input === 'string') ? input : (input && input.url) || '';
+            if (reC.test(url) && init && typeof init.body === 'string') init.body = fixCpfInBody(init.body);
+          } catch (e) {}
+          return of.apply(this, arguments);
+        };
+      }
+    } catch (e) {}
+    try {
+      var oo = XMLHttpRequest.prototype.open, os = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function (m, u) { this.__mmU = u || ''; return oo.apply(this, arguments); };
+      XMLHttpRequest.prototype.send = function (body) {
+        try { if (reC.test(this.__mmU || '') && typeof body === 'string') arguments[0] = fixCpfInBody(body); } catch (e) {}
+        return os.apply(this, arguments);
+      };
+    } catch (e) {}
+  }
+  /* Instala JÁ (síncrono) — antes de qualquer submit possível. */
+  if (isLogin) installConsultaInterceptor();
+
   /* ==========================================================
      PARTE 1 — /login: form Consultar Pedido
      ========================================================== */
   function enhanceConsulta() {
-    /* --- máscara CPF/CNPJ (CRÍTICO: backend Magazord rejeita CPF sem
-       pontuação com erro enganoso de "pedido inválido") --- */
-    function fmtDoc(digits) {
-      var d = digits.slice(0, 14);
-      if (d.length <= 11) {
-        /* CPF 000.000.000-00 progressivo */
-        if (d.length > 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
-        if (d.length > 6) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
-        if (d.length > 3) return d.slice(0, 3) + '.' + d.slice(3);
-        return d;
-      }
-      /* CNPJ 00.000.000/0000-00 */
-      var p = d.slice(0, 2) + '.' + d.slice(2, 5) + '.' + d.slice(5, 8) + '/' + d.slice(8, 12);
-      if (d.length > 12) p += '-' + d.slice(12);
-      return p;
-    }
-
+    /* máscara CPF/CNPJ — fmtDoc é módulo-level (usado também pelo interceptor de
+       rede). CRÍTICO: backend Magazord rejeita CPF sem pontuação com erro
+       enganoso ({"pedido-invalido":true} → "Informe um número do pedido válido"). */
     function bindMask(input) {
       if (!input || input.getAttribute('data-mm-mask')) return;
       input.setAttribute('data-mm-mask', '1');
