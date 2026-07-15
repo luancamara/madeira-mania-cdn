@@ -52,17 +52,27 @@
       input.setAttribute('data-mm-mask', '1');
       input.setAttribute('maxlength', '18');
       input.setAttribute('inputmode', 'numeric');
-      input.addEventListener('input', function () {
-        var masked = fmtDoc(this.value.replace(/\D/g, ''));
-        if (this.value !== masked) this.value = masked;
-      });
-      /* garante pontuação também num submit com valor pré-preenchido */
+      function normalize() {
+        var masked = fmtDoc((input.value || '').replace(/\D/g, ''));
+        if (input.value !== masked) input.value = masked;
+      }
+      /* 'input' = digitação. 'change'/'blur' = autofill/colar, que NÃO disparam
+         'input' de forma confiável — era o furo: CPF autofillado ficava SEM
+         pontuação e o Magazord rejeitava com "Informe um número do pedido
+         válido" (erro enganoso: a culpa é da pontuação do CPF, não do pedido). */
+      input.addEventListener('input', normalize);
+      input.addEventListener('change', normalize);
+      input.addEventListener('blur', normalize);
+      /* Garante a pontuação ANTES da validação nativa do Magazord. O handler
+         antigo era 'submit' na fase de bubble (registrado DEPOIS do Magazord →
+         rodava tarde demais). Fase de CAPTURA roda antes dos handlers bubble do
+         Magazord, no submit E no clique do botão (caso valide no click). */
       var form = input.form;
       if (form && !form.getAttribute('data-mm-mask')) {
         form.setAttribute('data-mm-mask', '1');
-        form.addEventListener('submit', function () {
-          input.value = fmtDoc(input.value.replace(/\D/g, ''));
-        });
+        form.addEventListener('submit', normalize, true);
+        var submitBtn = form.querySelector('button.button-login, button[type="submit"], input[type="submit"]');
+        if (submitBtn) submitBtn.addEventListener('click', normalize, true);
       }
     }
 
