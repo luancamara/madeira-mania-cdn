@@ -296,10 +296,14 @@
     var discountEl = mainArea.querySelector('#resumo-compra .discount-value');
     if (discountEl) state.discount = parseBRL(discountEl.textContent);
 
-    var couponEl = mainArea.querySelector('#resumo-compra .txt-cupom, #resumo-compra .alert.alert-type-1');
+    /* Cupom: ler .txt-cupom (o CÓDIGO em si, ex. "BEMVINDO"). O seletor com
+       vírgula antigo casava .alert.alert-type-1 ("Cupom aplicado com sucesso!")
+       primeiro (ordem do DOM) e o regex de maiúsculas não achava código →
+       couponCode ficava "" mesmo com cupom aplicado. */
+    var couponEl = mainArea.querySelector('#resumo-compra .txt-cupom');
     if (couponEl) {
-      var m = couponEl.textContent.match(/([A-Z0-9]{3,})/);
-      if (m) state.couponCode = m[1];
+      var cc = (couponEl.textContent || '').replace(/\s+/g, '').trim();
+      if (/^[A-Za-z0-9][A-Za-z0-9._-]{1,}$/.test(cc)) state.couponCode = cc.toUpperCase();
     }
 
     /* Shipping — parse rico via .servico-frete + fallback texto */
@@ -990,6 +994,12 @@
 
   function handleCouponRemove() {
     if (!window.Zord || !window.Zord.checkout) return;
+    /* Limpa o cupom do snapshot NA HORA — senão um POST de manutenção concorrente
+       (drawer/onepage) leria o snapshot stale e re-aplicaria o cupom removido. */
+    try {
+      var s = loadCartSnapshot();
+      if (s && s.couponCode) { s.couponCode = ''; STORAGE.set(CART_SNAPSHOT_KEY, JSON.stringify(s)); }
+    } catch (e) {}
     try {
       window.Zord.checkout.removeCupomDesconto();
     } catch (e) {
@@ -1464,11 +1474,13 @@
       }
       var discountEl = area.querySelector('#resumo-compra .discount-value');
       var discount = discountEl ? parseBRL(discountEl.textContent) : 0;
-      var couponEl = area.querySelector('#resumo-compra .txt-cupom, #resumo-compra .alert.alert-type-1');
+      /* Mesmo bug do capture na linha ~299: ler .txt-cupom (o código), não o
+         seletor com vírgula que pegava o alerta de sucesso e falhava o regex. */
+      var couponEl = area.querySelector('#resumo-compra .txt-cupom');
       var couponCode = '';
       if (couponEl) {
-        var m = couponEl.textContent.match(/([A-Z0-9]{3,})/);
-        if (m) couponCode = m[1];
+        var cc = (couponEl.textContent || '').replace(/\s+/g, '').trim();
+        if (/^[A-Za-z0-9][A-Za-z0-9._-]{1,}$/.test(cc)) couponCode = cc.toUpperCase();
       }
       var freteEl = area.querySelector('#resumo-compra .frete-calculado');
       var shipping = null, shippingDeadline = '';
@@ -1875,11 +1887,35 @@
      Lemos data-valor-frete, NUNCA o texto: o HTML tem um nudge
      <span class="frete-gratis">frete grátis!</span> (promo ≥R$2.000) que
      falseia qualquer regex /grátis/. */
+  /* Cupom ATUALMENTE aplicado. Fonte 1: DOM (#resumo-compra .txt-cupom = o
+     código). Fonte 2: snapshot.couponCode. IMPORTANTE: enviar cupom-desconto
+     VAZIO num POST de manutenção REMOVE o cupom no servidor (e persiste);
+     OMITIR o campo preserva. Por isso quem chama só anexa cupom-desconto
+     quando isto retorna não-vazio. */
+  function readAppliedCoupon() {
+    try {
+      var resumo = document.querySelector('#resumo-compra');
+      if (resumo) {
+        /* Página do carrinho: o DOM é AUTORITATIVO. Sem .txt-cupom = sem cupom.
+           NÃO cai pro snapshot (que pode estar stale por ~120ms após um remove
+           nativo) — senão um POST de manutenção re-aplicaria o cupom removido. */
+        var el = resumo.querySelector('.txt-cupom');
+        if (el) { var t = (el.textContent || '').replace(/\s+/g, '').trim(); if (/^[A-Za-z0-9][A-Za-z0-9._-]{1,}$/.test(t)) return t.toUpperCase(); }
+        return '';
+      }
+    } catch (e) {}
+    /* Fora da página do carrinho (drawer/onepage sem #resumo-compra): snapshot
+       é o melhor sinal. Se vazio, quem chama OMITE o campo (preserva no server). */
+    try { var s = loadCartSnapshot(); if (s && s.couponCode) return String(s.couponCode).toUpperCase(); } catch (e) {}
+    return '';
+  }
+
   function fetchAuthoritativeFrete(cepDigits, cb) {
     var cepFmt = formatCep(cepDigits);
-    var coupon = '';
-    try { var s0 = loadCartSnapshot(); coupon = (s0 && s0.couponCode) || ''; } catch (e) {}
-    var body = 'cep=' + encodeURIComponent(cepFmt) + '&cupom-desconto=' + encodeURIComponent(coupon);
+    var coupon = readAppliedCoupon();
+    /* NUNCA enviar cupom-desconto vazio (removeria o cupom); omitir preserva. */
+    var body = 'cep=' + encodeURIComponent(cepFmt);
+    if (coupon) body += '&cupom-desconto=' + encodeURIComponent(coupon);
     fetch('/checkout/cart?operation=atualizaValoresCarrinho', {
       method: 'POST',
       credentials: 'include',

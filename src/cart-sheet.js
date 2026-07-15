@@ -251,12 +251,34 @@
   //
   // Workaround: call the raw backend endpoint
   //   POST /checkout/cart?operation=<adicionaItem|removeItem|deleteItem>
-  //   body: cep=&cupom-desconto=&nenhumCreditoSelecionado=true&id=<id>&area=main-cart
+  //   body: cep=&nenhumCreditoSelecionado=true&id=<id>&area=main-cart
+  //         (+ &cupom-desconto=<código> SÓ quando há cupom — enviar vazio o remove)
   // then update the DOM manually (optimistic UI) and sync Zord.get('cart.size').
 
+  // Lê o cupom ATUALMENTE aplicado (DOM #resumo-compra .txt-cupom = o código;
+  // fallback pro snapshot mm_cart_snapshot). CRÍTICO: enviar 'cupom-desconto='
+  // VAZIO num POST de manutenção REMOVE o cupom no servidor (e persiste) —
+  // por isso OMITIMOS o campo quando isto é vazio (omitir preserva o cupom).
+  function mmReadCoupon() {
+    try {
+      var resumo = document.querySelector('#resumo-compra');
+      if (resumo) {
+        // Página do carrinho: DOM AUTORITATIVO. Sem .txt-cupom = sem cupom (não
+        // cai pro snapshot stale → não re-aplica um cupom recém-removido).
+        var el = resumo.querySelector('.txt-cupom');
+        if (el) { var t = (el.textContent || '').replace(/\s+/g, '').trim(); if (/^[A-Za-z0-9][A-Za-z0-9._-]{1,}$/.test(t)) return t.toUpperCase(); }
+        return '';
+      }
+    } catch (e) {}
+    try { var s = JSON.parse(localStorage.getItem('mm_cart_snapshot') || 'null'); if (s && s.couponCode) return String(s.couponCode).toUpperCase(); } catch (e) {}
+    return '';
+  }
+
   function mmPostCartOp(operation, id) {
-    var body = 'cep=&cupom-desconto=&nenhumCreditoSelecionado=true&id=' +
+    var body = 'cep=&nenhumCreditoSelecionado=true&id=' +
       encodeURIComponent(String(id)) + '&area=main-cart';
+    var mmCup = mmReadCoupon();
+    if (mmCup) body += '&cupom-desconto=' + encodeURIComponent(mmCup);
     return fetch('/checkout/cart?operation=' + encodeURIComponent(operation), {
       method: 'POST',
       credentials: 'same-origin',
@@ -420,7 +442,10 @@
     }
 
     var body = 'cep=' + encodeURIComponent(cepDigits.slice(0, 5) + '-' + cepDigits.slice(5)) +
-      '&cupom-desconto=&nenhumCreditoSelecionado=true&area=main-cart';
+      '&nenhumCreditoSelecionado=true&area=main-cart';
+    // preserva o cupom (omitir se vazio — enviar vazio removeria o cupom)
+    var mmCupShip = mmReadCoupon();
+    if (mmCupShip) body += '&cupom-desconto=' + encodeURIComponent(mmCupShip);
 
     var p = fetch('/checkout/cart?operation=atualizaValoresCarrinho', {
       method: 'POST',
