@@ -60,6 +60,48 @@ html.mm-ped-on, html.mm-ped-on body { overflow-x: clip; }
   100% { box-shadow: 0 0 0 0 rgba(27, 122, 69, 0); }
 }
 
+/* Aviso pra quem chega LOGADO no form de consulta (guest-only): o Magazord
+   rejeita pedido em sessão logada — manda pra lista real de pedidos. */
+.mm-cp-logged {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--mm-border);
+  border-left: 3px solid var(--mm-cta);
+  border-radius: 12px;
+  background: var(--mm-cta-soft);
+  font-family: var(--mm-sans);
+}
+.mm-cp-logged strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mm-fg);
+}
+.mm-cp-logged span {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--mm-fg-meta);
+}
+.mm-cp-logged-cta {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--mm-r-full);
+  background: var(--mm-cta);
+  color: #fff !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--mm-tr-fast);
+}
+.mm-cp-logged-cta::after { content: '→'; font-weight: 400; }
+.mm-cp-logged-cta:hover { background: var(--mm-cta-dark); }
+
 /* header do card: voltar + título serif */
 .mm-consulta-on #form-consulta-pedido .cancel-consulta,
 .mm-consulta-on #form-consulta-pedido .cancel-consulta span,

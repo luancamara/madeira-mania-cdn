@@ -192,6 +192,19 @@
 
       document.documentElement.classList.add('mm-consulta-on');
 
+      /* GUARD: usuário LOGADO caiu no form de consulta (guest-only). O backend
+         Magazord REJEITA qualquer pedido numa sessão logada ({"pedido-invalido":true}),
+         então avisa e manda pra lista real de pedidos dele. Sinal: cookie zordEm
+         (só existe logado). Cobre quem chega por link antigo/cache/bookmark. */
+      if (/(?:^|;\s*)zordEm=[^;\s]/.test(document.cookie) && !box.querySelector('.mm-cp-logged')) {
+        var logged = document.createElement('div');
+        logged.className = 'mm-cp-logged';
+        logged.innerHTML = '<strong>Você já está logado.</strong>' +
+          '<span>Esta consulta é para quem comprou sem cadastro. Para acompanhar as suas compras:</span>' +
+          '<a href="/cliente/pedidos" class="mm-cp-logged-cta">Ver todos os meus pedidos</a>';
+        box.insertAdjacentElement('afterbegin', logged);
+      }
+
       /* --- layout unificado login + consulta (sem toggle) --- */
       var holder = document.querySelector('.login-holder');
       var pageLogin = document.querySelector('.page.page-login');

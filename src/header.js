@@ -27,6 +27,13 @@
       truck: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>'
     };
 
+    // "Rastrear pedido": o form de consulta em /login é guest-only — o Magazord
+    // REJEITA qualquer pedido numa sessão logada. Então logado vai direto pra
+    // lista real de pedidos dele (/cliente/pedidos); visitante vai pro form.
+    // Sinal de login: cookie zordEm (só existe quando logado; visitante nunca tem).
+    var mmLoggedIn = /(?:^|;\s*)zordEm=[^;\s]/.test(document.cookie);
+    var trackHref = mmLoggedIn ? '/cliente/pedidos' : '/login#rastrear';
+
     var header = document.createElement('div');
     header.id = 'mm-header';
     header.innerHTML = [
@@ -52,7 +59,7 @@
       '  </a>',
       '  <div class="mm-h-main-right">',
       '    <a class="mm-h-action" href="/wishlist">' + svg.heart + '<span>Favoritos</span></a>',
-      '    <a class="mm-h-action mm-h-track" href="/login#rastrear">' + svg.truck + '<span>Rastrear</span></a>',
+      '    <a class="mm-h-action mm-h-track" href="' + trackHref + '">' + svg.truck + '<span>Rastrear</span></a>',
       '    <a class="mm-h-action" href="/login">' + svg.user + '<span>Conta</span></a>',
       '    <button class="mm-h-action" type="button" id="mm-h-cart" aria-label="Carrinho, 0 itens" aria-live="polite">',
       '      <span class="mm-h-cart-icon">' + svg.bag + '<span class="mm-h-cart-badge" id="mm-h-cart-count" aria-hidden="true" hidden>0</span></span>',
@@ -251,7 +258,7 @@
       '      <a href="/outlet" class="mm-h-drawer-link">Outlet</a>',
       '    </nav>',
       '    <div class="mm-h-drawer-footer">',
-      '      <a href="/login#rastrear" class="mm-h-drawer-track">' + svg.truck + '<span>Rastrear pedido</span></a>',
+      '      <a href="' + trackHref + '" class="mm-h-drawer-track">' + svg.truck + '<span>Rastrear pedido</span></a>',
       '      <a href="/wishlist">Favoritos</a>',
       '      <a href="/login">Conta</a>',
       '      <a href="/atendimento">Atendimento</a>',

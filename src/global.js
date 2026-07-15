@@ -167,7 +167,8 @@
           '<div class="mm-footer-col">' +
             '<h4 class="mm-footer-h">Sua compra</h4>' +
             '<ul class="mm-footer-list">' +
-              '<li><a href="/login#rastrear">Rastrear meu pedido</a></li>' +
+              /* logado → lista real de pedidos; visitante → form de consulta (guest-only) */
+              '<li><a href="' + (/(?:^|;\s*)zordEm=[^;\s]/.test(document.cookie) ? '/cliente/pedidos' : '/login#rastrear') + '">Rastrear meu pedido</a></li>' +
               '<li><a href="/como-comprar">Como comprar</a></li>' +
               '<li><a href="/politica-de-entrega">Frete e entrega</a></li>' +
               '<li><a href="/politica-de-trocas-e-devolucoes">Trocas e devoluções</a></li>' +
