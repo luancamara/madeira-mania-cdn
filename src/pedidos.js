@@ -408,9 +408,29 @@
     document.documentElement.classList.add('mm-ped-on');
   }
 
+  /* Deep-link "Rastrear pedido" (#rastrear, vindo do header/rodapé): rola até o
+     form de consulta e destaca — deixa claro que é ali que se rastreia, mesmo
+     estando na /login. */
+  function focusConsultaFromHash() {
+    if (!/rastrear/i.test(location.hash || '') && !/rastrear/i.test(location.search || '')) return;
+    var tries = 0;
+    (function go() {
+      var box = document.getElementById('form-consulta-pedido');
+      if (!box || box.offsetParent === null) {
+        if (++tries < 30) return void setTimeout(go, 200);
+        return;
+      }
+      try { box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { try { box.scrollIntoView(); } catch (e2) {} }
+      box.classList.add('mm-cp-flash');
+      setTimeout(function () { box.classList.remove('mm-cp-flash'); }, 2400);
+      var num = document.getElementById('numero-pedido');
+      if (num) setTimeout(function () { try { num.focus({ preventScroll: true }); } catch (e) { try { num.focus(); } catch (e2) {} } }, 700);
+    })();
+  }
+
   onReady(function () {
     try {
-      if (isLogin) enhanceConsulta();
+      if (isLogin) { enhanceConsulta(); focusConsultaFromHash(); }
       if (isPedido) enhancePedido();
     } catch (e) {
       /* degrada pro nativo — nunca quebra a página */

@@ -263,6 +263,7 @@
   #mm-header .mm-h-burger { display: inline-flex; }
   #mm-header .mm-h-action#mm-h-buscar { display: none; }
   #mm-header .mm-h-main-right .mm-h-action[href="/wishlist"],
+  #mm-header .mm-h-main-right .mm-h-track,
   #mm-header .mm-h-main-right .mm-h-action[href="/login"] { display: none; }
   /* Hide "Carrinho" text label — only keep the bag icon + badge */
   #mm-header #mm-h-cart > span:not(.mm-h-cart-icon) { display: none; }
@@ -1092,6 +1093,25 @@
   touch-action: manipulation;
 }
 #mm-header .mm-h-drawer-footer a:hover { color: var(--c-brand); }
+/* "Rastrear pedido" no menu mobile — destaque (é a razão principal do usuário
+   abrir o menu vindo do "Rastrear") com ícone de caminhão alinhado. */
+#mm-header .mm-h-drawer-footer a.mm-h-drawer-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--c-brand);
+}
+#mm-header .mm-h-drawer-footer a.mm-h-drawer-track svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
 
 @keyframes mm-slide-right {
   from { transform: translateX(-100%); }

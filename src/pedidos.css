@@ -48,6 +48,18 @@ html.mm-ped-on, html.mm-ped-on body { overflow-x: clip; }
   font-family: var(--mm-sans);
 }
 
+/* Destaque ao chegar via "Rastrear pedido" (#rastrear) — deixa claro que é
+   aqui que se rastreia, mesmo estando na /login. */
+#form-consulta-pedido.mm-cp-flash {
+  animation: mm-cp-flash 2.2s ease-out 1;
+  border-radius: 16px;
+}
+@keyframes mm-cp-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(27, 122, 69, 0); }
+  18%  { box-shadow: 0 0 0 4px rgba(27, 122, 69, 0.38); }
+  100% { box-shadow: 0 0 0 0 rgba(27, 122, 69, 0); }
+}
+
 /* header do card: voltar + título serif */
 .mm-consulta-on #form-consulta-pedido .cancel-consulta,
 .mm-consulta-on #form-consulta-pedido .cancel-consulta span,
