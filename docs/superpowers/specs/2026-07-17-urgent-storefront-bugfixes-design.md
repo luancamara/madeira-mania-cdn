@@ -1,6 +1,6 @@
 # Correções urgentes do fluxo de compra
 
-**Data:** 2026-07-17  
+**Data:** 2026-07-17
 **Status:** aprovado para implementação
 
 ## Objetivo

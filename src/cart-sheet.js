@@ -16,6 +16,30 @@
 (function() {
   'use strict';
 
+  var MM_VITRINE_INTENT_TTL_MS = 10000;
+  var mmVitrineIntentUntil = 0;
+  var mmPromotingVitrineFeedback = false;
+
+  function mmStorefrontFlow() {
+    return window.MMStorefrontFlow || null;
+  }
+
+  function mmIsLoggedCustomer() {
+    var flow = mmStorefrontFlow();
+    if (flow && typeof flow.isLoggedCustomer === 'function') {
+      return flow.isLoggedCustomer(document.cookie);
+    }
+    return /(?:^|;\s*)zordEm=[^;\s]+/.test(document.cookie || '');
+  }
+
+  function mmCheckoutTarget() {
+    var flow = mmStorefrontFlow();
+    if (flow && typeof flow.checkoutTarget === 'function') {
+      return flow.checkoutTarget(document.cookie);
+    }
+    return mmIsLoggedCustomer() ? '/checkout/onepage' : '/checkout/identify';
+  }
+
   // Disparar evento React apos qualquer AJAX do carrinho completar.
   // Isso cobre: adicionaQuantidade, removeQuantidade, deleteItem,
   // e qualquer outra operacao que use Zord.callArea("checkout/cart", ...).
@@ -29,6 +53,104 @@
         }, 100);
       }
     });
+  }
+
+  /* A vitrine nova do Magazord confirma a inclusão com um toast curto, enquanto
+     a PDP abre um dialog com as escolhas de continuar/finalizar. Marcamos o
+     clique da vitrine, mas só promovemos o feedback DEPOIS que o próprio
+     Magazord renderizar o sucesso — falhas de inclusão nunca viram falso êxito. */
+  function instalarModalVitrineUnificado() {
+    var root = document.documentElement;
+    if (!root || root.dataset.mmVitrineFeedbackObserver === '1') return;
+    root.dataset.mmVitrineFeedbackObserver = '1';
+
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!target || !target.closest || !target.closest('.btn-comprar-vitrine')) return;
+      mmVitrineIntentUntil = Date.now() + MM_VITRINE_INTENT_TTL_MS;
+    }, true);
+
+    function scanSuccessPopup() {
+      if (mmPromotingVitrineFeedback || Date.now() > mmVitrineIntentUntil) return;
+
+      var swal = window.Swal;
+      var hasSwal = !!(swal && typeof swal.fire === 'function');
+      var popups = document.querySelectorAll('.swal2-popup, [role="alert"]');
+
+      for (var i = 0; i < popups.length; i += 1) {
+        var popup = popups[i];
+        var titleEl = popup.querySelector('.swal2-title, h2');
+        var title = titleEl ? titleEl.textContent : '';
+        var flow = mmStorefrontFlow();
+        var shouldPromote = flow && typeof flow.shouldPromoteVitrineSuccess === 'function'
+          ? flow.shouldPromoteVitrineSuccess({
+              hasPendingIntent: Date.now() <= mmVitrineIntentUntil,
+              title: title,
+              popupClass: typeof popup.className === 'string' ? popup.className : '',
+              hasSwal: hasSwal
+            })
+          : Date.now() <= mmVitrineIntentUntil &&
+            String(title || '').trim() === 'Adicionado ao carrinho!' &&
+            !popup.classList.contains('popup-adicionado-ao-carrinho') &&
+            hasSwal;
+
+        if (!shouldPromote) continue;
+
+        mmVitrineIntentUntil = 0;
+        mmPromotingVitrineFeedback = true;
+
+        try { swal.close(); } catch (closeError) {}
+
+        setTimeout(function () {
+          var result;
+          try {
+            result = swal.fire({
+              title: 'Produto adicionado ao seu carrinho!',
+              text: 'O que você deseja fazer a seguir?',
+              icon: 'success',
+              width: 600,
+              showCloseButton: true,
+              showConfirmButton: true,
+              showDenyButton: true,
+              confirmButtonText: 'Continuar comprando',
+              denyButtonText: 'Finalizar compra',
+              confirmButtonColor: '#FFFFFF',
+              denyButtonColor: '#27AE60',
+              focusConfirm: false,
+              customClass: {
+                popup: 'popup-adicionado-ao-carrinho',
+                icon: 'icone-adicionado-ao-carrinho',
+                title: 'titulo-adicionado-ao-carrinho',
+                actions: 'actions-popup-add-carrinho',
+                confirmButton: 'botao-continuar-comprando',
+                denyButton: 'botao-finalizar-compra'
+              }
+            });
+          } catch (fireError) {
+            mmPromotingVitrineFeedback = false;
+            return;
+          }
+
+          if (!result || typeof result.then !== 'function') {
+            mmPromotingVitrineFeedback = false;
+            return;
+          }
+
+          result.then(function (choice) {
+            mmPromotingVitrineFeedback = false;
+            if (choice && choice.isDenied) window.location.href = '/checkout/cart';
+          }, function () {
+            mmPromotingVitrineFeedback = false;
+          });
+        }, 0);
+        return;
+      }
+    }
+
+    var observer = new MutationObserver(function () {
+      setTimeout(scanSuccessPopup, 0);
+    });
+    observer.observe(document.body || root, { childList: true, subtree: true });
   }
 
   function injetarParcelamentoTotal() {
@@ -228,11 +350,29 @@
     }, true); // capturing phase to intercept before Magazord's handler
   }
 
-  // Redirecionar "Finalizar compra" do carrinho preview direto para identify (pula /checkout/cart)
+  // Cliente logado pula identity (que é guest-oriented) e entra no onepage,
+  // onde a sessão/endereço salvo já são reconhecidos. Visitante mantém o fluxo
+  // anterior: previews dentro de #cart-preview-area seguem direto ao identify;
+  // o drawer desktop elevado preserva seu href nativo para /checkout/cart.
   function redirecionarFinalizarCompra() {
     document.addEventListener('click', function(e) {
-      var btn = e.target.closest('.finalizar-compra');
-      if (btn && btn.closest('#cart-preview-area')) {
+      var target = e.target;
+      if (!target || !target.closest) return;
+      var btn = target.closest('.finalizar-compra, .box-total-btn .checkout a, .box-total-btn .checkout .button');
+      if (!btn) return;
+
+      var preview = btn.closest('#cart-preview-area');
+      var desktopDrawer = btn.closest('.carrinho-rapido-ctn');
+      if (!preview && !desktopDrawer) return;
+
+      if (mmIsLoggedCustomer()) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = mmCheckoutTarget();
+        return;
+      }
+
+      if (preview) {
         e.preventDefault();
         e.stopPropagation();
         window.location.href = '/checkout/identify';
@@ -1693,6 +1833,7 @@
 
   function iniciar() {
     registrarAjaxListener();
+    instalarModalVitrineUnificado();
     interceptarDeleteComConfirmacao();
     redirecionarFinalizarCompra();
 

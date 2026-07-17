@@ -25,7 +25,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 #   (loader tem onerror em cadeia). Manter a tag por deploy dá paridade ao fallback.
 #   NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
 CDN_PAGES_HOST="madeira-mania-cdn.luancamara.workers.dev"
-CDN_VERSION="v2.0.43"
+CDN_VERSION="v2.0.44"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 
 # Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
@@ -169,6 +169,9 @@ echo "Gerando bundle único..."
   echo "  /* ============================================="
   echo "     SEÇÃO 6: CART + CHECKOUT JS"
   echo "     ============================================= */"
+  echo ""
+  echo "  /* === storefront-flow.js === */"
+  sed 's/^/  /' "$SRC/storefront-flow.js"
   echo ""
   echo "  /* === cart-sheet.js === */"
   sed 's/^/  /' "$SRC/cart-sheet.js"

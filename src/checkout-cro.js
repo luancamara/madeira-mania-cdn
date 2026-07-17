@@ -36,7 +36,17 @@
      pra ele NÃO forçamos "sem cadastro" nem pedimos dados de novo; adaptamos a
      layout (identidade em resumo + seletor de endereços salvos). Cookie zordEm
      só existe logado (visitante fresco nunca recebe). Ver [[magazord-cpf-mask-autofill]]. */
-  var mmLoggedIn = /(?:^|;\s*)zordEm=[^;\s]/.test(document.cookie);
+  var mmFlow = window.MMStorefrontFlow || null;
+  var mmLoggedIn = mmFlow && typeof mmFlow.isLoggedCustomer === 'function'
+    ? mmFlow.isLoggedCustomer(document.cookie)
+    : /(?:^|;\s*)zordEm=[^;\s]+/.test(document.cookie || '');
+
+  function mmCheckoutTarget() {
+    if (mmFlow && typeof mmFlow.checkoutTarget === 'function') {
+      return mmFlow.checkoutTarget(document.cookie);
+    }
+    return mmLoggedIn ? '/checkout/onepage' : '/checkout/identify';
+  }
 
   /* Pedido confirmado — limpa o draft do onepage (user terminou o fluxo).
      NÃO retorna: repaginamos a tela de comprovante/QR (mountDone) abaixo. */
@@ -1024,6 +1034,15 @@
         saveCartSnapshot(s);
       }
     } catch (e) {}
+
+    /* O identify customizado é a entrada do fluxo guest. Cliente já logado deve
+       ir direto ao onepage, que lê seus endereços e mantém o carrinho servidor.
+       Não acionamos o botão nativo abaixo porque ele aponta fixo para identify. */
+    if (mmLoggedIn) {
+      STORAGE.remove('mm_checkout_mode');
+      location.href = mmCheckoutTarget();
+      return;
+    }
 
     var btn = document.getElementById('finalizar-compra');
     if (btn) {

@@ -1158,6 +1158,31 @@ html:has(#cart-preview-area > div[class*="z-[9999]"].translate-x-\[0\]) .topbar-
   -webkit-overflow-scrolling: touch !important;
 }
 
+/* O Magazord também entrega a estrutura pós-AJAX sem o wrapper .cart-items:
+   .content-cart > .cart-item* + .box-total-btn. Nesse formato, manter o
+   overflow:hidden faz os cards encolherem e o footer cobrir o último item.
+   O próprio content vira o scroll container; não movemos nós controlados pelo
+   React. A variante com .cart-items continua usando a regra acima. */
+@media (min-width: 769px) {
+  .carrinho-rapido-ctn .content-cart:not(:has(> .cart-items)):has(> .cart-item) {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior-y: contain !important;
+    scrollbar-gutter: stable !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .carrinho-rapido-ctn .content-cart:not(:has(> .cart-items)) > .cart-item {
+    flex: 0 0 auto !important;
+  }
+
+  .carrinho-rapido-ctn .content-cart:not(:has(> .cart-items)) > .box-total-btn {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 3 !important;
+  }
+}
+
 /* Footer .box-total-btn — compact white card with top-radius + shadow-up */
 .carrinho-rapido-ctn .box-total-btn {
   flex: 0 0 auto !important;

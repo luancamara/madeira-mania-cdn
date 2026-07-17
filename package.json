@@ -5,7 +5,8 @@
   "description": "Bundle único de injeções CSS/JS para Madeira Mania (Magazord), servido via jsDelivr.",
   "scripts": {
     "build": "bash ./build.sh",
-    "dev": "bash ./dev.sh"
+    "dev": "bash ./dev.sh",
+    "test": "node --check src/storefront-flow.js && node --check src/cart-sheet.js && node --check src/checkout-cro.js && node --test test/storefront/*.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.1"
