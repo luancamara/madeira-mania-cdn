@@ -1174,6 +1174,60 @@ body.mm-checkout-rebuild .checkout-main {
   color: var(--mm-danger);
 }
 
+/* ---- Cupom sempre-aberto: label + estados ---- */
+.mm-coupon-label {
+  display: flex;
+  align-items: center;
+  gap: var(--mm-s2);
+  margin-bottom: var(--mm-s2);
+  font-family: var(--mm-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mm-fg-soft);
+}
+
+.mm-coupon-label svg {
+  flex-shrink: 0;
+  color: var(--mm-olive);
+}
+
+/* Estado ocupado (aplicando/removendo) — trava interação e sinaliza carregamento */
+.mm-coupon.is-busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mm-coupon.is-busy .mm-btn-secondary {
+  position: relative;
+  color: transparent !important;
+}
+
+.mm-coupon.is-busy .mm-btn-secondary::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: mm-load-spin 0.6s linear infinite;
+}
+
+.mm-coupon-error {
+  margin: var(--mm-s2) 0 0;
+  font-family: var(--mm-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mm-danger);
+}
+
+.mm-coupon-error[hidden] {
+  display: none;
+}
+
 
 /* ---- Primary CTA ---- */
 .mm-cta {

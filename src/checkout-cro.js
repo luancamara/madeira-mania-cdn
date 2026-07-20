@@ -560,6 +560,35 @@
     return out;
   }
 
+  /* Bloco de cupom reutilizável (cart + identify/onepage). SEMPRE-ABERTO por
+     padrão: a pílula escondida atrás de "Tenho um cupom" fazia clientes não
+     acharem o campo (relato real de dificuldade no mobile). actPrefix define
+     os data-mm-act — 'coupon' no cart usa a Zord API (addCupomDesconto); no
+     identify/onepage usamos 'summary-coupon' (POST server-side), porque a Zord
+     API depende do DOM nativo do carrinho e quebra fora dele. */
+  function renderCouponBlock(couponCode, actPrefix) {
+    if (couponCode) {
+      return (
+        '<div class="mm-coupon mm-coupon-has">' +
+          '<div class="mm-coupon-applied">' +
+            '<span class="mm-coupon-applied-left">' + ICON.tag + '<span>' + escapeHTML(couponCode) + '</span></span>' +
+            '<button type="button" data-mm-act="' + actPrefix + '-remove" aria-label="Remover cupom">' + ICON.close + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+    return (
+      '<div class="mm-coupon is-open">' +
+        '<div class="mm-coupon-label">' + ICON.tag + '<span>Cupom de desconto</span></div>' +
+        '<form class="mm-coupon-form" data-mm-act="' + actPrefix + '-submit">' +
+          '<input type="text" class="mm-input" name="mm-coupon-code" placeholder="Digite o código" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" />' +
+          '<button type="submit" class="mm-btn-secondary">Aplicar</button>' +
+        '</form>' +
+        '<p class="mm-coupon-error" hidden></p>' +
+      '</div>'
+    );
+  }
+
   function renderSummaryDynamic(state) {
     var subtotalFull = state.subtotalFull > 0 ? state.subtotalFull : state.subtotalPix;
 
@@ -623,26 +652,8 @@
         '</div>';
     }
 
-    /* Coupon block */
-    var couponBlock;
-    if (state.couponCode) {
-      couponBlock =
-        '<div class="mm-coupon-applied">' +
-          '<span class="mm-coupon-applied-left">' + ICON.tag + '<span>' + escapeHTML(state.couponCode) + '</span></span>' +
-          '<button type="button" data-mm-act="coupon-remove" aria-label="Remover cupom">' + ICON.close + '</button>' +
-        '</div>';
-    } else {
-      couponBlock =
-        '<div class="mm-coupon">' +
-          '<button type="button" class="mm-coupon-toggle" data-mm-act="coupon-toggle">' +
-            ICON.tag + '<span>Tenho um cupom</span>' +
-          '</button>' +
-          '<form class="mm-coupon-form" data-mm-act="coupon-submit">' +
-            '<input type="text" class="mm-input" name="mm-coupon-code" placeholder="CUPOM" autocomplete="off" autocapitalize="characters" spellcheck="false" />' +
-            '<button type="submit" class="mm-btn-secondary">Aplicar</button>' +
-          '</form>' +
-        '</div>';
-    }
+    /* Coupon block — sempre aberto (ver renderCouponBlock) */
+    var couponBlock = renderCouponBlock(state.couponCode, 'coupon');
 
     return (
       '<div class="mm-sum-stack">' +
@@ -1282,6 +1293,7 @@
         '<div class="mm-sum-card">' +
           '<div class="mm-id-thumbs">' + thumbsHTML + '</div>' +
           '<div class="mm-rows">' + rows + '</div>' +
+          renderCouponBlock(snap.couponCode, 'summary-coupon') +
           totalBlock +
           '<a class="mm-id-edit-cart" href="/checkout/cart">' +
             '<span>Editar carrinho</span>' +
@@ -1599,6 +1611,106 @@
     });
   }
 
+  /* ===== Cupom no resumo do identify/onepage =====
+     A Zord API (addCupomDesconto) só funciona no /checkout/cart — depende do
+     DOM nativo do carrinho (feedback, #field-cupom) e QUEBRA fora dele (testado:
+     lança "reading 'style'" e não aplica). Aqui usamos o endpoint de manutenção
+     do carrinho, que aplica+persiste o cupom server-side; o onepage/payment
+     cobram desse mesmo carrinho. cupom-desconto VAZIO remove+persiste (omitir
+     preservaria) — ver memória magazord-cupom-desconto-wipe. */
+  function mmPostSummaryCoupon(code) {
+    var body = 'cep=&nenhumCreditoSelecionado=true&area=main-cart&cupom-desconto=' +
+      encodeURIComponent(code || '');
+    return fetch('/checkout/cart?operation=atualizaValoresCarrinho', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'text/html,application/json,*/*',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: body
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    });
+  }
+
+  /* Sucesso = a resposta traz .txt-cupom com EXATAMENTE o código enviado
+     (a resposta é o fragmento #cart-area, não #checkout-main-area, então
+     parseCartHtml não serve pra ela — checamos só o marcador de cupom). */
+  function mmSummaryCouponApplied(html, code) {
+    try {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var tc = doc.querySelector('.txt-cupom');
+      if (!tc) return false;
+      var applied = (tc.textContent || '').replace(/\s+/g, '').trim().toUpperCase();
+      return !!applied && applied === String(code).toUpperCase();
+    } catch (e) { return false; }
+  }
+
+  function mmSummaryCouponError(block, msg) {
+    if (!block) return;
+    block.classList.remove('is-busy');
+    var err = block.querySelector('.mm-coupon-error');
+    if (err) { err.textContent = msg; err.removeAttribute('hidden'); }
+    var inp = block.querySelector('input');
+    if (inp) { inp.classList.add('mm-input-error'); try { inp.focus(); } catch (e) {} }
+  }
+
+  function applySummaryCoupon(code, form) {
+    code = (code || '').trim();
+    var block = form ? form.closest('.mm-coupon') : null;
+    if (!code) { mmSummaryCouponError(block, 'Digite um cupom.'); return; }
+    if (block) {
+      block.classList.add('is-busy');
+      var err = block.querySelector('.mm-coupon-error'); if (err) err.setAttribute('hidden', '');
+      var inp = block.querySelector('input'); if (inp) inp.classList.remove('mm-input-error');
+    }
+    mmPostSummaryCoupon(code).then(function (html) {
+      if (mmSummaryCouponApplied(html, code)) {
+        /* Onepage: reload garante que o total NATIVO (que gera a cobrança)
+           recalcule com o cupom; o draft do guest é restaurado no mount. Identify:
+           sem total de pagamento — reconcilia in-place (mais leve, sem flash). */
+        if (isOnepage) { location.reload(); return; }
+        reconcileSummaryFromServer();
+      } else {
+        mmSummaryCouponError(block, 'Cupom inválido ou não aplicável a este carrinho.');
+      }
+    }).catch(function () {
+      mmSummaryCouponError(block, 'Não foi possível aplicar agora. Tente de novo.');
+    });
+  }
+
+  function removeSummaryCoupon(btn) {
+    var block = btn ? btn.closest('.mm-coupon') : null;
+    if (block) block.classList.add('is-busy');
+    mmPostSummaryCoupon('').then(function () {
+      if (isOnepage) { location.reload(); return; }
+      reconcileSummaryFromServer();
+    }).catch(function () {
+      if (block) block.classList.remove('is-busy');
+    });
+  }
+
+  /* Listener delegado (uma vez por layout). Sobrevive ao rehydrate do summary
+     porque delega no #mm-layout, não no .mm-id-sum que é substituído. */
+  function attachSummaryCouponHandlers(layout) {
+    if (!layout || layout._mmCouponBound) return;
+    layout._mmCouponBound = true;
+    layout.addEventListener('submit', function (e) {
+      var form = e.target.closest('[data-mm-act="summary-coupon-submit"]');
+      if (!form) return;
+      e.preventDefault();
+      var input = form.querySelector('input');
+      applySummaryCoupon(input ? input.value : '', form);
+    });
+    layout.addEventListener('click', function (e) {
+      var rm = e.target.closest('[data-mm-act="summary-coupon-remove"]');
+      if (rm) { e.preventDefault(); removeSummaryCoupon(rm); }
+    });
+  }
+
   /* ----- mount entry ----- */
   if (isIdentify) {
     function waitForIdentifyDom(attempt) {
@@ -1616,6 +1728,7 @@
       var snap = loadCartSnapshot();
       buildIdentifyLayout(snap);
       bindIdentifyEvents();
+      attachSummaryCouponHandlers(document.getElementById('mm-layout'));
       reparentGoogleLogin();
 
       /* Tenta novamente o reparent depois pra cobrir caso .social-login-area
@@ -4380,6 +4493,7 @@
       /* logado: resumo mostra o frete NATIVO real (não "Informe seu CEP") */
       if (mmLoggedIn) mmApplyNativeFrete(snap);
       buildOnepageLayout(snap, prefilledEmail);
+      attachSummaryCouponHandlers(document.getElementById('mm-layout'));
 
       /* CLIENTE LOGADO: binder próprio (submit + troca de endereço + guard de
          re-mount). Sem draft/captura/recalc-por-CEP nem o beforeunload guest. */
