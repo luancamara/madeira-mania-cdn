@@ -1716,6 +1716,104 @@ body.mm-checkout-rebuild .checkout-main {
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
 }
 
+/* Aviso do handoff pro checkout nativo. Fica FORA do #mm-layout (é anexado ao
+   body, sobre a tela do Magazord) — por isso sem o prefixo de escopo.
+   Barra fixa: o cliente precisa continuar vendo a instrução enquanto rola até
+   a verificação de segurança. */
+.mm-handoff-note {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+  background: #1F3D1F;
+  color: #FFF;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: -0.003em;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+  text-align: center;
+}
+
+.mm-handoff-note strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.mm-handoff-note span {
+  display: block;
+  opacity: 0.92;
+}
+
+/* Banner de erro acionável no topo do form guest. Substitui o "shake" mudo
+   (não dizia o que corrigir) e a nota amarela "tente de novo" (mandava
+   repetir um envio que nunca passaria). Usado tanto pela validação de
+   pré-voo quanto pela mensagem real devolvida pelo Magazord. */
+#mm-layout .mm-op-alert {
+  display: block;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid #F0B4B4;
+  border-left: 4px solid #DC2626;
+  background: #FEF2F2;
+  border-radius: 12px;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #8A1C1C;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+}
+
+#mm-layout .mm-op-alert-msg {
+  display: block;
+}
+
+#mm-layout .mm-op-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#mm-layout .mm-op-alert-fix,
+#mm-layout .mm-op-alert-keep {
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.003em;
+  /* alvo de toque confortável no mobile — é aqui que a venda se salva */
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+#mm-layout .mm-op-alert-fix {
+  border: 1px solid #1A1A1A;
+  background: #1A1A1A;
+  color: #FFF;
+}
+
+#mm-layout .mm-op-alert-keep {
+  border: 1px solid #C9A9A9;
+  background: transparent;
+  color: #8A1C1C;
+}
+
+#mm-layout .mm-op-alert-fix:active,
+#mm-layout .mm-op-alert-keep:active {
+  opacity: 0.72;
+}
+
 /* CTA loading state */
 #mm-layout .mm-cta.is-loading {
   pointer-events: none;

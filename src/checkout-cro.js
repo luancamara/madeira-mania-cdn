@@ -2756,34 +2756,36 @@
         uf: (document.getElementById('mm-op-uf') || {}).value || ''
       };
 
-      /* Validação inline */
-      var errors = [];
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) errors.push('mm-op-email');
-      if (data.nome.trim().split(/\s+/).length < 2) errors.push('mm-op-nome');
-      if (data.cpf.replace(/\D/g, '').length !== 11) errors.push('mm-op-cpf');
-      if (data.tel.replace(/\D/g, '').length < 10) errors.push('mm-op-tel');
-      if (data.cep.replace(/\D/g, '').length !== 8) errors.push('mm-op-cep');
-      if (!data.rua.trim()) errors.push('mm-op-rua');
-      if (!data.num.trim()) errors.push('mm-op-num');
-      if (!data.bairro.trim()) errors.push('mm-op-bairro');
-      if (!data.cidade.trim()) errors.push('mm-op-cidade');
-      if (!data.uf.trim()) errors.push('mm-op-uf');
+      /* Validação de pré-voo. Antes: só marcava os campos em vermelho por 1.8s
+         sem dizer O QUE estava errado — e o que passasse daqui e fosse
+         reprovado pelo Magazord (e-mail/CPF) virava o loop de 20s + "tente de
+         novo". Agora cada erro tem mensagem própria e o e-mail com typo de
+         domínio ganha correção de um toque. */
+      var firstErr = null;
+      function fail(id, msg, fix) { if (!firstErr) firstErr = { id: id, msg: msg, fix: fix || null }; }
 
-      if (errors.length) {
-        errors.forEach(function(id) {
-          var el = document.getElementById(id);
-          if (el) {
-            el.classList.add('mm-input-error');
-            setTimeout(function() { el.classList.remove('mm-input-error'); }, 1800);
-          }
-        });
-        var first = document.getElementById(errors[0]);
-        if (first) {
-          first.focus();
-          first.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        }
+      var emailEl = document.getElementById('mm-op-email');
+      var emailChk = mmValidateEmail(data.email, !!(emailEl && emailEl.dataset && emailEl.dataset.mmEmailOk === '1'));
+      if (!emailChk.ok) fail('mm-op-email', emailChk.msg, emailChk.fix);
+      if (data.nome.trim().split(/\s+/).length < 2) fail('mm-op-nome', 'Informe nome e sobrenome (como no documento).');
+      if (!mmValidCPF(data.cpf)) {
+        fail('mm-op-cpf', data.cpf.replace(/\D/g, '').length !== 11
+          ? 'CPF incompleto — precisa dos 11 dígitos.'
+          : 'CPF inválido — confira os números digitados.');
+      }
+      if (data.tel.replace(/\D/g, '').length < 10) fail('mm-op-tel', 'Telefone incompleto — inclua o DDD.');
+      if (data.cep.replace(/\D/g, '').length !== 8) fail('mm-op-cep', 'CEP incompleto — precisa dos 8 dígitos.');
+      if (!data.rua.trim()) fail('mm-op-rua', 'Informe a rua do endereço de entrega.');
+      if (!data.num.trim()) fail('mm-op-num', 'Informe o número (use "S/N" se não houver).');
+      if (!data.bairro.trim()) fail('mm-op-bairro', 'Informe o bairro.');
+      if (!data.cidade.trim()) fail('mm-op-cidade', 'Informe a cidade.');
+      if (!data.uf.trim()) fail('mm-op-uf', 'Informe o estado (UF).');
+
+      if (firstErr) {
+        mmShowOpAlert(firstErr.msg, firstErr.id, firstErr.fix);
         return;
       }
+      mmClearOpAlert();
 
       /* Loading state */
       var btn = form.querySelector('.mm-cta');
@@ -2800,10 +2802,45 @@
       submitOnepageToMagazord(data);
     });
 
+    /* Botões do banner de erro: aceitar o domínio sugerido ou manter o que foi
+       digitado. "Manter" marca o campo como confirmado pra a sugestão não
+       reaparecer — nunca bloqueamos e-mail válido de domínio próprio. */
+    layout.addEventListener('click', function(e) {
+      var fix = e.target.closest && e.target.closest('.mm-op-alert-fix');
+      if (fix) {
+        e.preventDefault();
+        var el = document.getElementById('mm-op-email');
+        if (el) {
+          el.value = fix.getAttribute('data-mm-fix') || el.value;
+          if (el.dataset) el.dataset.mmEmailOk = '1';
+          el.classList.remove('mm-input-error');
+        }
+        mmClearOpAlert();
+        var cta = document.querySelector('.mm-op-form .mm-cta');
+        if (cta) { try { cta.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) {} }
+        return;
+      }
+      var keep = e.target.closest && e.target.closest('.mm-op-alert-keep');
+      if (keep) {
+        e.preventDefault();
+        var el2 = document.getElementById('mm-op-email');
+        if (el2) { if (el2.dataset) el2.dataset.mmEmailOk = '1'; el2.classList.remove('mm-input-error'); }
+        mmClearOpAlert();
+      }
+    });
+
     /* Auto-fill via CEP — quando user preenche CEP completo */
     layout.addEventListener('input', function(e) {
       var t = e.target;
       if (!t) return;
+      /* Editar qualquer campo apaga o erro exibido — a mensagem antiga não
+         pode sobreviver à correção que o cliente está fazendo agora. */
+      if (t.id && t.id.indexOf('mm-op-') === 0) {
+        t.classList.remove('mm-input-error');
+        mmClearOpAlert();
+        /* mexeu no e-mail → a sugestão de domínio volta a valer */
+        if (t.id === 'mm-op-email' && t.dataset) delete t.dataset.mmEmailOk;
+      }
       /* Edição manual de um campo auto-preenchido por CEP remove a flag, pra
          que um CEP futuro não sobrescreva a correção do usuário. Atribuição
          programática de .value (o auto-fill) NÃO dispara 'input', então a flag
@@ -2908,6 +2945,289 @@
       if (calcFreteOnepage._t) clearTimeout(calcFreteOnepage._t);
       calcFreteOnepage._t = setTimeout(calcFreteOnepage, 200);
     });
+  }
+
+  /* =====================================================================
+     VALIDAÇÃO — pré-voo nosso + captura do erro NATIVO do Magazord
+     =====================================================================
+     BUG (venda perdida, reproduzido): o submit guest dirige o form nativo do
+     Magazord por trás de um overlay fullscreen. Quando o Magazord reprova um
+     campo ele NÃO faz request nenhum — só pinta um toast próprio
+     (Zord.msgToastError → .toast-error-ctn > .toast-error > .toast-text,
+     ex.: "E-mail Inválido") e aborta a chain. O gate só reconhecia
+     '.mz-toast-popup.error/.swal2-toast' E exigia texto /inativo|realize
+     login/ — nada disso casa com o toast real. Consequência: a mensagem
+     ficava ESCONDIDA atrás do overlay, o gate girava os 20s inteiros e
+     abortava com "Está demorando mais que o normal... tente de novo",
+     convidando o cliente a repetir um envio que jamais passaria. Cliente
+     real repetiu 5x com "faspegio@hotmail.comf" e desistiu.
+
+     Correção em 3 camadas:
+     1) pré-voo pega o erro ANTES do submit (e sugere o domínio certo);
+     2) hook em Zord.msgToastError + varredura de DOM capturam o erro nativo
+        NO INSTANTE em que acontece;
+     3) o abort mostra a mensagem REAL e foca o campo — "tente de novo" fica
+        só pra timeout de verdade, nunca pra erro de dados. */
+
+  /* ---- CPF: dígitos verificadores (o Magazord valida; nós só olhávamos o
+     comprimento, então CPF com 11 dígitos errados caía no loop de 20s) ---- */
+  function mmValidCPF(raw) {
+    var c = (raw || '').replace(/\D/g, '');
+    if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+    var s = 0, i, d;
+    for (i = 0; i < 9; i++) s += parseInt(c.charAt(i), 10) * (10 - i);
+    d = (s * 10) % 11; if (d === 10) d = 0;
+    if (d !== parseInt(c.charAt(9), 10)) return false;
+    s = 0;
+    for (i = 0; i < 10; i++) s += parseInt(c.charAt(i), 10) * (11 - i);
+    d = (s * 10) % 11; if (d === 10) d = 0;
+    return d === parseInt(c.charAt(10), 10);
+  }
+
+  /* ---- E-mail: estrutura + sugestão de domínio (typo de teclado mobile) ----
+     A sugestão é SOFT por design: bloquear domínio desconhecido derrubaria
+     e-mail corporativo válido — que é justamente a venda que queremos salvar.
+     Mostramos "Você quis dizer X?" com um toque pra aceitar e outro pra
+     manter o que foi digitado. */
+  var MM_MAIL_DOMAINS = [
+    'gmail.com', 'hotmail.com', 'hotmail.com.br', 'outlook.com', 'outlook.com.br',
+    'yahoo.com', 'yahoo.com.br', 'icloud.com', 'live.com', 'me.com', 'msn.com',
+    'bol.com.br', 'uol.com.br', 'terra.com.br', 'globo.com', 'ig.com.br',
+    /* provedores BR curtos: entram na lista pra casarem EXATO e nunca virarem
+       "sugestão" de outro domínio parecido (ex.: r7.com ~ me.com, dist 2) */
+    'r7.com', 'oi.com.br', 'zipmail.com.br', 'superig.com.br', 'aol.com'
+  ];
+
+  /* Damerau-Levenshtein: conta transposição de vizinhos como 1 edição, não 2.
+     Sem isso "gmial.com"/"hotmial.com" (troca de dedos, o typo mais comum de
+     teclado mobile) dariam distância 2 e escapariam do limite seguro. */
+  function mmEditDistance(a, b) {
+    var m = a.length, n = b.length, i, j;
+    if (Math.abs(m - n) > 3) return 99;
+    var d = [];
+    for (i = 0; i <= m; i++) { d[i] = []; d[i][0] = i; }
+    for (j = 0; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) {
+      for (j = 1; j <= n; j++) {
+        var cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+        if (i > 1 && j > 1 && a.charAt(i - 1) === b.charAt(j - 2) && a.charAt(i - 2) === b.charAt(j - 1)) {
+          d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+        }
+      }
+    }
+    return d[m][n];
+  }
+
+  /* Só sugerimos com distância 1 — ou 2 em domínio longo (>=12 chars), onde 2
+     edições ainda são uma fração pequena. Domínio curto com distância 2 é
+     ruído: "r7.com" vs "me.com" e "oi.com.br" vs "bol.com.br" são ambos
+     distância 2 e ambos VÁLIDOS. Sugerir correção de e-mail bom é justamente
+     a venda que estamos tentando salvar. */
+  function mmSuggestMailDomain(domain) {
+    var d = (domain || '').toLowerCase(), i, dist, best = null, bestDist = 99;
+    for (i = 0; i < MM_MAIL_DOMAINS.length; i++) if (MM_MAIL_DOMAINS[i] === d) return null;
+    for (i = 0; i < MM_MAIL_DOMAINS.length; i++) {
+      dist = mmEditDistance(d, MM_MAIL_DOMAINS[i]);
+      if (dist < bestDist) { bestDist = dist; best = MM_MAIL_DOMAINS[i]; }
+    }
+    if (bestDist === 1) return best;
+    if (bestDist === 2 && d.length >= 12) return best;
+    return null;
+  }
+
+  function mmValidateEmail(raw, skipSuggestion) {
+    var v = (raw || '').trim();
+    if (!v) return { ok: false, msg: 'Informe seu e-mail — é pra onde vai a confirmação do pedido.' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      return { ok: false, msg: 'E-mail incompleto. Confira — o formato é nome@provedor.com.' };
+    }
+    var at = v.lastIndexOf('@');
+    var domain = v.slice(at + 1);
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i.test(domain)) {
+      return { ok: false, msg: 'O domínio do e-mail parece incorreto. Confira depois do "@".' };
+    }
+    if (!skipSuggestion) {
+      var sug = mmSuggestMailDomain(domain);
+      if (sug) {
+        var fixed = v.slice(0, at + 1) + sug;
+        return { ok: false, msg: 'Você quis dizer ' + fixed + '?', fix: fixed };
+      }
+    }
+    return { ok: true };
+  }
+
+  /* ---- Captura do erro nativo do Magazord ---- */
+  var mmNativeErr = null;
+
+  /* Seletores REAIS (levantados no site em produção): o toast de validação é
+     .toast-error-ctn > .toast-error > .toast-text; o erro de CEP vem como
+     modal .swal2-popup.swal2-icon-error. */
+  var MM_ERR_SELS = [
+    '.toast-error .toast-text',
+    '.toast-error-ctn .toast-text',
+    '.toast-error',
+    '.mz-toast-popup.error',
+    '.swal2-popup.swal2-icon-error .swal2-html-container',
+    '.swal2-popup.swal2-icon-error .swal2-title',
+    '.swal2-toast.swal2-icon-error'
+  ];
+
+  function mmCleanErrText(raw) {
+    var t = (raw || '').replace(/\s+/g, ' ').trim();
+    t = t.replace(/^[×xX]\s*/, '');
+    t = t.replace(/Ooopss*!*/gi, ' ');
+    /* labels de botão do swal grudam no fim do textContent */
+    t = t.replace(/(?:\s*(?:Fechar|Cancelar|Cancel|Confirmar|OK|Sim|N[ãa]o|No))+\s*$/i, '');
+    t = t.replace(/\s+/g, ' ').trim();
+    if (t.length < 3 || t.length > 220) return '';
+    return t;
+  }
+
+  function mmScanNativeError() {
+    for (var i = 0; i < MM_ERR_SELS.length; i++) {
+      var nodes = document.querySelectorAll(MM_ERR_SELS[i]);
+      for (var j = 0; j < nodes.length; j++) {
+        var el = nodes[j];
+        /* ignora erros da NOSSA UI (mm-layout) — só queremos o do Magazord */
+        if (el.closest && el.closest('#mm-layout')) continue;
+        if (!el.getClientRects().length) continue;
+        var t = mmCleanErrText(el.textContent);
+        if (t) return t;
+      }
+    }
+    return null;
+  }
+
+  /* Hook na fonte: Zord.msgToastError é o que o Magazord chama pra reprovar
+     campo. Pegar aqui é instantâneo e imune a mudança de classe CSS.
+     Hookamos SÓ esse método — é o único inequivocamente de erro. Abortar um
+     checkout que ia dar certo seria pior que o bug original, então nada de
+     hookar msgToast/msgSwal (também servem pra mensagem neutra); o resto fica
+     por conta da varredura de DOM, que exige classe .toast-error explícita. */
+  function mmInstallNativeErrorHook() {
+    if (window.__mmNativeErrHooked) return;
+    var Z = window.Zord;
+    if (!Z || typeof Z.msgToastError !== 'function') return;
+    window.__mmNativeErrHooked = true;
+    var orig = Z.msgToastError;
+    Z.msgToastError = function() {
+      try {
+        for (var i = 0; i < arguments.length; i++) {
+          if (typeof arguments[i] === 'string') {
+            var t = mmCleanErrText(arguments[i]);
+            if (t) { mmNativeErr = t; break; }
+          }
+        }
+      } catch (e) {}
+      return orig.apply(this, arguments);
+    };
+  }
+
+  /* Zera o estado de erro e remove toasts de tentativas anteriores, pra um
+     toast velho não abortar a tentativa nova. */
+  function mmClearNativeErrors() {
+    mmNativeErr = null;
+    var sels = ['.toast-error-ctn', '.toast-error', '.mz-toast-popup.error'];
+    for (var i = 0; i < sels.length; i++) {
+      var nodes = document.querySelectorAll(sels[i]);
+      for (var j = 0; j < nodes.length; j++) {
+        var el = nodes[j];
+        if (el.closest && el.closest('#mm-layout')) continue;
+        try { el.remove(); } catch (e) {}
+      }
+    }
+    var swalClose = document.querySelector('.swal2-popup.swal2-icon-error .swal2-close, .swal2-popup.swal2-icon-error .swal2-confirm');
+    if (swalClose) { try { swalClose.click(); } catch (e) {} }
+  }
+
+  /* ---- Cloudflare Turnstile: o desafio que ficava escondido ----
+     O form anônimo do Magazord é protegido por Turnstile. Quase sempre ele
+     resolve sozinho, invisível. Quando ESCALONA pro desafio interativo
+     ("Confirme que é humano") — muito mais comum no mobile: IP de operadora
+     (CGNAT), VPN, navegador com privacidade reforçada — o widget é desenhado
+     NO FORM NATIVO, que está atrás do nosso overlay fullscreen. O cliente não
+     vê nada, não tem como resolver, o botão "Próxima etapa" fica disabled
+     esperando um token que nunca vem, e 20s depois recebe "tente de novo" —
+     que cai exatamente no mesmo lugar. Era o loop infinito relatado.
+     Aqui detectamos o desafio pendente pra poder SAIR DA FRENTE.
+
+     Detecção: NÃO dá pra achar o widget por iframe[src] — o Turnstile desenha
+     num iframe cross-origin sem src legível (medimos: querySelectorAll com
+     filtro de src volta vazio mesmo com o checkbox na tela). O sinal
+     confiável é o campo de token: existe e continua VAZIO. Enquanto estiver
+     assim, o form nativo está travado esperando o Turnstile. */
+  function mmTurnstileWaiting() {
+    var resp = document.querySelector('[name="cf-turnstile-response"], #cf-chl-widget-response');
+    return !!(resp && !resp.value);
+  }
+
+  /* Container onde o widget é desenhado — alvo do scroll no handoff. Subimos
+     do input de resposta até o primeiro ancestral com tamanho real. */
+  function mmTurnstileNode() {
+    var resp = document.querySelector('[name="cf-turnstile-response"], #cf-chl-widget-response');
+    if (!resp) return null;
+    var el = resp.parentElement;
+    while (el && el !== document.body) {
+      var r = el.getBoundingClientRect();
+      if (r.width > 40 && r.height > 20) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  /* Mapeia a mensagem do Magazord pro NOSSO campo, pra focar o certo. */
+  function mmFieldForMessage(msg) {
+    var m = (msg || '').toLowerCase();
+    if (/e-?mail/.test(m)) return 'mm-op-email';
+    if (/cpf|cnpj|documento/.test(m)) return 'mm-op-cpf';
+    if (/telefone|celular/.test(m)) return 'mm-op-tel';
+    if (/\bcep\b/.test(m)) return 'mm-op-cep';
+    if (/n[uú]mero/.test(m)) return 'mm-op-num';
+    if (/bairro/.test(m)) return 'mm-op-bairro';
+    if (/cidade|munic[ií]pio/.test(m)) return 'mm-op-cidade';
+    if (/\buf\b|estado/.test(m)) return 'mm-op-uf';
+    if (/logradouro|endere[cç]o|\brua\b/.test(m)) return 'mm-op-rua';
+    if (/nome|destinat/.test(m)) return 'mm-op-nome';
+    return null;
+  }
+
+  /* Banner de erro ACIONÁVEL no topo do form. Substitui (a) o "shake" mudo,
+     que não dizia o que corrigir, e (b) a nota amarela "tente de novo", que
+     mandava repetir um envio impossível. */
+  function mmShowOpAlert(msg, fieldId, fixValue) {
+    var form = document.querySelector('.mm-op-form[data-mm-act="onepage-submit"]');
+    if (!form) return;
+    var old = form.querySelector('.mm-op-alert'); if (old) old.remove();
+    var oldRetry = form.querySelector('.mm-op-retry'); if (oldRetry) oldRetry.remove();
+
+    var box = document.createElement('div');
+    box.className = 'mm-op-alert';
+    box.setAttribute('role', 'alert');
+    var html = '<span class="mm-op-alert-msg">' + escapeHTML(msg) + '</span>';
+    if (fixValue) {
+      html += '<span class="mm-op-alert-actions">' +
+                '<button type="button" class="mm-op-alert-fix" data-mm-fix="' + escapeHTML(fixValue) + '">Usar esse</button>' +
+                '<button type="button" class="mm-op-alert-keep">Manter o que digitei</button>' +
+              '</span>';
+    }
+    box.innerHTML = html;
+    form.insertBefore(box, form.firstChild);
+
+    var el = fieldId ? document.getElementById(fieldId) : null;
+    if (el) {
+      el.classList.add('mm-input-error');
+      /* sem auto-remover: a marca some quando o cliente edita o campo */
+    }
+    try { box.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+    if (el && !fixValue) { try { el.focus({ preventScroll: true }); } catch (e2) { el.focus(); } }
+  }
+
+  function mmClearOpAlert() {
+    var form = document.querySelector('.mm-op-form[data-mm-act="onepage-submit"]');
+    if (!form) return;
+    var box = form.querySelector('.mm-op-alert');
+    if (box) box.remove();
   }
 
   /* Submit final: estratégia híbrida.
@@ -3080,10 +3400,9 @@
          (botão "Cadastrar endereço" visível) ou detecta o toast de erro pra
          abortar, com teto de tempo. */
       function step2Ready() {
-        /* toast de erro/sessão → aborta (não adianta salvar endereço) */
-        var errToast = document.querySelector('.mz-toast-popup.error, .swal2-toast.swal2-icon-error');
-        if (errToast && /inativo|realize login/i.test(errToast.textContent || '')) return 'error';
-        /* etapa de endereço pronta: botão "Cadastrar endereço" visível */
+        /* etapa de endereço pronta: botão "Cadastrar endereço" visível
+           (o erro nativo agora é tratado por mmNativeErr/mmScanNativeError,
+           checados a cada tick do gate — ver gateEndereco) */
         var btns = document.querySelectorAll('button, [type="submit"]');
         for (var i = 0; i < btns.length; i++) {
           var t = (btns[i].textContent || '').toLowerCase();
@@ -3110,7 +3429,7 @@
       /* Aborta o fluxo dirigido SEM forçar salvarEndereco (a causa do "muito
          tempo inativo"): restaura nossa tela com os dados preenchidos e oferece
          retry. A 2ª tentativa passa porque a sessão já esquentou a etapa 1. */
-      function abortStep1(msg) {
+      function restoreOnepageUI() {
         var ov = document.getElementById('mm-op-overlay');
         if (ov) ov.remove();
         var layout = document.getElementById('mm-layout');
@@ -3118,6 +3437,75 @@
         mainArea.classList.add('mm-shadow-mode');
         var cta = document.querySelector('.mm-op-form .mm-cta');
         if (cta) cta.classList.remove('is-loading');
+      }
+
+      /* Erro de VALIDAÇÃO do Magazord: mostra a mensagem real e foca o campo.
+         Repetir o envio com o mesmo dado nunca passaria — por isso aqui NÃO
+         aparece "tente de novo". Era exatamente o loop que fazia o cliente
+         tentar 5x e desistir. */
+      function abortStep1Native(rawMsg) {
+        restoreOnepageUI();
+        var fieldId = mmFieldForMessage(rawMsg);
+        var msg = rawMsg;
+        if (fieldId) msg = rawMsg.replace(/\s*$/, '') + ' — corrija o campo destacado e toque em “Última etapa: pagamento”.';
+        mmShowOpAlert(msg, fieldId, null);
+      }
+
+      /* ESCAPE HATCH — entrega o checkout NATIVO, já preenchido, em vez de
+         prender o cliente no nosso loop. Usado quando (a) o Turnstile pede
+         interação ou (b) o fluxo dirigido não concluiu. A tela do Magazord é
+         menos bonita que a nossa, mas é COMPLETÁVEL: os dados já estão lá, e
+         o cliente só precisa resolver o desafio e tocar em "Próxima etapa".
+         Vender feio é infinitamente melhor que não vender. */
+      function handoffToNative(mode) {
+        var ov = document.getElementById('mm-op-overlay');
+        if (ov) ov.remove();
+        /* mantém nosso layout escondido e o nativo interativo (é o estado em
+           que o fluxo dirigido já está) */
+        var layout = document.getElementById('mm-layout');
+        if (layout) layout.style.display = 'none';
+        mainArea.classList.remove('mm-shadow-mode');
+
+        if (document.getElementById('mm-handoff-note')) return;
+        var note = document.createElement('div');
+        note.id = 'mm-handoff-note';
+        note.className = 'mm-handoff-note';
+        note.setAttribute('role', 'alert');
+        note.innerHTML = mode === 'turnstile'
+          ? '<strong>Falta só confirmar que você é humano.</strong>' +
+            '<span>Marque a verificação de segurança abaixo e toque em “Próxima etapa”. Seus dados já estão preenchidos.</span>'
+          : '<strong>Vamos concluir por aqui.</strong>' +
+            '<span>Seus dados já estão preenchidos — é só tocar em “Próxima etapa” para seguir ao pagamento.</span>';
+        document.body.appendChild(note);
+
+        /* leva o cliente até o que ele precisa tocar */
+        var target = mmTurnstileNode();
+        if (!target) {
+          var btns = document.querySelectorAll('button');
+          for (var i = 0; i < btns.length; i++) {
+            if (/pr[oó]xima etapa/i.test(btns[i].textContent || '') && btns[i].offsetParent !== null) { target = btns[i]; break; }
+          }
+        }
+        if (target) { try { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+
+        /* o desafio resolvido destrava o fluxo nativo sozinho; quando o
+           pagamento aparecer, retomamos a NOSSA tela de pagamento. */
+        var tries = 0;
+        (function watchNative() {
+          tries++;
+          var pay = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix');
+          if (pay && pay.offsetParent !== null) {
+            var n = document.getElementById('mm-handoff-note');
+            if (n) n.remove();
+            try { mountStep3Payment(data); } catch (e) {}
+            return;
+          }
+          if (tries < 900) setTimeout(watchNative, 400); /* ~6min */
+        })();
+      }
+
+      function abortStep1(msg) {
+        restoreOnepageUI();
         var form = document.querySelector('.mm-op-form[data-mm-act="onepage-submit"]');
         if (form && !form.querySelector('.mm-op-retry')) {
           var note = document.createElement('div');
@@ -3148,6 +3536,10 @@
           }
           return;
         }
+        /* Erro nativo na etapa de endereço (CEP inválido, campo obrigatório):
+           mesma regra da etapa 1 — mostra a mensagem real na hora. */
+        var errHere = mmNativeErr || mmScanNativeError();
+        if (errHere) { abortStep1Native(errHere); return; }
         if (attempts < 40) {
           setTimeout(function () { pollForPaymentStep(attempts + 1); }, 200);
         } else {
@@ -3166,6 +3558,11 @@
       /* Instala o observador do compraSemCadastro e zera o estado ANTES de
          clicar. */
       mmInstallStep1Observer();
+      /* Hook no Zord.msgToastError + limpeza de toasts da tentativa anterior:
+         a partir daqui, QUALQUER erro que o Magazord levantar é nosso sinal
+         de abort imediato (antes ele passava despercebido e virava timeout). */
+      mmInstallNativeErrorHook();
+      mmClearNativeErrors();
       var step1 = { done: false, failed: false };
       mmStep1State = step1;
 
@@ -3183,6 +3580,7 @@
         var graceCap = 4;     /* após step1.done, espera ~1s (4x250ms) por 'ready' */
         var attempts = 0;
         var doneAt = null;
+        var tsTicks = 0;
         (function gateEndereco() {
           attempts++;
           /* O fluxo nativo JÁ chegou no pagamento? (usuário logado, sessão
@@ -3194,8 +3592,28 @@
              step 3 direto. Cobre o caso de quem "já tem carrinho". */
           var payReady = document.querySelector('input[name="forma-pagto"], #forma-pagto-pix, #forma-pagto-cartao, #forma-pagto-boleto');
           if (payReady && payReady.offsetParent !== null) { pollForPaymentStep(0); return; }
+          /* ERRO NATIVO — checado ANTES de tudo. É o caminho que estava
+             faltando: o Magazord reprova o campo, não faz request nenhum, e o
+             gate ficava girando até o teto de 20s. Agora aborta no 1º tick
+             seguinte com a mensagem real ("E-mail Inválido", etc.). */
+          var nativeErr = mmNativeErr || mmScanNativeError();
+          if (nativeErr) { abortStep1Native(nativeErr); return; }
+          /* TURNSTILE TRAVADO — token pedido e não emitido. O Turnstile
+             invisível resolve em 1-3s; 10s parado significa que ele escalonou
+             pro desafio interativo ("Confirme que é humano"), que está na tela
+             nativa atrás do nosso overlay. Nenhuma espera resolve isso — só o
+             cliente resolve. Saímos da frente aos 10s em vez dos 20s cegos.
+             Handoff prematuro não machuca: se o token chegar logo depois, o
+             fluxo nativo segue e o watchNative devolve a nossa tela de
+             pagamento. */
+          if (!step1.done && mmTurnstileWaiting()) {
+            tsTicks++;
+            if (tsTicks >= 40) { handoffToNative('turnstile'); return; }
+          } else {
+            tsTicks = 0;
+          }
           var st = step2Ready();
-          if (step1.failed || st === 'error') {
+          if (step1.failed) {
             abortStep1('Não foi possível iniciar o pedido. Toque em “Última etapa: pagamento” para tentar de novo.');
             return;
           }
@@ -3212,9 +3630,13 @@
             setTimeout(gateEndereco, 250);
             return;
           }
-          /* Teto: só prossegue se a etapa 1 concluiu de fato; senão aborta. */
+          /* Teto: só prossegue se a etapa 1 concluiu de fato. Senão, ENTREGA o
+             checkout nativo já preenchido. Antes mostrávamos "Está demorando
+             mais que o normal... tente de novo" — e tentar de novo caía no
+             mesmo lugar, porque a etapa 1 estava travada esperando algo que
+             só o cliente destrava (Turnstile) ou que não ia mudar. */
           if (step1.done) proceedToEndereco();
-          else abortStep1('Está demorando mais que o normal. Toque em “Última etapa: pagamento” para tentar de novo.');
+          else handoffToNative(mmTurnstileWaiting() ? 'turnstile' : 'timeout');
         })();
       }, 120);
     }, 80);
