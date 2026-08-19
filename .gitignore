@@ -3,6 +3,8 @@
 
 # Node
 node_modules/
+.dev.vars
+.wrangler/
 
 # Temporary files
 *.log

@@ -1,12 +1,33 @@
 {
-  // Cloudflare Workers Static Assets — serve o dist/ como site estático.
-  // A Cloudflare unificou Pages dentro de Workers; este arquivo substitui o
-  // antigo campo "Build output directory" do fluxo Pages clássico.
-  // Deploy: `npx wrangler deploy` (sobe o conteúdo de ./dist como assets).
-  // O bundle fica em https://<name>.<subdomínio>.workers.dev/js/madeira-mania.js
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "madeira-mania-cdn",
-  "compatibility_date": "2026-01-01",
+  "main": "./worker/index.mjs",
+  "compatibility_date": "2026-07-17",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/madeira-mania.js"
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "*/3 * * * *",
+      "37 * * * *",
+      "17 3 * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "SEARCH_PROVIDER": "algolia",
+    "ALGOLIA_INDEX_NAME": "madeira_mania_products",
+    "MAGAZORD_BASE_URL": "https://madeiramania.painel.magazord.com.br/api",
+    "SEARCH_MIN_FULL_RECORDS": "100",
+    "SEARCH_MAX_FULL_FAILURE_RATIO": "0.05",
+    "SEARCH_RATE_LIMIT_MAX": "120",
+    "SEARCH_RATE_LIMIT_PERIOD_SECONDS": "60"
   }
 }

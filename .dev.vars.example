@@ -1,0 +1,20 @@
+# Copie para .dev.vars e preencha localmente. Nunca versione .dev.vars.
+SEARCH_PROVIDER=algolia
+
+ALGOLIA_APP_ID=
+ALGOLIA_SEARCH_KEY=
+ALGOLIA_WRITE_KEY=
+ALGOLIA_INDEX_NAME=madeira_mania_products
+
+MAGAZORD_BASE_URL=https://madeiramania.painel.magazord.com.br/api
+MAGAZORD_BASIC_AUTH=
+# Opcional: sem este valor, o Worker identifica a loja pela API /v2/site/loja.
+MAGAZORD_STORE_ID=
+
+SEARCH_ADMIN_TOKEN=
+
+# Guardrails do full reindex e limite local por isolate.
+SEARCH_MIN_FULL_RECORDS=100
+SEARCH_MAX_FULL_FAILURE_RATIO=0.05
+SEARCH_RATE_LIMIT_MAX=120
+SEARCH_RATE_LIMIT_PERIOD_SECONDS=60

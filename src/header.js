@@ -452,6 +452,15 @@
       });
     }
 
+    // The advanced client is bundled before this file and owns the modal.
+    // Keep the previous SSR parser only as an emergency compatibility fallback
+    // when a partial/old bundle is loaded.
+    var useLegacySearch = true;
+    if (window.MMTextSearch && typeof window.MMTextSearch.initHeader === 'function') {
+      try { useLegacySearch = !window.MMTextSearch.initHeader(); }
+      catch (error) { useLegacySearch = true; }
+    }
+    if (useLegacySearch) {
     // Search autocomplete — live visual results + CTA + recent searches.
     //
     // STRATEGY (revised 2026-04-09 after re-probing Magazord):
@@ -813,6 +822,7 @@
       openBtn.addEventListener('click', function () {
         renderEmptyState();
       });
+    }
     }
 
     // Mobile drawer (replaces the Phase 1 stub that opened search)

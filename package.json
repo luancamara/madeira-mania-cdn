@@ -6,9 +6,12 @@
   "scripts": {
     "build": "bash ./build.sh",
     "dev": "bash ./dev.sh",
-    "test": "node --check src/storefront-flow.js && node --check src/cart-sheet.js && node --check src/checkout-cro.js && node --test test/storefront/*.test.mjs"
+    "test": "node --check src/header.js && node --check src/search.js && node --check src/storefront-flow.js && node --check src/cart-sheet.js && node --check src/checkout-cro.js && node --check worker/index.mjs && node --check scripts/reindex-search.mjs && node --test test/search/*.test.mjs test/storefront/*.test.mjs",
+    "check:worker": "wrangler deploy --dry-run",
+    "search:reindex": "node scripts/reindex-search.mjs"
   },
   "devDependencies": {
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "wrangler": "^4.111.0"
   }
 }

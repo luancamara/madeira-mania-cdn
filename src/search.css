@@ -1,0 +1,206 @@
+/* =============================================
+   TEXT SEARCH — native visual adapter only
+   ============================================= */
+
+.mm-search-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+body.mm-search-native-active #lista-produtos-area > :not(#mm-search-page-results) {
+  display: none !important;
+}
+
+body.mm-search-native-active .pesquisa-produtos > .pesquisa-sem-registros,
+body.mm-search-native-active .pesquisa-produtos > [id^="vitrine-react-app-"] {
+  display: none !important;
+}
+
+#mm-search-page-results {
+  width: 100%;
+  clear: both;
+}
+
+#mm-search-page-results[aria-busy="true"] {
+  opacity: .66;
+  pointer-events: none;
+}
+
+.mm-search-native-notice,
+.mm-search-commercial-note,
+.mm-search-fixture-note,
+.mm-search-page-error {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f8faf8;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.mm-search-native-notice a,
+.mm-search-page-error button {
+  margin-left: 6px;
+}
+
+.mm-search-fixture-note {
+  border-color: #f4d28b;
+  background: #fff8e8;
+}
+
+.mm-search-page-error {
+  border-color: #efb8b8;
+  background: #fff7f7;
+}
+
+.mm-search-native-filters .limpa-filtros {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mm-search-native-filters .mm-search-facet-count {
+  color: inherit;
+  font-size: .85em;
+  opacity: .68;
+}
+
+.mm-search-product-image-missing {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f4f4f4;
+}
+
+.mm-search-empty-state {
+  width: 100%;
+  padding: 36px 16px;
+  text-align: center;
+}
+
+.mm-search-empty-state h2 {
+  margin: 0 0 8px;
+}
+
+.mm-search-empty-state .button {
+  margin-top: 12px;
+}
+
+.mm-search-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  padding: 28px 0 12px;
+  clear: both;
+}
+
+.mm-search-pagination .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  text-decoration: none;
+}
+
+.mm-search-pagination .is-disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.mm-search-mobile-filter-toggle {
+  display: none;
+}
+
+#mm-header .mm-h-search-correction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--c-topbar-bg, #f6f6f3);
+  color: var(--c-text, #333);
+  font-size: 13px;
+}
+
+#mm-header .mm-h-search-correction a {
+  flex: 0 0 auto;
+  color: var(--c-brand, #4b664a);
+  text-decoration: underline;
+}
+
+#mm-header .mm-h-search-empty,
+#mm-header .mm-h-search-error,
+#mm-header .mm-search-commercial-note,
+#mm-header .mm-search-fixture-note {
+  margin: 0;
+  padding: 10px 0;
+  color: var(--c-text-muted, #666);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+#mm-header .mm-search-commercial-note,
+#mm-header .mm-search-fixture-note {
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  #mm-header .mm-h-search-products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #mm-header .mm-h-search-correction {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mm-search-mobile-filter-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0 0 12px;
+  }
+
+  .mm-search-native-filters:not(.is-open) {
+    display: none !important;
+  }
+
+  .mm-search-native-filters.is-open {
+    display: block !important;
+    width: 100%;
+  }
+
+  .mm-search-pagination {
+    gap: 5px;
+  }
+
+  .mm-search-pagination .button {
+    min-width: 36px;
+    min-height: 36px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
