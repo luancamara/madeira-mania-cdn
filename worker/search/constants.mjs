@@ -109,7 +109,7 @@ export const ALGOLIA_INDEX_SETTINGS = Object.freeze({
   highlightPostTag: '</mark>',
   indexLanguages: ['pt-br'],
   queryLanguages: ['pt-br'],
-  ignorePlurals: ['pt-br'],
+  ignorePlurals: ['pt'],
   typoTolerance: true,
   minWordSizefor1Typo: 4,
   minWordSizefor2Typos: 8,

@@ -18,7 +18,9 @@ const env = {
 test('usa português do Brasil conforme a configuração aprovada', () => {
   assert.deepEqual(ALGOLIA_INDEX_SETTINGS.indexLanguages, ['pt-br']);
   assert.deepEqual(ALGOLIA_INDEX_SETTINGS.queryLanguages, ['pt-br']);
-  assert.deepEqual(ALGOLIA_INDEX_SETTINGS.ignorePlurals, ['pt-br']);
+  // A API aceita o locale pt-br para index/query, mas a lista de flexões
+  // de ignorePlurals usa o dicionário ISO 639-1 `pt`.
+  assert.deepEqual(ALGOLIA_INDEX_SETTINGS.ignorePlurals, ['pt']);
 });
 
 test('mantém limites conservadores para não poluir termos de três letras', () => {
