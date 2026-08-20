@@ -91,13 +91,13 @@ html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-
 (function(){
   // ===== Madeira Mania CDN loader (multi-CDN com fallback) =====
   // Edita só estas 3 linhas pra trocar versão/host sem rebuild se precisar.
-  var VERSION    = 'v2.0.47';
+  var VERSION    = 'v2.0.48';
   var REPO       = 'gh/luancamara/madeira-mania-cdn';
   var PAGES_HOST = 'madeira-mania-cdn.luancamara.workers.dev';
 
   // PRIMÁRIO: Cloudflare Pages (host dedicado, sem rate-limit de mirror).
   //   ?v= força cache-bust por versão (cada deploy bumpa VERSION).
-  var PRIMARY  = 'https://' + PAGES_HOST + '/js/madeira-mania.js?v=' + VERSION;
+  var PRIMARY  = 'https://' + PAGES_HOST + '/madeira-mania.js?v=' + VERSION;
   // FALLBACK: jsDelivr @tag (infra independente) — só se o primário falhar.
   var FALLBACK = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
 

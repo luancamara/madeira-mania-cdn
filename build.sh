@@ -20,12 +20,13 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # PRIMÁRIO: Cloudflare Pages — host dedicado, deploy automático no push do repo,
 #   sem rate-limit de "mirror sob demanda" (o que derrubou o jsDelivr: 503 no
 #   repo inteiro por excesso de cache-miss). Serve o dist/ do repo: o bundle fica
-#   em https://<CDN_PAGES_HOST>/js/madeira-mania.js. ?v=CDN_VERSION = cache-bust.
+#   em https://<CDN_PAGES_HOST>/madeira-mania.js. O alias passa pelo Worker e
+#   aplica no-cache; ?v=CDN_VERSION identifica a release no navegador.
 # FALLBACK: jsDelivr @tag — infra independente, carregado SÓ se o CF Pages falhar
 #   (loader tem onerror em cadeia). Manter a tag por deploy dá paridade ao fallback.
 #   NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
 CDN_PAGES_HOST="madeira-mania-cdn.luancamara.workers.dev"
-CDN_VERSION="v2.0.47"
+CDN_VERSION="v2.0.48"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 
 # Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
@@ -319,7 +320,7 @@ echo "Gerando loader..."
 
   // PRIMÁRIO: Cloudflare Pages (host dedicado, sem rate-limit de mirror).
   //   ?v= força cache-bust por versão (cada deploy bumpa VERSION).
-  var PRIMARY  = 'https://' + PAGES_HOST + '/js/madeira-mania.js?v=' + VERSION;
+  var PRIMARY  = 'https://' + PAGES_HOST + '/madeira-mania.js?v=' + VERSION;
   // FALLBACK: jsDelivr @tag (infra independente) — só se o primário falhar.
   var FALLBACK = 'https://cdn.jsdelivr.net/' + REPO + '@' + VERSION + '/dist/js/madeira-mania.js';
 

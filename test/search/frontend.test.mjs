@@ -104,6 +104,8 @@ test('loader do head protege o primeiro paint da busca e possui failsafe', () =>
   assert.match(buildSource, /@keyframes mm-search-early-shimmer/);
   assert.doesNotMatch(buildSource, /content:"Carregando resultados\\2026"/);
   assert.match(buildSource, /classList\.remove\('mm-search-loading'\)/);
+  assert.match(buildSource, /PAGES_HOST \+ '\/madeira-mania\.js\?v=' \+ VERSION/);
+  assert.doesNotMatch(buildSource, /PAGES_HOST \+ '\/js\/madeira-mania\.js\?v=' \+ VERSION/);
 });
 
 test('cards da página usam a miniatura quadrada do CDN nativo', () => {

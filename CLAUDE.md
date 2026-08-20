@@ -163,7 +163,7 @@ git tag v2.0.34 && git push origin v2.0.34
 ```
 
 **Como o rollout chega em produção:**
-- CDN primário: `madeira-mania-cdn.luancamara.workers.dev/js/madeira-mania.js?v=<VERSION>`
+- CDN primário: `madeira-mania-cdn.luancamara.workers.dev/madeira-mania.js?v=<VERSION>`
   — o worker serve sempre o asset mais novo (o `?v=` é só cache-bust de browser).
   O loader colado no Site Builder pede um `?v=` fixo; sem re-colar o loader, a
   propagação acontece conforme o cache dos browsers expira (max-age=86400, ≤24h).
@@ -244,7 +244,7 @@ cai pro bundle cru SEM quebrar — cuidado com `*/` dentro de comentários de bl
    que sobrevive à minificação: `grep "string-ou-regex-literal" dist/js/madeira-mania.js`
    (nomes de função são renomeados pelo esbuild!)
 2. Commit foi pushed? `git log origin/main..HEAD` deve estar vazio
-3. Worker atualizou? `curl -s "https://madeira-mania-cdn.luancamara.workers.dev/js/madeira-mania.js" | grep "literal"`
+3. Worker atualizou? `curl -s "https://madeira-mania-cdn.luancamara.workers.dev/madeira-mania.js" | grep "literal"`
    (auto-deploy do Cloudflare leva ~1-2 min após o push)
 4. Tag da versão existe? `git ls-remote --tags origin | grep v2.0` (fallback jsDelivr)
 5. Browser cache: hard reload (Ctrl+Shift+R) ou janela anônima — o loader do Site
