@@ -24,7 +24,10 @@ function upstreamError(status) {
   return error;
 }
 
-export function createAlgoliaClient(env = {}, { fetchImpl = fetch } = {}) {
+export function createAlgoliaClient(env = {}, {
+  fetchImpl = fetch,
+  sleepImpl = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))
+} = {}) {
   const appId = String(env.ALGOLIA_APP_ID || '').trim();
   const searchKey = String(env.ALGOLIA_SEARCH_KEY || '').trim();
   const writeKey = String(env.ALGOLIA_WRITE_KEY || env.ALGOLIA_ADMIN_KEY || '').trim();
@@ -94,9 +97,9 @@ export function createAlgoliaClient(env = {}, { fetchImpl = fetch } = {}) {
   async function waitTask(name, taskID, { timeout = 30000, interval = 1500 } = {}) {
     const started = Date.now();
     while (Date.now() - started < timeout) {
+      await sleepImpl(Math.min(interval, Math.max(0, timeout - (Date.now() - started))));
       const result = await request(`${indexPath(name)}/task/${encodeURIComponent(taskID)}`, { method: 'GET' });
       if (result.status === 'published') return result;
-      await new Promise((resolve) => setTimeout(resolve, interval));
     }
     const error = new Error('Tempo esgotado aguardando indexação Algolia.');
     error.code = 'ALGOLIA_TASK_TIMEOUT';

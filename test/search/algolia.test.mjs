@@ -94,7 +94,9 @@ test('batch rejeita campo comercial antes de chamar Algolia', async () => {
 
 test('usa chave de escrita e aguarda task publicada', async () => {
   const calls = [];
+  const waits = [];
   const client = createAlgoliaClient(env, {
+    sleepImpl: async (milliseconds) => waits.push(milliseconds),
     fetchImpl: async (url, options) => {
       calls.push({ url, options });
       if (url.includes('/task/')) return jsonResponse({ status: 'published' });
@@ -104,6 +106,7 @@ test('usa chave de escrita e aguarda task publicada', async () => {
   await client.batchUpsert([{ objectID: 'A', sku: 'A', name: 'Mesa' }], 'products', { wait: true });
   assert.equal(calls[0].options.headers['X-Algolia-API-Key'], 'write-key');
   assert.match(calls[1].url, /\/task\/42$/);
+  assert.deepEqual(waits, [1500]);
 });
 
 test('erros nunca incluem chave de escrita nem corpo remoto', async () => {
@@ -119,6 +122,7 @@ test('configura réplicas e encaminha sinônimos', async () => {
   const calls = [];
   let task = 0;
   const client = createAlgoliaClient(env, {
+    sleepImpl: async () => {},
     fetchImpl: async (url, options) => {
       calls.push({ url, body: options.body ? JSON.parse(options.body) : null });
       if (url.includes('/task/')) return jsonResponse({ status: 'published' });
