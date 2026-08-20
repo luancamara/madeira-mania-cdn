@@ -91,7 +91,7 @@ export function createAlgoliaClient(env = {}, { fetchImpl = fetch } = {}) {
     return replicaNames[sort] || indexName;
   }
 
-  async function waitTask(name, taskID, { timeout = 30000, interval = 120 } = {}) {
+  async function waitTask(name, taskID, { timeout = 30000, interval = 1500 } = {}) {
     const started = Date.now();
     while (Date.now() - started < timeout) {
       const result = await request(`${indexPath(name)}/task/${encodeURIComponent(taskID)}`, { method: 'GET' });

@@ -81,6 +81,32 @@ test('sync completa configura índice temporário e faz move atômico', async ()
   assert.equal(result.indexed, 1);
 });
 
+test('sync completa envia os 840 produtos atuais em um único lote Algolia', async () => {
+  const batchSizes = [];
+  const source = Array.from({ length: 840 }, (_, index) => ({
+    codigo: `SKU-${index}`,
+    nome: `Produto ${index}`,
+    ativo: true
+  }));
+  const synchronizer = createSearchSynchronizer({
+    magazord: { async listFrontendProducts() { return source; } },
+    algolia: {
+      indexName: 'products',
+      async setSettings() {},
+      async replaceSynonyms() {},
+      async batchUpsert(records) { batchSizes.push(records.length); },
+      async moveIndex() {},
+      async deleteIndex() {}
+    },
+    minimumFullRecords: 1
+  });
+
+  const result = await synchronizer.full();
+
+  assert.deepEqual(batchSizes, [840]);
+  assert.equal(result.indexed, 840);
+});
+
 test('sync completa aborta antes da troca quando a coleta fica abaixo do piso', async () => {
   let moved = false;
   const synchronizer = createSearchSynchronizer({

@@ -3,7 +3,7 @@ import { ALGOLIA_INDEX_SETTINGS, ALGOLIA_SYNONYMS } from './constants.mjs';
 import { mapWithConcurrency, uniqueStrings } from './utils.mjs';
 
 const INCREMENTAL_OVERLAP_MS = 30 * 60 * 1000;
-const BATCH_SIZE = 500;
+const BATCH_SIZE = 1000;
 
 function chunks(items, size = BATCH_SIZE) {
   const output = [];

@@ -155,11 +155,11 @@ export function createMagazordClient(env = {}, {
     return product;
   }
 
-  async function listPages(path, query = {}, maxPages = 200) {
+  async function listPages(path, query = {}, maxPages = 200, pageSize = 100) {
     const items = [];
     let page = 1;
     while (page <= maxPages) {
-      const payload = await request(path, { query: { ...query, limit: 100, page } });
+      const payload = await request(path, { query: { ...query, limit: pageSize, page } });
       const current = pageData(payload);
       items.push(...current.items);
       if (!current.hasMore || current.items.length === 0) break;
@@ -174,7 +174,7 @@ export function createMagazordClient(env = {}, {
     while (page <= maxPages) {
       const payload = await request('/v3/avaliacoes/query', {
         method: 'POST',
-        query: { limit: 500, page },
+        query: { limit: 5000, page },
         body: {
           filters: [{ field: 'situacao', operator: 'eq', value: 2 }],
           sorters: [{ field: 'id', direction: 'asc' }]
@@ -282,7 +282,7 @@ export function createMagazordClient(env = {}, {
     },
     async listFrontendProducts() {
       const resolvedStoreId = await resolveStoreId();
-      return listPages(`/v2/site/frontend/produto/${encodeURIComponent(resolvedStoreId)}`);
+      return listPages(`/v2/site/frontend/produto/${encodeURIComponent(resolvedStoreId)}`, {}, 200, 1000);
     },
     async listApprovedReviewAggregates(maxPages) {
       return listApprovedReviewAggregates(maxPages);

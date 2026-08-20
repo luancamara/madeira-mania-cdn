@@ -78,7 +78,7 @@ test('agrega somente avaliações aprovadas sem retornar PII', async () => {
   const aggregates = await client.listApprovedReviewAggregates();
   assert.deepEqual(aggregates.get('10'), { ratingAverage: 4, reviewCount: 2 });
   assert.deepEqual(calls[0].body.filters, [{ field: 'situacao', operator: 'eq', value: 2 }]);
-  assert.equal(new URL(calls[0].url).searchParams.get('limit'), '500');
+  assert.equal(new URL(calls[0].url).searchParams.get('limit'), '5000');
   assert.equal(JSON.stringify(aggregates).includes('Privado'), false);
 });
 
@@ -212,6 +212,21 @@ test('pagina produtos incrementais com filtros de atualização', async () => {
   assert.deepEqual(items.map((item) => item.id), [1, 2]);
   assert.equal(urls[0].searchParams.get('dataAtualizacaoInicio'), '2026-07-16T10:00:00-03:00');
   assert.equal(urls[0].searchParams.get('loja'), '7');
+});
+
+test('coleta o catálogo frontend em lote de até mil produtos', async () => {
+  const urls = [];
+  const client = createMagazordClient(env, {
+    fetchImpl: async (url) => {
+      urls.push(new URL(url));
+      return jsonResponse({ data: { items: [{ codigo: 'A' }], page: 1, total_pages: 1, has_more: false } });
+    }
+  });
+
+  const products = await client.listFrontendProducts();
+
+  assert.equal(products.length, 1);
+  assert.equal(urls[0].searchParams.get('limit'), '1000');
 });
 
 test('classifica 404 e autenticação sem consumir corpo sensível', async () => {
