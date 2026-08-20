@@ -42,11 +42,32 @@ function firstNamedValue(value) {
   return '';
 }
 
-export function createMagazordClient(env = {}, { fetchImpl = fetch } = {}) {
+export function createMagazordClient(env = {}, {
+  fetchImpl = fetch,
+  sleepImpl = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))
+} = {}) {
   const baseUrl = String(env.MAGAZORD_BASE_URL || 'https://madeiramania.painel.magazord.com.br/api').replace(/\/$/, '');
   const storeId = String(env.MAGAZORD_STORE_ID || '').trim();
   const timeoutMs = Math.max(500, Math.min(8000, Number(env.MAGAZORD_TIMEOUT_MS || 2500)));
+  const rateLimitRetries = Math.max(0, Math.min(8, Number(env.MAGAZORD_RATE_LIMIT_RETRIES ?? 8)));
+  const rateLimitBaseMs = Math.max(100, Math.min(5000, Number(env.MAGAZORD_RATE_LIMIT_BASE_MS || 5000)));
+  const reviewPageDelayMs = Math.max(0, Math.min(5000, Number(env.MAGAZORD_REVIEW_PAGE_DELAY_MS ?? 750)));
   let resolvedStoreIdPromise = null;
+
+  function isIdempotentRead(path, method) {
+    return method === 'GET' || (method === 'POST' && path === '/v3/avaliacoes/query');
+  }
+
+  function rateLimitDelay(response, attempt) {
+    const retryAfter = String(response.headers.get('Retry-After') || '').trim();
+    const seconds = Number(retryAfter);
+    if (retryAfter && Number.isFinite(seconds)) return Math.max(100, Math.min(10000, seconds * 1000));
+    if (retryAfter) {
+      const timestamp = Date.parse(retryAfter);
+      if (Number.isFinite(timestamp)) return Math.max(100, Math.min(10000, timestamp - Date.now()));
+    }
+    return Math.min(10000, rateLimitBaseMs * (2 ** attempt));
+  }
 
   async function request(path, { query, method = 'GET', body, timeout = timeoutMs } = {}) {
     const url = new URL(`${baseUrl}${path}`);
@@ -54,33 +75,42 @@ export function createMagazordClient(env = {}, { fetchImpl = fetch } = {}) {
       if (value != null && value !== '') url.searchParams.set(key, String(value));
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
     let response;
-    try {
-      response = await fetchImpl(url.toString(), {
-        method,
-        headers: {
-          Accept: 'application/json',
-          Authorization: authHeader(env.MAGAZORD_BASIC_AUTH),
-          ...(body ? { 'Content-Type': 'application/json' } : {})
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-        cache: 'no-store'
-      });
-    } catch (error) {
-      if (error?.name === 'AbortError') {
-        throw createUpstreamError('Tempo esgotado ao confirmar dados comerciais.', 'UPSTREAM_TIMEOUT', 504);
+    for (let attempt = 0; attempt <= rateLimitRetries; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      try {
+        response = await fetchImpl(url.toString(), {
+          method,
+          headers: {
+            Accept: 'application/json',
+            Authorization: authHeader(env.MAGAZORD_BASIC_AUTH),
+            ...(body ? { 'Content-Type': 'application/json' } : {})
+          },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
+          cache: 'no-store'
+        });
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          throw createUpstreamError('Tempo esgotado ao confirmar dados comerciais.', 'UPSTREAM_TIMEOUT', 504);
+        }
+        throw createUpstreamError('Magazord indisponível no momento.', 'UPSTREAM_UNAVAILABLE', 502);
+      } finally {
+        clearTimeout(timeoutId);
       }
-      throw createUpstreamError('Magazord indisponível no momento.', 'UPSTREAM_UNAVAILABLE', 502);
-    } finally {
-      clearTimeout(timeoutId);
+
+      if (response.status !== 429 || !isIdempotentRead(path, method) || attempt === rateLimitRetries) break;
+      try { await response.body?.cancel(); } catch {}
+      await sleepImpl(rateLimitDelay(response, attempt));
     }
 
     if (response.status === 404) throw createUpstreamError('Produto não encontrado.', 'NOT_FOUND', 404);
     if (response.status === 401 || response.status === 403) {
       throw createUpstreamError('Autenticação Magazord inválida.', 'UPSTREAM_AUTH', 502);
+    }
+    if (response.status === 429) {
+      throw createUpstreamError('Magazord temporariamente limitou as requisições.', 'UPSTREAM_RATE_LIMITED', 429);
     }
     if (!response.ok) throw createUpstreamError('Magazord retornou uma falha.', 'UPSTREAM_ERROR', 502);
 
@@ -144,7 +174,7 @@ export function createMagazordClient(env = {}, { fetchImpl = fetch } = {}) {
     while (page <= maxPages) {
       const payload = await request('/v3/avaliacoes/query', {
         method: 'POST',
-        query: { limit: 100, page },
+        query: { limit: 500, page },
         body: {
           filters: [{ field: 'situacao', operator: 'eq', value: 2 }],
           sorters: [{ field: 'id', direction: 'asc' }]
@@ -163,6 +193,14 @@ export function createMagazordClient(env = {}, { fetchImpl = fetch } = {}) {
         aggregates.set(key, aggregate);
       }
       if (!current.hasMore || current.items.length === 0) break;
+      if (page >= maxPages) {
+        throw createUpstreamError(
+          'A paginação de avaliações excedeu o limite seguro.',
+          'UPSTREAM_PAGINATION_LIMIT',
+          502
+        );
+      }
+      if (reviewPageDelayMs > 0) await sleepImpl(reviewPageDelayMs);
       page += 1;
     }
 
@@ -246,8 +284,8 @@ export function createMagazordClient(env = {}, { fetchImpl = fetch } = {}) {
       const resolvedStoreId = await resolveStoreId();
       return listPages(`/v2/site/frontend/produto/${encodeURIComponent(resolvedStoreId)}`);
     },
-    async listApprovedReviewAggregates() {
-      return listApprovedReviewAggregates();
+    async listApprovedReviewAggregates(maxPages) {
+      return listApprovedReviewAggregates(maxPages);
     },
     request
   };

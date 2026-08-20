@@ -78,7 +78,103 @@ test('agrega somente avaliações aprovadas sem retornar PII', async () => {
   const aggregates = await client.listApprovedReviewAggregates();
   assert.deepEqual(aggregates.get('10'), { ratingAverage: 4, reviewCount: 2 });
   assert.deepEqual(calls[0].body.filters, [{ field: 'situacao', operator: 'eq', value: 2 }]);
+  assert.equal(new URL(calls[0].url).searchParams.get('limit'), '500');
   assert.equal(JSON.stringify(aggregates).includes('Privado'), false);
+});
+
+test('repete consulta idempotente de avaliações quando a Magazord responde 429', async () => {
+  let attempts = 0;
+  const waits = [];
+  const client = createMagazordClient(env, {
+    sleepImpl: async (milliseconds) => waits.push(milliseconds),
+    fetchImpl: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        return new Response(JSON.stringify({ message: 'Too Many Requests' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '1' }
+        });
+      }
+      return jsonResponse({
+        items: [{ idProduto: 10, nota: 5, situacao: 2 }],
+        page: 1,
+        totalPages: 1,
+        hasMore: false
+      });
+    }
+  });
+
+  const aggregates = await client.listApprovedReviewAggregates();
+
+  assert.equal(attempts, 2);
+  assert.deepEqual(waits, [1000]);
+  assert.deepEqual(aggregates.get('10'), { ratingAverage: 5, reviewCount: 1 });
+});
+
+test('não repete POST genérico quando a Magazord responde 429', async () => {
+  let attempts = 0;
+  const client = createMagazordClient(env, {
+    sleepImpl: async () => assert.fail('POST não idempotente não pode aguardar retry'),
+    fetchImpl: async () => {
+      attempts += 1;
+      return jsonResponse({ message: 'Too Many Requests' }, 429);
+    }
+  });
+
+  await assert.rejects(
+    () => client.request('/v3/escrita', { method: 'POST', body: { ativo: true } }),
+    (error) => error.code === 'UPSTREAM_RATE_LIMITED' && error.status === 429
+  );
+  assert.equal(attempts, 1);
+});
+
+test('espaça páginas de avaliações para não esgotar a cota da Magazord', async () => {
+  const waits = [];
+  let page = 0;
+  const client = createMagazordClient({
+    ...env,
+    MAGAZORD_REVIEW_PAGE_DELAY_MS: '750'
+  }, {
+    sleepImpl: async (milliseconds) => waits.push(milliseconds),
+    fetchImpl: async () => {
+      page += 1;
+      return jsonResponse({
+        items: [{ idProduto: page, nota: 5, situacao: 2 }],
+        page,
+        totalPages: 2,
+        hasMore: page === 1
+      });
+    }
+  });
+
+  const aggregates = await client.listApprovedReviewAggregates();
+
+  assert.equal(aggregates.size, 2);
+  assert.deepEqual(waits, [750]);
+});
+
+test('interrompe avaliações com erro explícito se a paginação exceder o teto', async () => {
+  let requests = 0;
+  const client = createMagazordClient({
+    ...env,
+    MAGAZORD_REVIEW_PAGE_DELAY_MS: '0'
+  }, {
+    fetchImpl: async () => {
+      requests += 1;
+      return jsonResponse({
+        items: [{ idProduto: requests, nota: 5, situacao: 2 }],
+        page: requests,
+        totalPages: 3,
+        hasMore: true
+      });
+    }
+  });
+
+  await assert.rejects(
+    () => client.listApprovedReviewAggregates(2),
+    (error) => error.code === 'UPSTREAM_PAGINATION_LIMIT' && error.status === 502
+  );
+  assert.equal(requests, 2);
 });
 
 test('monta contexto de carrinho com depósito que possui estoque', async () => {
