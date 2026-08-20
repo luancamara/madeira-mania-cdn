@@ -25,7 +25,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 #   (loader tem onerror em cadeia). Manter a tag por deploy dá paridade ao fallback.
 #   NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
 CDN_PAGES_HOST="madeira-mania-cdn.luancamara.workers.dev"
-CDN_VERSION="v2.0.46"
+CDN_VERSION="v2.0.47"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 
 # Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
@@ -272,6 +272,14 @@ echo "Gerando loader..."
   echo 'html.mm-header-loading #tickerBar,html.mm-header-loading .ticker-bar{display:none!important}'
   echo 'html.mm-header-loading body{padding-top:var(--mm-header-total,168px)}'
   echo '@media(max-width:767px){html.mm-header-loading body{padding-top:var(--mm-header-total-mobile,92px)}}'
+  echo '/* Anti-flicker BUSCA: o loader no head assume o primeiro paint antes do bundle async. O bundle troca este shimmer pelos resultados avançados ou restaura o nativo na primeira falha. */'
+  echo 'html.mm-search-loading .container.box-pesquisa #search-area{display:none!important}'
+  echo 'html.mm-search-loading .container.box-pesquisa{position:relative;min-height:360px}'
+  echo 'html.mm-search-loading .container.box-pesquisa::before{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-repeat:no-repeat;background-size:112px 13px,275px 14px,190px 35px,74% 46px,24px 24px,24px 24px,24px 24px,24px 24px,24px 24px,128px 12px,94px 12px,128px 12px,94px 12px,128px 12px,23.54% 187px,23.54% 187px,23.54% 187px;background-position:0 6px,26% 6px,100% 0,100% 67px,0 46px,0 77px,0 108px,0 139px,0 170px,34px 52px,34px 83px,34px 114px,34px 145px,34px 176px,26% 125px,51.22% 125px,76.44% 125px}'
+  echo 'html.mm-search-loading .container.box-pesquisa::after{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;pointer-events:none;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.72) 48%,transparent 72%);background-size:220% 100%;background-position:115% 0;animation:mm-search-early-shimmer 1.35s ease-in-out infinite}'
+  echo '@keyframes mm-search-early-shimmer{to{background-position:-115% 0}}'
+  echo '@media(max-width:767px){html.mm-search-loading .container.box-pesquisa::before{background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-size:42% 14px,88px 35px,104px 35px,100% 46px,calc((100% - 12px)/2) 195px,calc((100% - 12px)/2) 195px;background-position:0 10px,calc(100% - 200px) 0,100% 0,0 59px,0 117px,100% 117px}}'
+  echo '@media(prefers-reduced-motion:reduce){html.mm-search-loading .container.box-pesquisa::after{animation:none;background:none}}'
   echo '/* DEV mode indicators — 3 estados possíveis:'
   echo '   .mm-dev-pending  = localStorage setado, ainda carregando (cinza)'
   echo '   .mm-dev-mode     = bundle local carregou OK (verde — dev real)'
@@ -293,7 +301,7 @@ echo "Gerando loader..."
   # cobre o caso "bundle carregou mas travou/early-return antes do failsafe
   # interno". Reduzido de 6s → 3.5s (alinhado ao failsafe interno de 2s) pra
   # não deixar o usuário olhando spinner/tela escondida em conexão lenta.
-  echo '(function(){var p=location.pathname;if(/^\/checkout\/(?!done)/.test(p)){document.documentElement.classList.add("mm-cart-loading");setTimeout(function(){document.documentElement.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){document.documentElement.classList.add("mm-header-loading");setTimeout(function(){document.documentElement.classList.remove("mm-header-loading")},3500)}document.documentElement.classList.add("mm-footer-loading");setTimeout(function(){document.documentElement.classList.remove("mm-footer-loading")},3500)})();'
+  echo '(function(){var p=location.pathname,d=document.documentElement;if(/^\/checkout\/(?!done)/.test(p)){d.classList.add("mm-cart-loading");setTimeout(function(){d.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){d.classList.add("mm-header-loading");setTimeout(function(){d.classList.remove("mm-header-loading")},3500)}try{var q=new URLSearchParams(location.search).get("q")||"";if(/^\/busca\/?$/.test(p)&&q.trim().length>=2){d.classList.add("mm-search-loading");setTimeout(function(){d.classList.remove("mm-search-loading")},12000)}}catch(e){}d.classList.add("mm-footer-loading");setTimeout(function(){d.classList.remove("mm-footer-loading")},3500)})();'
   echo '</script>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"
@@ -325,6 +333,7 @@ echo "Gerando loader..."
     doc.classList.remove('mm-cart-loading');
     doc.classList.remove('mm-footer-loading');
     doc.classList.remove('mm-header-loading');
+    doc.classList.remove('mm-search-loading');
   }
   function load(src, onerr){
     var s = document.createElement('script');

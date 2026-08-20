@@ -2,8 +2,8 @@
    TEXT SEARCH — Madeira Mania
    Algolia discovery + live Magazord commerce.
 
-   Keeps the current header modal and /busca visual language. The native
-   Magazord result remains visible until the advanced response is valid.
+   Keeps the current header modal and /busca visual language. The advanced
+   page assumes the loading state immediately and restores Magazord on failure.
    ============================================= */
 
 (function () {
@@ -133,6 +133,24 @@
         url.hostname === 'magazord-public.s3.sa-east-1.amazonaws.com';
       return allowedHost ? url.href : '';
     } catch (error) { return ''; }
+  }
+
+  function nativeCardImageUrl(value) {
+    var safe = safeImageUrl(value);
+    if (!safe) return '';
+    try {
+      var url = new URL(safe);
+      var isProductImage = /^\/img\//i.test(url.pathname);
+      if (
+        isProductImage &&
+        (url.hostname === 'www.madeiramania.com.br' || url.hostname === 'madeiramania.com.br')
+      ) url.hostname = 'madeiramania.cdn.magazord.com.br';
+      if (isProductImage && url.hostname === 'madeiramania.cdn.magazord.com.br') {
+        url.protocol = 'https:';
+        url.searchParams.set('ims', '400x400');
+      }
+      return url.href;
+    } catch (error) { return safe; }
   }
 
   function safeProductUrl(value) {
@@ -786,7 +804,7 @@
     if (queryID) link.setAttribute('data-query-id', String(queryID));
 
     var figure = element('figure', 'relative flex min-w-full items-center justify-center overflow-hidden');
-    var imageUrl = safeImageUrl(hit.image);
+    var imageUrl = nativeCardImageUrl(hit.image);
     if (imageUrl) {
       var image = setAttributes(element('img', 'img-principal !transition-all !duration-500 block mx-auto w-auto object-contain'), {
         alt: hit.name || '', title: hit.name || '', src: imageUrl, loading: 'lazy', width: 400, height: 400
@@ -865,6 +883,68 @@
     }
     nav.appendChild(pageLink('Próxima', state.page + 1, false, state.page >= pages - 1));
     return nav;
+  }
+
+  function createPageLoadingSkeleton() {
+    var status = element('div', 'mm-search-page-loading');
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    status.appendChild(element('span', 'mm-search-sr-only', 'Carregando resultados…'));
+
+    var layout = element('div', 'mm-search-shimmer-layout');
+    layout.setAttribute('aria-hidden', 'true');
+
+    var sidebar = element('div', 'mm-search-shimmer-sidebar');
+    for (var groupIndex = 0; groupIndex < 2; groupIndex += 1) {
+      var group = element('div', 'mm-search-shimmer-filter-group');
+      var filterHeading = element('span', 'mm-search-shimmer-filter-heading');
+      filterHeading.appendChild(element('span', 'mm-search-shimmer-filter-title mm-search-shimmer-surface'));
+      filterHeading.appendChild(element('span', 'mm-search-shimmer-filter-arrow mm-search-shimmer-surface'));
+      group.appendChild(filterHeading);
+
+      var rowCount = groupIndex === 0 ? 5 : 1;
+      for (var rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+        var filterRow = element('span', 'mm-search-shimmer-filter-row');
+        filterRow.appendChild(element('span', 'mm-search-shimmer-filter-check mm-search-shimmer-surface'));
+        filterRow.appendChild(element(
+          'span',
+          'mm-search-shimmer-filter-label mm-search-shimmer-surface' + (rowIndex % 2 ? ' is-short' : '')
+        ));
+        group.appendChild(filterRow);
+      }
+      sidebar.appendChild(group);
+    }
+    layout.appendChild(sidebar);
+
+    var main = element('div', 'mm-search-shimmer-main');
+    var toolbar = element('div', 'mm-search-shimmer-toolbar');
+    toolbar.appendChild(element('span', 'mm-search-shimmer-count mm-search-shimmer-surface'));
+    var toolbarControls = element('span', 'mm-search-shimmer-toolbar-controls');
+    toolbarControls.appendChild(element('span', 'mm-search-shimmer-mobile-filter mm-search-shimmer-surface'));
+    toolbarControls.appendChild(element('span', 'mm-search-shimmer-sort mm-search-shimmer-surface'));
+    toolbar.appendChild(toolbarControls);
+    main.appendChild(toolbar);
+    main.appendChild(element('span', 'mm-search-shimmer-notice mm-search-shimmer-surface'));
+
+    var grid = element('div', 'mm-search-shimmer-grid');
+    for (var index = 0; index < 6; index += 1) {
+      var card = element('div', 'mm-search-shimmer-card');
+      card.appendChild(element('span', 'mm-search-shimmer-image mm-search-shimmer-surface'));
+
+      var content = element('span', 'mm-search-shimmer-content');
+      content.appendChild(element('span', 'mm-search-shimmer-line mm-search-shimmer-line-title mm-search-shimmer-surface'));
+      content.appendChild(element('span', 'mm-search-shimmer-line mm-search-shimmer-line-subtitle mm-search-shimmer-surface'));
+      content.appendChild(element('span', 'mm-search-shimmer-line mm-search-shimmer-line-rating mm-search-shimmer-surface'));
+      content.appendChild(element('span', 'mm-search-shimmer-line mm-search-shimmer-line-old-price mm-search-shimmer-surface'));
+      content.appendChild(element('span', 'mm-search-shimmer-line mm-search-shimmer-line-price mm-search-shimmer-surface'));
+      content.appendChild(element('span', 'mm-search-shimmer-button mm-search-shimmer-surface'));
+      card.appendChild(content);
+      grid.appendChild(card);
+    }
+    main.appendChild(grid);
+    layout.appendChild(main);
+    status.appendChild(layout);
+    return status;
   }
 
   function fetchJsonWithTimeout(url, options, timeoutMs) {
@@ -956,18 +1036,27 @@
     var hitsById = Object.create(null);
     var mobileFiltersOpen = false;
 
+    function clearEarlyLoading() {
+      document.documentElement.classList.remove('mm-search-loading');
+    }
+
     function restoreNative() {
-      if (!active) return;
-      active = false;
-      document.body.classList.remove('mm-search-native-active');
-      if (nativeFilters) nativeFilters.style.display = nativeFilterDisplay;
-      if (nativeOrder) nativeOrder.style.display = nativeOrderDisplay;
-      if (nativeOrderSelect) nativeOrderSelect.id = 'ordem';
-      if (advancedFilters) advancedFilters.remove();
-      if (advancedOrder) advancedOrder.remove();
-      if (mobileFilterButton) mobileFilterButton.remove();
-      if (resultsRoot) resultsRoot.remove();
-      advancedFilters = advancedOrder = mobileFilterButton = resultsRoot = null;
+      document.body.classList.remove('mm-search-initial-loading');
+      if (active) {
+        active = false;
+        document.body.classList.remove('mm-search-native-active');
+        if (nativeFilters) nativeFilters.style.display = nativeFilterDisplay;
+        if (nativeOrder) nativeOrder.style.display = nativeOrderDisplay;
+        if (nativeOrderSelect) nativeOrderSelect.id = 'ordem';
+        if (advancedFilters) advancedFilters.remove();
+        if (advancedOrder) advancedOrder.remove();
+        if (mobileFilterButton) mobileFilterButton.remove();
+        if (resultsRoot) resultsRoot.remove();
+        advancedFilters = advancedOrder = mobileFilterButton = resultsRoot = null;
+      }
+      lastPayload = null;
+      hitsById = Object.create(null);
+      clearEarlyLoading();
     }
 
     function activate() {
@@ -1006,12 +1095,24 @@
 
     function ensureResultsRoot() {
       if (resultsRoot) return resultsRoot;
-      resultsRoot = element('section', 'mm-search-page-results');
+      resultsRoot = element('section', 'mm-search-page-results ra-vitrine');
       resultsRoot.id = 'mm-search-page-results';
       resultsRoot.setAttribute('aria-label', 'Resultados da busca avançada');
       resultsRoot.setAttribute('aria-live', 'polite');
       listArea.appendChild(resultsRoot);
       return resultsRoot;
+    }
+
+    function showPageLoading() {
+      activate();
+      var root = ensureResultsRoot();
+      root.setAttribute('aria-busy', 'true');
+      if (!lastPayload) {
+        document.body.classList.add('mm-search-initial-loading');
+        empty(root);
+        root.appendChild(createPageLoadingSkeleton());
+      }
+      clearEarlyLoading();
     }
 
     function renderError(error) {
@@ -1053,6 +1154,7 @@
         return;
       }
       lastPayload = payload;
+      document.body.classList.remove('mm-search-initial-loading');
       hitsById = Object.create(null);
       payload.hits.forEach(function (hit) { hitsById[String(hit.objectID || hit.sku || '')] = hit; });
       activate();
@@ -1087,11 +1189,11 @@
 
     function load() {
       if (state.query.length < MIN_QUERY_LENGTH) { restoreNative(); return; }
+      showPageLoading();
       sequence += 1;
       var current = sequence;
       if (controller) controller.abort();
       controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      if (active && resultsRoot) resultsRoot.setAttribute('aria-busy', 'true');
       fetchSearch({
         query: state.query, exact: state.exact, page: state.page, limit: PAGE_LIMIT,
         sort: state.sort, filters: state.filters
@@ -1099,9 +1201,9 @@
         if (current !== sequence) return;
         renderResponse(payload);
       }).catch(function (error) {
-        if (error && error.name === 'AbortError') return;
         if (current !== sequence) return;
         if (!active) return;
+        if (!lastPayload) { restoreNative(); return; }
         renderError(error);
       });
     }
@@ -1239,5 +1341,7 @@
     }
   };
 
-  ready(function () { initSearchPage(); });
+  ready(function () {
+    if (!initSearchPage()) document.documentElement.classList.remove('mm-search-loading');
+  });
 })();

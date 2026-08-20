@@ -19,7 +19,8 @@ body.mm-search-native-active #lista-produtos-area > :not(#mm-search-page-results
 }
 
 body.mm-search-native-active .pesquisa-produtos > .pesquisa-sem-registros,
-body.mm-search-native-active .pesquisa-produtos > [id^="vitrine-react-app-"] {
+body.mm-search-native-active .pesquisa-produtos > [id^="vitrine-react-app-"],
+body.mm-search-native-active .pesquisa-produtos > .rightPesquisa {
   display: none !important;
 }
 
@@ -31,6 +32,209 @@ body.mm-search-native-active .pesquisa-produtos > [id^="vitrine-react-app-"] {
 #mm-search-page-results[aria-busy="true"] {
   opacity: .66;
   pointer-events: none;
+}
+
+body.mm-search-initial-loading .container.box-pesquisa .pesquisa-produtos {
+  box-sizing: border-box;
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+body.mm-search-initial-loading #mm-search-page-results[aria-busy="true"] {
+  opacity: 1;
+}
+
+.mm-search-page-loading {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 640px;
+  padding: 0;
+}
+
+.mm-search-shimmer-layout {
+  display: grid;
+  grid-template-columns: 23% 74%;
+  align-items: start;
+  column-gap: 3%;
+  width: 100%;
+}
+
+.mm-search-shimmer-sidebar,
+.mm-search-shimmer-main {
+  min-width: 0;
+}
+
+.mm-search-shimmer-filter-group {
+  margin-bottom: 15px;
+}
+
+.mm-search-shimmer-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 23px;
+  margin-bottom: 15px;
+}
+
+.mm-search-shimmer-filter-title {
+  width: 112px;
+  height: 13px;
+  border-radius: 999px;
+}
+
+.mm-search-shimmer-filter-arrow {
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 2px;
+}
+
+.mm-search-shimmer-filter-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 24px;
+  margin-bottom: 7px;
+}
+
+.mm-search-shimmer-filter-check {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  border-radius: 3px;
+}
+
+.mm-search-shimmer-filter-label {
+  width: 128px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.mm-search-shimmer-filter-label.is-short {
+  width: 94px;
+}
+
+.mm-search-shimmer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 35px;
+  margin-bottom: 32px;
+}
+
+.mm-search-shimmer-count {
+  width: 275px;
+  max-width: 45%;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.mm-search-shimmer-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mm-search-shimmer-mobile-filter {
+  display: none;
+}
+
+.mm-search-shimmer-sort {
+  width: 190px;
+  height: 35px;
+  border-radius: 4px;
+}
+
+.mm-search-shimmer-notice {
+  display: block;
+  width: 100%;
+  height: 46px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.mm-search-shimmer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 31.81%);
+  gap: 28px 2.27%;
+  width: 100%;
+}
+
+.mm-search-shimmer-card,
+.mm-search-shimmer-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mm-search-shimmer-card {
+  gap: 20px;
+}
+
+.mm-search-shimmer-content {
+  width: 100%;
+  gap: 8px;
+}
+
+.mm-search-shimmer-surface {
+  display: block;
+  overflow: hidden;
+  background: linear-gradient(100deg, #edf0ed 25%, #f8faf8 48%, #edf0ed 72%);
+  background-size: 220% 100%;
+  animation: mm-search-shimmer 1.35s ease-in-out infinite;
+}
+
+.mm-search-shimmer-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+}
+
+.mm-search-shimmer-line {
+  height: 13px;
+  border-radius: 999px;
+}
+
+.mm-search-shimmer-line-title {
+  width: 82%;
+}
+
+.mm-search-shimmer-line-subtitle {
+  width: 64%;
+}
+
+.mm-search-shimmer-line-rating {
+  width: 42%;
+  height: 18px;
+  margin-top: 7px;
+}
+
+.mm-search-shimmer-line-old-price {
+  width: 25%;
+  height: 10px;
+  margin-top: 1px;
+}
+
+.mm-search-shimmer-line-price {
+  width: 34%;
+  height: 20px;
+}
+
+.mm-search-shimmer-button {
+  width: 90%;
+  height: 41px;
+  margin-top: 8px;
+  border-radius: 8px;
+}
+
+@keyframes mm-search-shimmer {
+  from { background-position: 115% 0; }
+  to { background-position: -115% 0; }
 }
 
 .mm-search-native-notice,
@@ -184,6 +388,63 @@ body.mm-search-native-active .pesquisa-produtos > [id^="vitrine-react-app-"] {
     margin: 0 0 12px;
   }
 
+  .mm-search-page-loading {
+    min-height: 520px;
+  }
+
+  .mm-search-shimmer-layout {
+    display: block;
+  }
+
+  .mm-search-shimmer-sidebar {
+    display: none;
+  }
+
+  .mm-search-shimmer-toolbar {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .mm-search-shimmer-count {
+    width: 42%;
+  }
+
+  .mm-search-shimmer-toolbar-controls {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .mm-search-shimmer-mobile-filter {
+    display: block;
+    width: 88px;
+    height: 35px;
+    border-radius: 4px;
+  }
+
+  .mm-search-shimmer-sort {
+    width: 104px;
+  }
+
+  .mm-search-shimmer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 12px;
+  }
+
+  .mm-search-shimmer-card:nth-child(n + 5) {
+    display: none;
+  }
+
+  .mm-search-shimmer-card {
+    gap: 12px;
+  }
+
+  .mm-search-shimmer-button {
+    width: 90%;
+    height: 44px;
+    margin-top: 8px;
+  }
+
   .mm-search-native-filters:not(.is-open) {
     display: none !important;
   }
@@ -202,5 +463,12 @@ body.mm-search-native-active .pesquisa-produtos > [id^="vitrine-react-app-"] {
     min-height: 36px;
     padding-left: 8px;
     padding-right: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mm-search-shimmer-surface {
+    animation: none;
+    background: #edf0ed;
   }
 }
