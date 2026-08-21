@@ -26,7 +26,7 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 #   (loader tem onerror em cadeia). Manter a tag por deploy dá paridade ao fallback.
 #   NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
 CDN_PAGES_HOST="madeira-mania-cdn.luancamara.workers.dev"
-CDN_VERSION="v2.0.52"
+CDN_VERSION="v2.0.53"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 
 # Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
@@ -278,9 +278,13 @@ echo "Gerando loader..."
   echo 'html.mm-search-loading .container.box-pesquisa{position:relative;min-height:360px}'
   echo 'html.mm-search-loading .container.box-pesquisa::before{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-repeat:no-repeat;background-size:112px 13px,275px 14px,190px 35px,74% 46px,24px 24px,24px 24px,24px 24px,24px 24px,24px 24px,128px 12px,94px 12px,128px 12px,94px 12px,128px 12px,23.54% 187px,23.54% 187px,23.54% 187px;background-position:0 6px,26% 6px,100% 0,100% 67px,0 46px,0 77px,0 108px,0 139px,0 170px,34px 52px,34px 83px,34px 114px,34px 145px,34px 176px,26% 125px,51.22% 125px,76.44% 125px}'
   echo 'html.mm-search-loading .container.box-pesquisa::after{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;pointer-events:none;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.72) 48%,transparent 72%);background-size:220% 100%;background-position:115% 0;animation:mm-search-early-shimmer 1.35s ease-in-out infinite}'
+  echo 'html.mm-search-loading body.device-mobile #main-area #search-area{display:block!important;position:relative;min-height:360px}'
+  echo 'html.mm-search-loading body.device-mobile #main-area #search-area>*{display:none!important}'
+  echo 'html.mm-search-loading body.device-mobile #main-area #search-area::before{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-repeat:no-repeat;background-size:42% 14px,88px 35px,104px 35px,100% 46px,calc((100% - 12px)/2) 195px,calc((100% - 12px)/2) 195px;background-position:0 10px,calc(100% - 200px) 0,100% 0,0 59px,0 117px,100% 117px}'
+  echo 'html.mm-search-loading body.device-mobile #main-area #search-area::after{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;pointer-events:none;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.72) 48%,transparent 72%);background-size:220% 100%;background-position:115% 0;animation:mm-search-early-shimmer 1.35s ease-in-out infinite}'
   echo '@keyframes mm-search-early-shimmer{to{background-position:-115% 0}}'
   echo '@media(max-width:767px){html.mm-search-loading .container.box-pesquisa::before{background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-size:42% 14px,88px 35px,104px 35px,100% 46px,calc((100% - 12px)/2) 195px,calc((100% - 12px)/2) 195px;background-position:0 10px,calc(100% - 200px) 0,100% 0,0 59px,0 117px,100% 117px}}'
-  echo '@media(prefers-reduced-motion:reduce){html.mm-search-loading .container.box-pesquisa::after{animation:none;background:none}}'
+  echo '@media(prefers-reduced-motion:reduce){html.mm-search-loading .container.box-pesquisa::after,html.mm-search-loading body.device-mobile #main-area #search-area::after{animation:none;background:none}}'
   echo '/* DEV mode indicators — 3 estados possíveis:'
   echo '   .mm-dev-pending  = localStorage setado, ainda carregando (cinza)'
   echo '   .mm-dev-mode     = bundle local carregou OK (verde — dev real)'

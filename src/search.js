@@ -1011,23 +1011,36 @@
     });
   }
 
+  function resolveSearchPageElements() {
+    var desktopPage = document.querySelector('.container.box-pesquisa');
+    var pageBox = desktopPage || document.getElementById('main-area');
+    var productsArea = pageBox && pageBox.querySelector('.pesquisa-produtos');
+    var listArea = document.getElementById('lista-produtos-area');
+    if (pageBox && productsArea && !listArea) {
+      listArea = document.createElement('div');
+      listArea.id = 'lista-produtos-area';
+      productsArea.appendChild(listArea);
+    }
+    return {
+      pageBox: pageBox,
+      productsArea: productsArea,
+      listArea: listArea,
+      mobileTemplate: Boolean(pageBox && !desktopPage)
+    };
+  }
+
   function initSearchPage() {
     if (location.pathname.replace(/\/$/, '') !== '/busca') return false;
-    var pageBox = document.querySelector('.container.box-pesquisa');
-    var listArea = document.getElementById('lista-produtos-area');
-    if (pageBox && !listArea) {
-      var productsArea = pageBox.querySelector('.pesquisa-produtos');
-      if (productsArea) {
-        listArea = element('div');
-        listArea.id = 'lista-produtos-area';
-        productsArea.appendChild(listArea);
-      }
-    }
+    var pageElements = resolveSearchPageElements();
+    var pageBox = pageElements.pageBox;
+    var productsArea = pageElements.productsArea;
+    var listArea = pageElements.listArea;
+    var mobileTemplate = pageElements.mobileTemplate;
     if (!pageBox || !listArea || pageBox.getAttribute('data-mm-text-search') === 'ready') return false;
     pageBox.setAttribute('data-mm-text-search', 'ready');
 
-    var nativeFilters = pageBox.querySelector('.filtros') || document.querySelector('.box-pesquisa .filtros');
-    var nativeOrder = pageBox.querySelector('.ordenacao') || document.querySelector('.box-pesquisa .ordenacao');
+    var nativeFilters = mobileTemplate ? null : (pageBox.querySelector('.filtros') || document.querySelector('.box-pesquisa .filtros'));
+    var nativeOrder = pageBox.querySelector('.ordenacao') || document.querySelector('#main-area .ordenacao, .box-pesquisa .ordenacao');
     var nativeOrderSelect = nativeOrder && nativeOrder.querySelector('#ordem');
     var nativeFilterDisplay = nativeFilters ? nativeFilters.style.display : '';
     var nativeOrderDisplay = nativeOrder ? nativeOrder.style.display : '';
@@ -1079,7 +1092,9 @@
       var nextFilters = createNativeFilters(payload, state);
       var nextOrder = createNativeOrder(payload, state);
       if (advancedFilters) advancedFilters.replaceWith(nextFilters);
+      else if (mobileTemplate && nativeOrder && nativeOrder.parentNode) nativeOrder.parentNode.insertBefore(nextFilters, nativeOrder);
       else if (nativeFilters && nativeFilters.parentNode) nativeFilters.parentNode.insertBefore(nextFilters, nativeFilters);
+      else if (productsArea) productsArea.insertBefore(nextFilters, productsArea.firstChild);
       else pageBox.insertBefore(nextFilters, pageBox.firstChild);
       advancedFilters = nextFilters;
       if (mobileFiltersOpen) advancedFilters.classList.add('is-open');

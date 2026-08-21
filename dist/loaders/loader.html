@@ -30,9 +30,13 @@ html.mm-search-loading .container.box-pesquisa #search-area{display:none!importa
 html.mm-search-loading .container.box-pesquisa{position:relative;min-height:360px}
 html.mm-search-loading .container.box-pesquisa::before{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-repeat:no-repeat;background-size:112px 13px,275px 14px,190px 35px,74% 46px,24px 24px,24px 24px,24px 24px,24px 24px,24px 24px,128px 12px,94px 12px,128px 12px,94px 12px,128px 12px,23.54% 187px,23.54% 187px,23.54% 187px;background-position:0 6px,26% 6px,100% 0,100% 67px,0 46px,0 77px,0 108px,0 139px,0 170px,34px 52px,34px 83px,34px 114px,34px 145px,34px 176px,26% 125px,51.22% 125px,76.44% 125px}
 html.mm-search-loading .container.box-pesquisa::after{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;pointer-events:none;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.72) 48%,transparent 72%);background-size:220% 100%;background-position:115% 0;animation:mm-search-early-shimmer 1.35s ease-in-out infinite}
+html.mm-search-loading body.device-mobile #main-area #search-area{display:block!important;position:relative;min-height:360px}
+html.mm-search-loading body.device-mobile #main-area #search-area>*{display:none!important}
+html.mm-search-loading body.device-mobile #main-area #search-area::before{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-repeat:no-repeat;background-size:42% 14px,88px 35px,104px 35px,100% 46px,calc((100% - 12px)/2) 195px,calc((100% - 12px)/2) 195px;background-position:0 10px,calc(100% - 200px) 0,100% 0,0 59px,0 117px,100% 117px}
+html.mm-search-loading body.device-mobile #main-area #search-area::after{content:"";position:absolute;top:24px;left:15px;right:15px;height:312px;pointer-events:none;background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.72) 48%,transparent 72%);background-size:220% 100%;background-position:115% 0;animation:mm-search-early-shimmer 1.35s ease-in-out infinite}
 @keyframes mm-search-early-shimmer{to{background-position:-115% 0}}
 @media(max-width:767px){html.mm-search-loading .container.box-pesquisa::before{background-image:linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED),linear-gradient(#EDF0ED,#EDF0ED);background-size:42% 14px,88px 35px,104px 35px,100% 46px,calc((100% - 12px)/2) 195px,calc((100% - 12px)/2) 195px;background-position:0 10px,calc(100% - 200px) 0,100% 0,0 59px,0 117px,100% 117px}}
-@media(prefers-reduced-motion:reduce){html.mm-search-loading .container.box-pesquisa::after{animation:none;background:none}}
+@media(prefers-reduced-motion:reduce){html.mm-search-loading .container.box-pesquisa::after,html.mm-search-loading body.device-mobile #main-area #search-area::after{animation:none;background:none}}
 /* DEV mode indicators — 3 estados possíveis:
    .mm-dev-pending  = localStorage setado, ainda carregando (cinza)
    .mm-dev-mode     = bundle local carregou OK (verde — dev real)
@@ -91,7 +95,7 @@ html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-
 (function(){
   // ===== Madeira Mania CDN loader (multi-CDN com fallback) =====
   // Edita só estas 3 linhas pra trocar versão/host sem rebuild se precisar.
-  var VERSION    = 'v2.0.52';
+  var VERSION    = 'v2.0.53';
   var REPO       = 'gh/luancamara/madeira-mania-cdn';
   var PAGES_HOST = 'madeira-mania-cdn.luancamara.workers.dev';
 

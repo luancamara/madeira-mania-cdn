@@ -78,6 +78,50 @@ test('resultados avançados preservam o escopo visual nativo da vitrine', () => 
   assert.match(mountBlock[1], /element\('section', '[^']*\bra-vitrine\b[^']*'\)/);
 });
 
+test('página avançada reconhece o template móvel e cria a área de resultados', () => {
+  const resolveElementsSource = extractClientFunction('resolveSearchPageElements');
+  const appended = [];
+  const productsArea = {
+    appendChild(node) { appended.push(node); }
+  };
+  const mobilePage = {
+    querySelector(selector) {
+      return selector === '.pesquisa-produtos' ? productsArea : null;
+    }
+  };
+  const document = {
+    querySelector() { return null; },
+    getElementById(id) { return id === 'main-area' ? mobilePage : null; },
+    createElement(tagName) { return { tagName, id: '' }; }
+  };
+  const resolveSearchPageElements = Function(
+    'document',
+    `${resolveElementsSource}\nreturn resolveSearchPageElements;`
+  )(document);
+
+  const resolved = resolveSearchPageElements();
+
+  assert.equal(resolved.pageBox, mobilePage);
+  assert.equal(resolved.productsArea, productsArea);
+  assert.equal(resolved.mobileTemplate, true);
+  assert.equal(resolved.listArea.id, 'lista-produtos-area');
+  assert.deepEqual(appended, [resolved.listArea]);
+  assert.match(searchSource, /var nativeFilters = mobileTemplate \? null :/);
+  assert.match(searchSource, /mobileTemplate && nativeOrder && nativeOrder\.parentNode/);
+  assert.match(
+    searchCss,
+    /@media \(max-width:\s*767px\)[\s\S]*?#mm-search-page-results \.product-list > li\s*\{[\s\S]*?width:\s*calc\(\(100% - 12px\) \/ 2\)\s*!important;/
+  );
+  assert.match(
+    searchCss,
+    /@media \(max-width:\s*767px\)[\s\S]*?\.mm-search-mobile-filter-toggle\s*\{[\s\S]*?min-height:\s*44px;/
+  );
+  assert.match(
+    searchCss,
+    /@media \(max-width:\s*767px\)[\s\S]*?\.mm-search-native-order select\s*\{[\s\S]*?min-height:\s*44px;/
+  );
+});
+
 test('busca avançada oculta o exibir todos órfão da recomendação nativa', () => {
   assert.match(
     searchCss,
@@ -133,6 +177,8 @@ test('primeiro carregamento usa skeleton cards responsivos com shimmer acessíve
 test('loader do head protege o primeiro paint da busca e possui failsafe', () => {
   assert.match(buildSource, /classList\.add\("mm-search-loading"\)/);
   assert.match(buildSource, /html\.mm-search-loading \.container\.box-pesquisa #search-area/);
+  assert.match(buildSource, /html\.mm-search-loading body\.device-mobile #main-area #search-area/);
+  assert.match(buildSource, /html\.mm-search-loading body\.device-mobile #main-area #search-area::before/);
   assert.match(buildSource, /@keyframes mm-search-early-shimmer/);
   assert.doesNotMatch(buildSource, /content:"Carregando resultados\\2026"/);
   assert.match(buildSource, /classList\.remove\('mm-search-loading'\)/);
