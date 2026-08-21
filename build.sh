@@ -20,13 +20,13 @@ mkdir -p "$DIST/js" "$DIST/loaders"
 # PRIMÁRIO: Cloudflare Pages — host dedicado, deploy automático no push do repo,
 #   sem rate-limit de "mirror sob demanda" (o que derrubou o jsDelivr: 503 no
 #   repo inteiro por excesso de cache-miss). Serve o dist/ do repo: o bundle fica
-#   em https://<CDN_PAGES_HOST>/madeira-mania.js. O alias passa pelo Worker e
-#   aplica no-cache; ?v=CDN_VERSION identifica a release no navegador.
+#   em https://<CDN_PAGES_HOST>/madeira-mania.js. O alias passa pelo Worker;
+#   sem versão usa no-cache e ?v=CDN_VERSION usa cache imutável por release.
 # FALLBACK: jsDelivr @tag — infra independente, carregado SÓ se o CF Pages falhar
 #   (loader tem onerror em cadeia). Manter a tag por deploy dá paridade ao fallback.
 #   NUNCA purgar a tag (purge dá erros) — sempre criar uma TAG NOVA por deploy.
 CDN_PAGES_HOST="madeira-mania-cdn.luancamara.workers.dev"
-CDN_VERSION="v2.0.51"
+CDN_VERSION="v2.0.52"
 CDN_REPO="gh/luancamara/madeira-mania-cdn"
 
 # Bundle cru vai pra um temp; depois é minificado (esbuild) pro path final.
@@ -302,7 +302,7 @@ echo "Gerando loader..."
   # cobre o caso "bundle carregou mas travou/early-return antes do failsafe
   # interno". Reduzido de 6s → 3.5s (alinhado ao failsafe interno de 2s) pra
   # não deixar o usuário olhando spinner/tela escondida em conexão lenta.
-  echo '(function(){var p=location.pathname,d=document.documentElement;if(/^\/checkout\/(?!done)/.test(p)){d.classList.add("mm-cart-loading");setTimeout(function(){d.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){d.classList.add("mm-header-loading");setTimeout(function(){d.classList.remove("mm-header-loading")},3500)}try{var q=new URLSearchParams(location.search).get("q")||"";if(/^\/busca\/?$/.test(p)&&q.trim().length>=2){d.classList.add("mm-search-loading");setTimeout(function(){d.classList.remove("mm-search-loading")},12000)}}catch(e){}d.classList.add("mm-footer-loading");setTimeout(function(){d.classList.remove("mm-footer-loading")},3500)})();'
+  echo '(function(){var p=location.pathname,d=document.documentElement;if(/^\/checkout\/(?!done)/.test(p)){d.classList.add("mm-cart-loading");setTimeout(function(){d.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){d.classList.add("mm-header-loading");setTimeout(function(){d.classList.remove("mm-header-loading")},3500)}try{var q=new URLSearchParams(location.search).get("q")||"";if(/^\/busca\/?$/.test(p)&&q.trim().length>=2){d.classList.add("mm-search-loading");setTimeout(function(){d.classList.remove("mm-search-loading")},6500)}}catch(e){}d.classList.add("mm-footer-loading");setTimeout(function(){d.classList.remove("mm-footer-loading")},3500)})();'
   echo '</script>'
   echo ''
   cat "$DIST/loaders/schema-organization.html"

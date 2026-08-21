@@ -49,6 +49,7 @@ export function createMagazordClient(env = {}, {
   const baseUrl = String(env.MAGAZORD_BASE_URL || 'https://madeiramania.painel.magazord.com.br/api').replace(/\/$/, '');
   const storeId = String(env.MAGAZORD_STORE_ID || '').trim();
   const timeoutMs = Math.max(500, Math.min(8000, Number(env.MAGAZORD_TIMEOUT_MS || 2500)));
+  const commercialTimeoutMs = Math.max(300, Math.min(2500, Number(env.MAGAZORD_COMMERCIAL_TIMEOUT_MS || 900)));
   const rateLimitRetries = Math.max(0, Math.min(8, Number(env.MAGAZORD_RATE_LIMIT_RETRIES ?? 8)));
   const rateLimitBaseMs = Math.max(100, Math.min(5000, Number(env.MAGAZORD_RATE_LIMIT_BASE_MS || 5000)));
   const reviewPageDelayMs = Math.max(0, Math.min(5000, Number(env.MAGAZORD_REVIEW_PAGE_DELAY_MS ?? 750)));
@@ -69,14 +70,18 @@ export function createMagazordClient(env = {}, {
     return Math.min(10000, rateLimitBaseMs * (2 ** attempt));
   }
 
-  async function request(path, { query, method = 'GET', body, timeout = timeoutMs } = {}) {
+  async function request(path, { query, method = 'GET', body, timeout = timeoutMs, retries = rateLimitRetries } = {}) {
     const url = new URL(`${baseUrl}${path}`);
     for (const [key, value] of Object.entries(query || {})) {
       if (value != null && value !== '') url.searchParams.set(key, String(value));
     }
 
+    const parsedRetries = Number(retries);
+    const retryLimit = Number.isFinite(parsedRetries)
+      ? Math.max(0, Math.min(rateLimitRetries, Math.floor(parsedRetries)))
+      : rateLimitRetries;
     let response;
-    for (let attempt = 0; attempt <= rateLimitRetries; attempt += 1) {
+    for (let attempt = 0; attempt <= retryLimit; attempt += 1) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
       try {
@@ -100,7 +105,7 @@ export function createMagazordClient(env = {}, {
         clearTimeout(timeoutId);
       }
 
-      if (response.status !== 429 || !isIdempotentRead(path, method) || attempt === rateLimitRetries) break;
+      if (response.status !== 429 || !isIdempotentRead(path, method) || attempt === retryLimit) break;
       try { await response.body?.cancel(); } catch {}
       await sleepImpl(rateLimitDelay(response, attempt));
     }
@@ -121,10 +126,13 @@ export function createMagazordClient(env = {}, {
     }
   }
 
-  async function resolveStoreId() {
+  async function resolveStoreId(requestOptions = {}) {
     if (storeId) return storeId;
     if (!resolvedStoreIdPromise) {
-      resolvedStoreIdPromise = request('/v2/site/loja', { query: { limit: 100, page: 1 } })
+      resolvedStoreIdPromise = request('/v2/site/loja', {
+        query: { limit: 100, page: 1 },
+        ...requestOptions
+      })
         .then((payload) => {
           const stores = pageData(payload).items.filter((item) => item?.ativo !== false);
           const expectedHost = 'madeiramania.com.br';
@@ -147,9 +155,12 @@ export function createMagazordClient(env = {}, {
     return resolvedStoreIdPromise;
   }
 
-  async function getProductDetail(sku) {
-    const resolvedStoreId = await resolveStoreId();
-    const payload = await request(`/v2/site/frontend/produto/${encodeURIComponent(resolvedStoreId)}/${encodeURIComponent(String(sku))}`);
+  async function getProductDetail(sku, requestOptions = {}) {
+    const resolvedStoreId = await resolveStoreId(requestOptions);
+    const payload = await request(
+      `/v2/site/frontend/produto/${encodeURIComponent(resolvedStoreId)}/${encodeURIComponent(String(sku))}`,
+      requestOptions
+    );
     const product = payload?.data ?? payload;
     if (!product || product.ativo === false) throw createUpstreamError('Produto não encontrado.', 'NOT_FOUND', 404);
     return product;
@@ -219,7 +230,7 @@ export function createMagazordClient(env = {}, {
       return mapMagazordProductToRecord(await getProductDetail(sku));
     },
     async getCommercial(sku) {
-      const product = await getProductDetail(sku);
+      const product = await getProductDetail(sku, { timeout: commercialTimeoutMs, retries: 0 });
       return {
         status: 'confirmed',
         valor: product.valor,

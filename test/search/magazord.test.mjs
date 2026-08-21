@@ -111,6 +111,23 @@ test('repete consulta idempotente de avaliações quando a Magazord responde 429
   assert.deepEqual(aggregates.get('10'), { ratingAverage: 5, reviewCount: 1 });
 });
 
+test('comércio interativo não aguarda retries quando a Magazord responde 429', async () => {
+  let attempts = 0;
+  const client = createMagazordClient(env, {
+    sleepImpl: async () => assert.fail('busca interativa não pode aguardar retry'),
+    fetchImpl: async () => {
+      attempts += 1;
+      return jsonResponse({ message: 'Too Many Requests' }, 429);
+    }
+  });
+
+  await assert.rejects(
+    () => client.getCommercial('MM/1'),
+    (error) => error.code === 'UPSTREAM_RATE_LIMITED' && error.status === 429
+  );
+  assert.equal(attempts, 1);
+});
+
 test('não repete POST genérico quando a Magazord responde 429', async () => {
   let attempts = 0;
   const client = createMagazordClient(env, {

@@ -44,7 +44,7 @@ html.mm-dev-pending::before,html.mm-dev-mode::before,html.mm-dev-fallback::befor
 html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-top:20px !important}
 </style>
 <script>
-(function(){var p=location.pathname,d=document.documentElement;if(/^\/checkout\/(?!done)/.test(p)){d.classList.add("mm-cart-loading");setTimeout(function(){d.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){d.classList.add("mm-header-loading");setTimeout(function(){d.classList.remove("mm-header-loading")},3500)}try{var q=new URLSearchParams(location.search).get("q")||"";if(/^\/busca\/?$/.test(p)&&q.trim().length>=2){d.classList.add("mm-search-loading");setTimeout(function(){d.classList.remove("mm-search-loading")},12000)}}catch(e){}d.classList.add("mm-footer-loading");setTimeout(function(){d.classList.remove("mm-footer-loading")},3500)})();
+(function(){var p=location.pathname,d=document.documentElement;if(/^\/checkout\/(?!done)/.test(p)){d.classList.add("mm-cart-loading");setTimeout(function(){d.classList.remove("mm-cart-loading")},3500)}if(!/^\/checkout\//.test(p)){d.classList.add("mm-header-loading");setTimeout(function(){d.classList.remove("mm-header-loading")},3500)}try{var q=new URLSearchParams(location.search).get("q")||"";if(/^\/busca\/?$/.test(p)&&q.trim().length>=2){d.classList.add("mm-search-loading");setTimeout(function(){d.classList.remove("mm-search-loading")},6500)}}catch(e){}d.classList.add("mm-footer-loading");setTimeout(function(){d.classList.remove("mm-footer-loading")},3500)})();
 </script>
 
 <script type="application/ld+json">
@@ -91,7 +91,7 @@ html.mm-dev-pending body,html.mm-dev-mode body,html.mm-dev-fallback body{margin-
 (function(){
   // ===== Madeira Mania CDN loader (multi-CDN com fallback) =====
   // Edita só estas 3 linhas pra trocar versão/host sem rebuild se precisar.
-  var VERSION    = 'v2.0.51';
+  var VERSION    = 'v2.0.52';
   var REPO       = 'gh/luancamara/madeira-mania-cdn';
   var PAGES_HOST = 'madeira-mania-cdn.luancamara.workers.dev';
 

@@ -296,11 +296,18 @@ async function handleAsset(request, env) {
   if (!env.ASSETS?.fetch) return new Response('Asset binding not configured.', { status: 503 });
   const url = new URL(request.url);
   if (url.pathname === '/madeira-mania.js') {
+    const versioned = url.searchParams.has('v');
     url.pathname = '/js/madeira-mania.js';
     const asset = await env.ASSETS.fetch(new Request(url.toString(), request));
     const headers = new Headers(asset.headers);
-    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    headers.set('Pragma', 'no-cache');
+    if (versioned) {
+      headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      headers.delete('Pragma');
+      headers.delete('Expires');
+    } else {
+      headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      headers.set('Pragma', 'no-cache');
+    }
     return new Response(asset.body, { status: asset.status, statusText: asset.statusText, headers });
   }
   return env.ASSETS.fetch(request);

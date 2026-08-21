@@ -19,6 +19,38 @@ test('cliente usa somente a API avançada e não analisa HTML da busca', () => {
   assert.doesNotMatch(searchSource, /fetch\(['"]\/busca/);
 });
 
+test('fallback do bundle ignora mm_dev_url indisponível e usa a API de produção', () => {
+  const resolveApiBaseSource = extractClientFunction('resolveApiBase');
+  const workerOrigin = 'https://madeira-mania-cdn.luancamara.workers.dev';
+  const location = {
+    href: 'https://www.madeiramania.com.br/busca?q=rak',
+    hostname: 'www.madeiramania.com.br',
+    origin: 'https://www.madeiramania.com.br'
+  };
+  const document = {
+    documentElement: {
+      classList: {
+        contains(name) { return name === 'mm-dev-fallback'; }
+      }
+    },
+    scripts: [{ src: `${workerOrigin}/madeira-mania.js?v=v2.0.52` }]
+  };
+  const localStorage = {
+    getItem(name) {
+      if (name === 'mm_dev_url') {
+        return 'https://tunnel-inexistente.trycloudflare.com/madeira-mania.js';
+      }
+      return null;
+    }
+  };
+  const resolveApiBase = Function(
+    'localStorage', 'document', 'location', 'URL', 'WORKER_ORIGIN',
+    `${resolveApiBaseSource}\nreturn resolveApiBase;`
+  )(localStorage, document, location, URL, workerOrigin);
+
+  assert.equal(resolveApiBase(), `${workerOrigin}/api`);
+});
+
 test('busca avançada carrega antes do header e assume o modal', () => {
   assert.ok(buildSource.indexOf('/* === search.js === */') < buildSource.indexOf('/* === header.js === */'));
   assert.match(headerSource, /MMTextSearch\.initHeader/);

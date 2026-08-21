@@ -79,6 +79,11 @@ test('mantém alias legado do bundle e delega demais assets', async () => {
   const legacy = await handleRequest(request('/madeira-mania.js'), { ASSETS: assets });
   assert.equal(await legacy.text(), '/js/madeira-mania.js');
   assert.equal(legacy.headers.get('Cache-Control'), 'no-store, no-cache, must-revalidate');
+
+  const versioned = await handleRequest(request('/madeira-mania.js?v=v2.0.52'), { ASSETS: assets });
+  assert.equal(await versioned.text(), '/js/madeira-mania.js');
+  assert.equal(versioned.headers.get('Cache-Control'), 'public, max-age=31536000, immutable');
+
   const regular = await handleRequest(request('/assets/logo.svg'), { ASSETS: assets });
   assert.equal(await regular.text(), '/assets/logo.svg');
 });

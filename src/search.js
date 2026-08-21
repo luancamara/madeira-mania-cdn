@@ -14,7 +14,7 @@
   var MIN_QUERY_LENGTH = 2;
   var MODAL_LIMIT = 6;
   var PAGE_LIMIT = 12;
-  var REQUEST_TIMEOUT_MS = 9000;
+  var REQUEST_TIMEOUT_MS = 5000;
   var BUY_TIMEOUT_MS = 6000;
   var HEADER_DEBOUNCE_MS = 240;
   var SORTS = {
@@ -89,6 +89,13 @@
   }
 
   function resolveApiBase() {
+    var devFallback = Boolean(
+      document.documentElement &&
+      document.documentElement.classList &&
+      document.documentElement.classList.contains('mm-dev-fallback')
+    );
+    if (devFallback) return WORKER_ORIGIN + '/api';
+
     try {
       var override = String(localStorage.getItem('mm_search_api_url') || '').trim();
       if (override) {

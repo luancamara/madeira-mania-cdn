@@ -25,6 +25,7 @@
     "SEARCH_PROVIDER": "algolia",
     "ALGOLIA_INDEX_NAME": "madeira_mania_products",
     "MAGAZORD_BASE_URL": "https://madeiramania.painel.magazord.com.br/api",
+    "MAGAZORD_STORE_ID": "1",
     "SEARCH_MIN_FULL_RECORDS": "100",
     "SEARCH_MAX_FULL_FAILURE_RATIO": "0.05",
     "SEARCH_RATE_LIMIT_MAX": "120",
